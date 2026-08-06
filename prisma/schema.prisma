@@ -4,8 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -34,4 +33,180 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   DELETED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SUSPEND
+  RESTORE
+  LOGIN
+  LOGOUT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  TRIAL
+}
+
+model Organization {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+  slug String @unique
+
+  email  String?
+  phone  String?
+  domain String?
+  logo   String?
+
+  status OrganizationStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  // Relations
+  settings      OrganizationSettings?
+  branches      Branch[]
+  users         User[]
+  auditLogs     AuditLog[]
+  subscriptions Subscription[]
+}
+
+model OrganizationSettings {
+  id String @id @default(uuid())
+
+  organizationId String @unique
+
+  timezone String @default("Asia/Dhaka")
+  language String @default("en")
+  currency String @default("BDT")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Branch {
+  id   String @id @default(uuid())
+  code String @unique
+
+  organizationId String
+
+  name String
+  slug String @unique
+
+  email   String?
+  phone   String?
+  address String?
+  logo    String?
+
+  isHeadquarters Boolean @default(false)
+
+  status BranchStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  users     User[]
+  auditLogs AuditLog[]
+}
+
+model User {
+  id String @id @default(uuid())
+
+  organizationId String?
+  branchId       String?
+
+  code String @unique
+
+  firstName String
+  lastName  String?
+
+  email String  @unique
+  phone String?
+
+  password String
+
+  role   Role
+  status UserStatus @default(ACTIVE)
+
+  avatar String?
+
+  emailVerified Boolean   @default(false)
+  lastLoginAt   DateTime?
+
+  isBranchManager Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  auditLogs AuditLog[]
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  organizationId String?
+  branchId       String?
+  userId         String?
+
+  action AuditAction
+
+  entityType String
+  entityId   String
+
+  description String?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  organizationId String
+
+  planName String
+  status   SubscriptionStatus @default(TRIAL)
+
+  startDate DateTime
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
