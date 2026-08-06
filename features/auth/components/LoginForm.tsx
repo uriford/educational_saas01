@@ -1,22 +1,27 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { Controller, useForm } from "react-hook-form";
 
 import { loginSchema } from "../schemas/login.schema";
 import type { LoginFormData } from "../types";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AUTH_TEXT } from "../constants/auth-text";
-import PasswordInput from "../passwordInput";
-import { Controller, useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import Link from "next/link";
-import { AUTH_ROUTES } from "../constants/auth-routes";
 import LoadingButton from "@/components/common/LoadingButton";
-import { login } from "../services/auth.service";
+
+import { AUTH_TEXT } from "../constants/auth-text";
+import { AUTH_ROUTES } from "../constants/auth-routes";
+import PasswordInput from "../passwordInput";
+
+import Link from "next/link";
 
 export default function LoginForm() {
+  const router = useRouter();
+
   const {
     control,
     register,
@@ -34,16 +39,32 @@ export default function LoginForm() {
 
 async function onSubmit(data: LoginFormData) {
   try {
-    const response = await login(data);
+    console.log("LOGIN DATA:", data);
 
-    console.log(response);
+    const result = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+
+    console.log("AUTH RESULT:", result);
+
+    if (result?.error) {
+      console.error("AUTH ERROR:", result.error);
+      return;
+    }
+
+    router.push("/");
+    router.refresh();
+
   } catch (error) {
-    console.error(error);
+    console.error("LOGIN FAILED:", error);
   }
 }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
       {/* Email */}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
@@ -56,9 +77,12 @@ async function onSubmit(data: LoginFormData) {
         />
 
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <p className="text-sm text-destructive">
+            {errors.email.message}
+          </p>
         )}
       </div>
+
 
       {/* Password */}
       <div className="space-y-2">
@@ -72,11 +96,16 @@ async function onSubmit(data: LoginFormData) {
         />
 
         {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <p className="text-sm text-destructive">
+            {errors.password.message}
+          </p>
         )}
       </div>
 
+
+      {/* Remember + Forgot password */}
       <div className="flex items-center justify-between">
+
         <Controller
           control={control}
           name="rememberMe"
@@ -87,19 +116,23 @@ async function onSubmit(data: LoginFormData) {
                 onCheckedChange={field.onChange}
               />
 
-              <span className="text-sm">Remember me</span>
+              <span className="text-sm">
+                Remember me
+              </span>
             </label>
           )}
         />
 
+
         <Link
-          type="button"
           className="text-sm font-medium text-primary hover:underline"
           href={AUTH_ROUTES.FORGOT_PASSWORD}
         >
           Forgot password?
         </Link>
+
       </div>
+
 
       <LoadingButton
         type="submit"
@@ -109,6 +142,7 @@ async function onSubmit(data: LoginFormData) {
       >
         Sign In
       </LoadingButton>
+
     </form>
   );
 }
