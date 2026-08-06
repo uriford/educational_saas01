@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
@@ -11,7 +13,7 @@ async function main() {
   // ==========================
   const superAdminPassword = await bcrypt.hash("Admin@123", 12);
 
-  const superAdmin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: {
       email: "superadmin@americancouncil.com",
     },
