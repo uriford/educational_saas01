@@ -1,0 +1,1 @@
+export const STUDENT_CODE_PREFIX = "STD";

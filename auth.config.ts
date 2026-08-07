@@ -13,7 +13,6 @@ export default {
           label: "Email",
           type: "email",
         },
-
         password: {
           label: "Password",
           type: "password",
@@ -21,47 +20,59 @@ export default {
       },
 
       async authorize(credentials) {
-  console.log("🔥 AUTHORIZE START");
-  console.log("credentials:", credentials);
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
 
-  if (!credentials?.email || !credentials?.password) {
-    console.log("❌ Missing credentials");
-    return null;
-  }
+        const response = await AuthService.login({
+          email: credentials.email as string,
+          password: credentials.password as string,
+        });
 
-  try {
-    const response = await AuthService.login({
-      email: credentials.email as string,
-      password: credentials.password as string,
-    });
+        if (!response.success) {
+          return null;
+        }
 
-    console.log("🔥 AUTH SERVICE RESPONSE:", response);
-
-    if (!response.success) {
-      console.log("❌ AUTH SERVICE FAILED");
-      return null;
-    }
-
-    console.log("✅ USER FOUND:", response.user.email);
-
-    return {
-      id: response.user.id,
-      email: response.user.email,
-      role: response.user.role,
-      organizationId: response.user.organizationId,
-      branchId: response.user.branchId,
-      name: `${response.user.firstName} ${response.user.lastName ?? ""}`,
-    };
-
-  } catch (error) {
-    console.error("🔥 AUTHORIZE CRASH:", error);
-    return null;
-  }
-}
+        return {
+          id: response.user.id,
+          email: response.user.email,
+          name: `${response.user.firstName} ${response.user.lastName ?? ""}`,
+          role: response.user.role,
+          organizationId: response.user.organizationId!,
+          branchId: response.user.branchId!,
+        };
+      },
     }),
   ],
 
   pages: {
     signIn: "/login",
+  },
+
+  session: {
+    strategy: "jwt",
+  },
+
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+        token.organizationId = user.organizationId;
+        token.branchId = user.branchId;
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub!;
+        session.user.role = token.role;
+        session.user.organizationId = token.organizationId;
+        session.user.branchId = token.branchId;
+      }
+
+      return session;
+    },
   },
 } satisfies NextAuthConfig;

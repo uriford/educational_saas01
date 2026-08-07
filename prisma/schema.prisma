@@ -53,6 +53,19 @@ enum SubscriptionStatus {
   TRIAL
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  GRADUATED
+}
+
 model Organization {
   id   String @id @default(uuid())
   code String @unique
@@ -79,6 +92,7 @@ model Organization {
   users         User[]
   auditLogs     AuditLog[]
   subscriptions Subscription[]
+  students Student[]
 }
 
 model OrganizationSettings {
@@ -126,6 +140,7 @@ model Branch {
 
   users     User[]
   auditLogs AuditLog[]
+  students Student[]
 }
 
 model User {
@@ -166,6 +181,7 @@ model User {
   branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   auditLogs AuditLog[]
+  students Student[]
 }
 
 model AuditLog {
@@ -210,4 +226,49 @@ model Subscription {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+}
+
+model Student {
+  id String @id @default(uuid())
+
+  userId String? @unique
+
+  organizationId String
+  branchId String
+
+  studentId String @unique
+
+  firstName String
+  lastName String?
+
+  email String? @unique
+  phone String?
+
+  gender Gender?
+
+  dateOfBirth DateTime?
+
+  guardianName String?
+  guardianPhone String?
+
+  address String?
+
+  admissionDate DateTime @default(now())
+
+  status StudentStatus @default(ACTIVE)
+
+  avatar String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
