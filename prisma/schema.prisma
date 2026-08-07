@@ -66,6 +66,13 @@ enum StudentStatus {
   GRADUATED
 }
 
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  RESIGNED
+}
+
 model Organization {
   id   String @id @default(uuid())
   code String @unique
@@ -93,6 +100,7 @@ model Organization {
   auditLogs     AuditLog[]
   subscriptions Subscription[]
   students Student[]
+  teachers Teacher[]
 }
 
 model OrganizationSettings {
@@ -141,6 +149,7 @@ model Branch {
   users     User[]
   auditLogs AuditLog[]
   students Student[]
+  teachers Teacher[]
 }
 
 model User {
@@ -182,6 +191,7 @@ model User {
 
   auditLogs AuditLog[]
   students Student[]
+  teachers Teacher[]
 }
 
 model AuditLog {
@@ -265,6 +275,54 @@ model Student {
 
   createdById String?
   updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Teacher {
+  id             String @id @default(uuid())
+
+  userId         String? @unique
+
+  organizationId String
+  branchId       String
+
+  teacherId      String @unique
+
+  firstName      String
+  lastName       String?
+
+  email          String? @unique
+  phone          String?
+
+  gender         Gender?
+
+  dateOfBirth    DateTime?
+
+  qualification  String?
+
+  designation    String?
+
+  joiningDate    DateTime @default(now())
+
+  salary         Decimal? @db.Decimal(10,2)
+
+  address        String?
+
+  status         TeacherStatus @default(ACTIVE)
+
+  avatar         String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  createdById    String?
+  updatedById    String?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
