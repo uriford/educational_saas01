@@ -94,13 +94,14 @@ model Organization {
   updatedById String?
 
   // Relations
-  settings      OrganizationSettings?
-  branches      Branch[]
-  users         User[]
-  auditLogs     AuditLog[]
-  subscriptions Subscription[]
-  students Student[]
-  teachers Teacher[]
+  settings         OrganizationSettings?
+  branches         Branch[]
+  users            User[]
+  auditLogs        AuditLog[]
+  subscriptions    Subscription[]
+  students         Student[]
+  teachers         Teacher[]
+  teacherIdCounter TeacherIdCounter?
 }
 
 model OrganizationSettings {
@@ -148,8 +149,8 @@ model Branch {
 
   users     User[]
   auditLogs AuditLog[]
-  students Student[]
-  teachers Teacher[]
+  students  Student[]
+  teachers  Teacher[]
 }
 
 model User {
@@ -190,8 +191,8 @@ model User {
   branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   auditLogs AuditLog[]
-  students Student[]
-  teachers Teacher[]
+  students  Student[]
+  teachers  Teacher[]
 }
 
 model AuditLog {
@@ -244,12 +245,12 @@ model Student {
   userId String? @unique
 
   organizationId String
-  branchId String
+  branchId       String
 
   studentId String @unique
 
   firstName String
-  lastName String?
+  lastName  String?
 
   email String? @unique
   phone String?
@@ -258,7 +259,7 @@ model Student {
 
   dateOfBirth DateTime?
 
-  guardianName String?
+  guardianName  String?
   guardianPhone String?
 
   address String?
@@ -269,8 +270,8 @@ model Student {
 
   avatar String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdById String?
@@ -284,49 +285,59 @@ model Student {
 }
 
 model Teacher {
-  id             String @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId         String? @unique
+  userId String? @unique
 
   organizationId String
   branchId       String
 
-  teacherId      String @unique
+  teacherId String @unique
 
-  firstName      String
-  lastName       String?
+  firstName String
+  lastName  String?
 
-  email          String? @unique
-  phone          String?
+  email String? @unique
+  phone String?
 
-  gender         Gender?
+  gender Gender?
 
-  dateOfBirth    DateTime?
+  dateOfBirth DateTime?
 
-  qualification  String?
+  qualification String?
 
-  designation    String?
+  designation String?
 
-  joiningDate    DateTime @default(now())
+  joiningDate DateTime @default(now())
 
-  salary         Decimal? @db.Decimal(10,2)
+  salary Decimal? @db.Decimal(10, 2)
 
-  address        String?
+  address String?
 
-  status         TeacherStatus @default(ACTIVE)
+  status TeacherStatus @default(ACTIVE)
 
-  avatar         String?
+  avatar String?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  deletedAt      DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  createdById    String?
-  updatedById    String?
+  createdById String?
+  updatedById String?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model TeacherIdCounter {
+  id             String   @id @default(uuid())
+  organizationId String   @unique
+  nextNumber     Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }

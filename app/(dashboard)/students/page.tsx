@@ -7,7 +7,7 @@ import StudentSearch from "@/features/students/components/StudentSearch";
 import StudentTable from "@/features/students/components/StudentTable";
 
 import { getStudentsAction } from "@/features/students/actions/get-students.action";
-import Pagination from "@/features/students/components/Pagination";
+import Pagination from "@/components/common/Pagination";
 
 type Props = {
   searchParams: Promise<{
@@ -37,10 +37,11 @@ export default async function StudentsPage({ searchParams }: Props) {
 
       {/* Pagination component will go here */}
       <Pagination
-        currentPage={result.page}
-        totalPages={result.totalPages}
-        search={search}
-      />
+  currentPage={result.page}
+  totalPages={result.totalPages}
+  search={search}
+  basePath="/students"
+/>
     </div>
   );
 }

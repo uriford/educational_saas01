@@ -5,7 +5,10 @@ import type { CreateTeacherData } from "../types";
 export class TeacherService {
 static async create(data: CreateTeacherData) {
   try {
-    await this.createWithGeneratedId(data);
+    await TeacherRepository.create({
+      ...data,
+      teacherId: "",
+    });
 
     return {
       success: true,
@@ -19,24 +22,6 @@ static async create(data: CreateTeacherData) {
       message: "Failed to create teacher.",
     };
   }
-}
-
-static async createWithGeneratedId(
-  data: CreateTeacherData,
-) {
-  const teacherId = await this.generateTeacherId();
-
-  return TeacherRepository.create({
-    ...data,
-    teacherId,
-  });
-}
-
-static async generateTeacherId() {
-  const totalTeachers =
-    await TeacherRepository.count();
-
-  return `TCH-${String(totalTeachers + 1).padStart(6, "0")}`;
 }
 
   static async getAll(

@@ -20,11 +20,11 @@ export default function TeacherSearch() {
 
     if (value.trim()) {
       params.set("search", value);
+      params.set("page", "1");
     } else {
       params.delete("search");
+      params.set("page", "1");
     }
-
-    params.set("page", "1");
 
     router.replace(`/teachers?${params.toString()}`);
   }
@@ -32,8 +32,8 @@ export default function TeacherSearch() {
   return (
     <Input
       className="w-full md:max-w-sm"
-      placeholder="Search by teacher name, ID, phone or designation..."
       value={search}
+      placeholder="Search by name, phone, teacher ID..."
       onChange={(e) => handleChange(e.target.value)}
     />
   );
