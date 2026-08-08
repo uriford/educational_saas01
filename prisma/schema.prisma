@@ -73,6 +73,19 @@ enum TeacherStatus {
   RESIGNED
 }
 
+enum CourseStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
 model Organization {
   id   String @id @default(uuid())
   code String @unique
@@ -102,6 +115,8 @@ model Organization {
   students         Student[]
   teachers         Teacher[]
   teacherIdCounter TeacherIdCounter?
+  courses          Course[]
+  announcements    Announcement[]
 }
 
 model OrganizationSettings {
@@ -147,10 +162,12 @@ model Branch {
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  users     User[]
-  auditLogs AuditLog[]
-  students  Student[]
-  teachers  Teacher[]
+  users         User[]
+  auditLogs     AuditLog[]
+  students      Student[]
+  teachers      Teacher[]
+  courses       Course[]
+  announcements Announcement[]
 }
 
 model User {
@@ -332,6 +349,39 @@ model Teacher {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
+model Course {
+  id             String       @id @default(uuid())
+  organizationId String
+  branchId       String
+  code           String
+  name           String
+  description    String?
+  duration       Int?
+  fee            Decimal?     @db.Decimal(10, 2)
+  capacity       Int?
+  status         CourseStatus @default(INACTIVE)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
 model TeacherIdCounter {
   id             String   @id @default(uuid())
   organizationId String   @unique
@@ -340,4 +390,35 @@ model TeacherIdCounter {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id             String  @id @default(uuid())
+  organizationId String
+  branchId       String?
+
+  title   String
+  content String
+
+  status AnnouncementStatus @default(DRAFT)
+
+  publishAt DateTime?
+  expiresAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([publishAt])
+  @@index([expiresAt])
+  @@index([createdAt])
 }
