@@ -1,22 +1,14 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import { AnnouncementService } from "../services/announcement.service";
-
 import type { CreateAnnouncementData } from "../types";
 
 export async function createAnnouncementAction(
   data: CreateAnnouncementData,
 ) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      message: "Unauthorized.",
-    };
-  }
+  const session = await requireAdmin();
 
   if (!session.user.organizationId) {
     return {

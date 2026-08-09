@@ -1,17 +1,17 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 import { StudentService } from "../services/student.service";
 
 export async function getStudentsAction(
   search = "",
   page = 1,
-  limit = 10
+  limit = 10,
 ) {
-  const session = await auth();
+  const session = await requireAdmin();
 
-  if (!session?.user) {
-    throw new Error("Unauthorized");
+  if (!session.user.organizationId) {
+    throw new Error("Organization not found");
   }
 
   return StudentService.getAll(
@@ -19,6 +19,6 @@ export async function getStudentsAction(
     session.user.branchId,
     search,
     page,
-    limit
+    limit,
   );
 }

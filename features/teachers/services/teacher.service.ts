@@ -1,28 +1,30 @@
 import { TeacherRepository } from "../repository/teacher.repository";
 
-import type { CreateTeacherData } from "../types";
+import type {
+  CreateTeacherData,
+} from "../types";
 
 export class TeacherService {
-static async create(data: CreateTeacherData) {
-  try {
-    await TeacherRepository.create({
-      ...data,
-      teacherId: "",
-    });
+  static async create(data: CreateTeacherData) {
+    try {
+      await TeacherRepository.create({
+        ...data,
+        teacherId: "",
+      });
 
-    return {
-      success: true,
-      message: "Teacher created successfully.",
-    };
-  } catch (error) {
-    console.error(error);
+      return {
+        success: true,
+        message: "Teacher created successfully.",
+      };
+    } catch (error) {
+      console.error(error);
 
-    return {
-      success: false,
-      message: "Failed to create teacher.",
-    };
+      return {
+        success: false,
+        message: "Failed to create teacher.",
+      };
+    }
   }
-}
 
   static async getAll(
     organizationId: string,
@@ -40,8 +42,26 @@ static async create(data: CreateTeacherData) {
     );
   }
 
-  static async getById(id: string, organizationId: string, branchId?: string) {
-    return TeacherRepository.findById(id, organizationId, branchId);
+  static async getStatistics(
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return TeacherRepository.getStatistics(
+      organizationId,
+      branchId,
+    );
+  }
+
+  static async getById(
+    id: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return TeacherRepository.findById(
+      id,
+      organizationId,
+      branchId,
+    );
   }
 
   static async update(
@@ -51,12 +71,13 @@ static async create(data: CreateTeacherData) {
     data: Partial<CreateTeacherData>,
   ) {
     try {
-      const result = await TeacherRepository.update(
-        id,
-        organizationId,
-        branchId,
-        data,
-      );
+      const result =
+        await TeacherRepository.update(
+          id,
+          organizationId,
+          branchId,
+          data,
+        );
 
       if (result.count === 0) {
         return {
@@ -85,11 +106,12 @@ static async create(data: CreateTeacherData) {
     branchId?: string,
   ) {
     try {
-      const result = await TeacherRepository.softDelete(
-        id,
-        organizationId,
-        branchId,
-      );
+      const result =
+        await TeacherRepository.softDelete(
+          id,
+          organizationId,
+          branchId,
+        );
 
       if (result.count === 0) {
         return {

@@ -1,33 +1,38 @@
 import Link from "next/link";
-import { Plus, BookOpen, Clock, Users, CalendarDays } from "lucide-react";
 
-import {CourseRepository} from "../../../features/courses/repository/course.repository";
+import {
+  BookOpen,
+  CalendarDays,
+  Clock,
+  Plus,
+  Users,
+} from "lucide-react";
 
-type Props = {
-  organizationId: string;
-  branchId?: string;
-};
+import { requireAdmin } from "@/features/auth/authorization";
+import { CourseRepository } from "@/features/courses/repository/course.repository";
 
-export default async function CoursesPage({
-  organizationId,
-  branchId,
-}: Props) {
+export default async function CoursesPage() {
+  const session = await requireAdmin();
+
+  if (!session.user.organizationId) {
+    return null;
+  }
+
   const { courses } = await CourseRepository.findAll(
-    organizationId,
-    branchId,
+    session.user.organizationId,
+    session.user.branchId ?? undefined,
     undefined,
     1,
-    50
+    50,
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Courses
-          </h2>
+          </h1>
 
           <p className="text-sm text-muted-foreground">
             Manage courses offered by your organization.
@@ -43,7 +48,6 @@ export default async function CoursesPage({
         </Link>
       </div>
 
-      {/* Empty state */}
       {courses.length === 0 ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-dashed bg-card p-8 text-center">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -56,7 +60,7 @@ export default async function CoursesPage({
 
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             Create your first course to start managing your
-            organization&rsquo;s academic programs.
+            organization&apos;s academic programs.
           </p>
 
           <Link
@@ -68,14 +72,12 @@ export default async function CoursesPage({
           </Link>
         </div>
       ) : (
-        /* Course cards */
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {courses.map((course) => (
             <div
               key={course.id}
               className="group rounded-xl border bg-card p-5 shadow-sm transition hover:shadow-md"
             >
-              {/* Top */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -106,17 +108,16 @@ export default async function CoursesPage({
                 </span>
               </div>
 
-              {/* Description */}
               {course.description && (
                 <p className="mt-4 line-clamp-2 text-sm text-muted-foreground">
                   {course.description}
                 </p>
               )}
 
-              {/* Information */}
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
+
                   <span>
                     {course.duration
                       ? `${course.duration} days`
@@ -126,6 +127,7 @@ export default async function CoursesPage({
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" />
+
                   <span>
                     {course.capacity
                       ? `${course.capacity} seats`
@@ -135,6 +137,7 @@ export default async function CoursesPage({
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
+
                   <span>
                     {course.startDate
                       ? new Date(course.startDate).toLocaleDateString()
@@ -149,7 +152,6 @@ export default async function CoursesPage({
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="mt-5 flex gap-2 border-t pt-4">
                 <Link
                   href={`/courses/${course.id}/edit`}

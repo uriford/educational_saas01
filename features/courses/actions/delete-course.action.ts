@@ -1,20 +1,13 @@
 "use server";
 
-import { auth } from "@/auth";
-import { CourseService } from "../services/course.service";
+import { requireAdmin } from "@/features/auth/authorization";
 
+import { CourseService } from "../services/course.service";
 
 export async function deleteCourseAction(
   id: string,
 ) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      message: "Unauthorized",
-    };
-  }
+  const session = await requireAdmin();
 
   if (
     !session.user.organizationId ||

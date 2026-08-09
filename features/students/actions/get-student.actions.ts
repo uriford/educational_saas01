@@ -1,18 +1,18 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 import { StudentService } from "../services/student.service";
 
 export async function getStudentAction(id: string) {
-  const session = await auth();
+  const session = await requireAdmin();
 
-  if (!session?.user) {
-    throw new Error("Unauthorized");
+  if (!session.user.organizationId) {
+    throw new Error("Organization not found");
   }
 
   return StudentService.getById(
     id,
     session.user.organizationId,
-    session.user.branchId
+    session.user.branchId,
   );
 }

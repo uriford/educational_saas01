@@ -19,7 +19,10 @@ export class StudentService {
   static async create(data: CreateStudentData): Promise<CreateStudentResponse> {
     try {
       if (data.email?.trim()) {
-        const existingStudent = await StudentRepository.findByEmail(data.email);
+        const existingStudent = await StudentRepository.findByEmail(
+          data.email,
+          data.organizationId,
+        );
 
         if (existingStudent) {
           return {
@@ -81,7 +84,10 @@ export class StudentService {
   ) {
     try {
       if (data.email) {
-        const existingStudent = await StudentRepository.findByEmail(data.email);
+        const existingStudent = await StudentRepository.findByEmail(
+          data.email,
+          organizationId,
+        );
 
         if (existingStudent && existingStudent.id !== id) {
           return {
@@ -150,13 +156,7 @@ export class StudentService {
       };
     }
   }
-  static async getStatistics(
-  organizationId: string,
-  branchId?: string
-) {
-  return StudentRepository.getStatistics(
-    organizationId,
-    branchId
-  );
-}
+  static async getStatistics(organizationId: string, branchId?: string) {
+    return StudentRepository.getStatistics(organizationId, branchId);
+  }
 }

@@ -2,12 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 
-import { auth } from "@/auth";
-
 import { Button } from "@/components/ui/button";
 
 import { AnnouncementService } from "../services/announcement.service";
 import DeleteAnnouncementButton from "../components/DeleteAnnouncementButton";
+import { requireAdmin } from "@/features/auth/authorization";
 
 type Props = {
   announcementId: string;
@@ -23,7 +22,7 @@ const statusStyles = {
 export default async function AnnouncementDetailsPage({
   announcementId,
 }: Props) {
-  const session = await auth();
+  const session = await requireAdmin();
 
   if (!session?.user?.organizationId) {
     return null;

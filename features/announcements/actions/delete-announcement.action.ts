@@ -1,20 +1,13 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import { AnnouncementService } from "../services/announcement.service";
 
 export async function deleteAnnouncementAction(
   id: string,
 ) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      message: "Unauthorized.",
-    };
-  }
+  const session = await requireAdmin();
 
   if (!session.user.organizationId) {
     return {

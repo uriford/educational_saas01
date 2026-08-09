@@ -1,8 +1,7 @@
 import Link from "next/link";
-
 import { Plus } from "lucide-react";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import { Button } from "@/components/ui/button";
 import Pagination from "@/components/common/Pagination";
@@ -11,6 +10,7 @@ import { TeacherService } from "@/features/teachers/services/teacher.service";
 
 import TeacherSearch from "@/features/teachers/components/TeacherSearch";
 import TeacherTable from "@/features/teachers/components/TeacherTable";
+import TeacherStatistics from "@/features/teachers/components/TeacherStatistics";
 
 type Props = {
   searchParams: Promise<{
@@ -22,9 +22,9 @@ type Props = {
 export default async function TeachersPage({
   searchParams,
 }: Props) {
-  const session = await auth();
+  const session = await requireAdmin();
 
-  if (!session?.user?.organizationId) {
+  if (!session.user.organizationId) {
     return null;
   }
 
@@ -37,24 +37,35 @@ export default async function TeachersPage({
     Number(params.page ?? "1") || 1,
   );
 
-  const result = await TeacherService.getAll(
-    session.user.organizationId,
-    session.user.branchId ?? undefined,
-    search,
-    currentPage,
-    10,
-  );
+  const branchId =
+    session.user.branchId ?? undefined;
+
+  const [result, statistics] =
+    await Promise.all([
+      TeacherService.getAll(
+        session.user.organizationId,
+        branchId,
+        search,
+        currentPage,
+        10,
+      ),
+
+      TeacherService.getStatistics(
+        session.user.organizationId,
+        branchId,
+      ),
+    ]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             Teachers
           </h1>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Manage teachers and their information.
           </p>
         </div>
@@ -67,8 +78,28 @@ export default async function TeachersPage({
         </Link>
       </div>
 
+      {/* Statistics */}
+      <TeacherStatistics
+        total={statistics.total}
+        active={statistics.active}
+        inactive={statistics.inactive}
+        onLeave={statistics.onLeave}
+        resigned={statistics.resigned}
+        newThisMonth={statistics.newThisMonth}
+      />
+
       {/* Search */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">
+            All Teachers
+          </h2>
+
+          <p className="text-sm text-muted-foreground">
+            Search and manage your teaching staff.
+          </p>
+        </div>
+
         <TeacherSearch />
       </div>
 
@@ -77,11 +108,11 @@ export default async function TeachersPage({
 
       {/* Pagination */}
       <Pagination
-  currentPage={result.page}
-  totalPages={result.totalPages}
-  search={search}
-  basePath="/teachers"
-/>
+        currentPage={result.page}
+        totalPages={result.totalPages}
+        search={search}
+        basePath="/teachers"
+      />
     </div>
   );
 }

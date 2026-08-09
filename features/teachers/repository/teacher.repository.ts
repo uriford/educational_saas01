@@ -1,89 +1,92 @@
 import { db } from "@/lib/db";
 
-import type { CreateTeacherData, CreateTeacherRepositoryData } from "../types";
+import type {
+  CreateTeacherData,
+  CreateTeacherRepositoryData,
+} from "../types";
 
 export class TeacherRepository {
-static async create(data: CreateTeacherRepositoryData) {
-  return db.$transaction(async (tx) => {
-    // Prevent two simultaneous teacher creations
-    // from initializing/updating the same organization counter
-    // at the same time.
-    await tx.$queryRaw`
-      SELECT pg_advisory_xact_lock(
-        hashtext(${data.organizationId})
-      )
-    `;
+  static async create(data: CreateTeacherRepositoryData) {
+    return db.$transaction(async (tx) => {
+      // Prevent two simultaneous teacher creations
+      // from initializing/updating the same organization counter
+      // at the same time.
+      await tx.$executeRaw`
+        SELECT pg_advisory_xact_lock(
+          hashtext(${data.organizationId})
+        )
+      `;
 
-    const existingCounter =
-      await tx.teacherIdCounter.findUnique({
-        where: {
-          organizationId: data.organizationId,
-        },
-      });
-
-    let teacherNumber: number;
-
-    if (existingCounter) {
-      teacherNumber = existingCounter.nextNumber;
-
-      await tx.teacherIdCounter.update({
-        where: {
-          organizationId: data.organizationId,
-        },
-        data: {
-          nextNumber: {
-            increment: 1,
-          },
-        },
-      });
-    } else {
-      const lastTeacher =
-        await tx.teacher.findFirst({
+      const existingCounter =
+        await tx.teacherIdCounter.findUnique({
           where: {
             organizationId: data.organizationId,
-            teacherId: {
-              startsWith: "TCH-",
-            },
-          },
-          orderBy: {
-            teacherId: "desc",
-          },
-          select: {
-            teacherId: true,
           },
         });
 
-      const lastNumber = lastTeacher
-        ? Number(
-            lastTeacher.teacherId.replace("TCH-", ""),
-          )
-        : 0;
+      let teacherNumber: number;
 
-      teacherNumber = lastNumber + 1;
+      if (existingCounter) {
+        teacherNumber = existingCounter.nextNumber;
 
-      await tx.teacherIdCounter.create({
+        await tx.teacherIdCounter.update({
+          where: {
+            organizationId: data.organizationId,
+          },
+          data: {
+            nextNumber: {
+              increment: 1,
+            },
+          },
+        });
+      } else {
+        const lastTeacher =
+          await tx.teacher.findFirst({
+            where: {
+              organizationId: data.organizationId,
+              teacherId: {
+                startsWith: "TCH-",
+              },
+            },
+            orderBy: {
+              teacherId: "desc",
+            },
+            select: {
+              teacherId: true,
+            },
+          });
+
+        const lastNumber = lastTeacher
+          ? Number(
+              lastTeacher.teacherId.replace("TCH-", ""),
+            )
+          : 0;
+
+        teacherNumber = lastNumber + 1;
+
+        await tx.teacherIdCounter.create({
+          data: {
+            organizationId: data.organizationId,
+            nextNumber: teacherNumber + 1,
+          },
+        });
+      }
+
+      const teacherId = `TCH-${String(
+        teacherNumber,
+      ).padStart(6, "0")}`;
+
+      return tx.teacher.create({
         data: {
-          organizationId: data.organizationId,
-          nextNumber: teacherNumber + 1,
+          ...data,
+          teacherId,
+          dateOfBirth: data.dateOfBirth
+            ? new Date(data.dateOfBirth)
+            : null,
         },
       });
-    }
-
-    const teacherId = `TCH-${String(
-      teacherNumber,
-    ).padStart(6, "0")}`;
-
-    return tx.teacher.create({
-      data: {
-        ...data,
-        teacherId,
-        dateOfBirth: data.dateOfBirth
-          ? new Date(data.dateOfBirth)
-          : null,
-      },
     });
-  });
-}
+  }
 
   static async findAll(
     organizationId: string,
@@ -159,7 +162,86 @@ static async create(data: CreateTeacherRepositoryData) {
     };
   }
 
-  static async findById(id: string, organizationId: string, branchId?: string) {
+  static async getStatistics(
+    organizationId: string,
+    branchId?: string,
+  ) {
+    const where = {
+      organizationId,
+      ...(branchId && { branchId }),
+      deletedAt: null,
+    };
+
+    const startOfMonth = new Date();
+
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [
+      total,
+      active,
+      inactive,
+      onLeave,
+      resigned,
+      newThisMonth,
+    ] = await Promise.all([
+      db.teacher.count({
+        where,
+      }),
+
+      db.teacher.count({
+        where: {
+          ...where,
+          status: "ACTIVE",
+        },
+      }),
+
+      db.teacher.count({
+        where: {
+          ...where,
+          status: "INACTIVE",
+        },
+      }),
+
+      db.teacher.count({
+        where: {
+          ...where,
+          status: "ON_LEAVE",
+        },
+      }),
+
+      db.teacher.count({
+        where: {
+          ...where,
+          status: "RESIGNED",
+        },
+      }),
+
+      db.teacher.count({
+        where: {
+          ...where,
+          createdAt: {
+            gte: startOfMonth,
+          },
+        },
+      }),
+    ]);
+
+    return {
+      total,
+      active,
+      inactive,
+      onLeave,
+      resigned,
+      newThisMonth,
+    };
+  }
+
+  static async findById(
+    id: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
     return db.teacher.findFirst({
       where: {
         id,
@@ -191,7 +273,9 @@ static async create(data: CreateTeacherRepositoryData) {
 
       data: {
         ...data,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+        dateOfBirth: data.dateOfBirth
+          ? new Date(data.dateOfBirth)
+          : undefined,
       },
     });
   }

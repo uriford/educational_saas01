@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import type { UpdateCourseData } from "../types";
 import { CourseService } from "../services/course.service";
@@ -9,14 +9,7 @@ export async function updateCourseAction(
   id: string,
   data: UpdateCourseData,
 ) {
-  const session = await auth();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      message: "Unauthorized",
-    };
-  }
+  const session = await requireAdmin();
 
   if (
     !session.user.organizationId ||

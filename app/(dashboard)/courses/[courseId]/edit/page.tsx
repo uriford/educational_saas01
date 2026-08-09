@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 import CourseForm from "@/features/courses/components/CourseForm";
 import { CourseService } from "@/features/courses/services/course.service";
-
 
 type Props = {
   params: Promise<{
@@ -11,11 +10,13 @@ type Props = {
   }>;
 };
 
-export default async function EditCoursePage({ params }: Props) {
-  const session = await auth();
+export default async function EditCoursePage({
+  params,
+}: Props) {
+  const session = await requireAdmin();
 
-  if (!session?.user?.organizationId) {
-    return null;
+  if (!session.user.organizationId) {
+    notFound();
   }
 
   const { courseId } = await params;
@@ -31,11 +32,11 @@ export default async function EditCoursePage({ params }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           Edit Course
-        </h2>
+        </h1>
 
         <p className="text-sm text-muted-foreground">
           Update the information and schedule for this course.
@@ -51,7 +52,9 @@ export default async function EditCoursePage({ params }: Props) {
             name: course.name,
             description: course.description ?? "",
             duration: course.duration ?? undefined,
-            fee: course.fee ? Number(course.fee) : undefined,
+            fee: course.fee
+              ? Number(course.fee)
+              : undefined,
             capacity: course.capacity ?? undefined,
             startDate: course.startDate
               ? course.startDate.toISOString().split("T")[0]

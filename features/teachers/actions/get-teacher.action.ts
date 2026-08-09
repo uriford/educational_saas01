@@ -1,16 +1,17 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import { TeacherService } from "../services/teacher.service";
 
-export async function getTeacherAction(
-  id: string,
-) {
-  const session = await auth();
+export async function getTeacherAction(id: string) {
+  const session = await requireAdmin();
 
-  if (!session?.user) {
-    throw new Error("Unauthorized");
+  if (
+    !session.user.organizationId ||
+    !session.user.branchId
+  ) {
+    throw new Error("Organization or Branch not found.");
   }
 
   return TeacherService.getById(

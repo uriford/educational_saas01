@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import { AnnouncementService } from "../services/announcement.service";
 
@@ -9,12 +9,12 @@ export async function getAnnouncementsAction(
   page = 1,
   limit = 10,
 ) {
-  const session = await auth();
+  const session = await requireAdmin();
 
-  if (!session?.user?.organizationId) {
+  if (!session.user.organizationId) {
     return {
       success: false,
-      message: "Unauthorized.",
+      message: "Organization not found.",
       data: null,
     };
   }

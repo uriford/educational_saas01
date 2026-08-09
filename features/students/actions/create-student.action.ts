@@ -1,35 +1,41 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import type { StudentFormValues } from "../schemas/student.schema";
 import { StudentService } from "../services/student.service";
 
 export async function createStudentAction(
-  data: StudentFormValues
+  data: StudentFormValues,
 ) {
-  const session = await auth();
+  try {
+    const session = await requireAdmin();
 
-  if (!session?.user) {
+    if (
+      !session.user.organizationId ||
+      !session.user.branchId
+    ) {
+      return {
+        success: false,
+        message: "Organization or Branch not found.",
+      };
+    }
+
+    return StudentService.create({
+      ...data,
+      organizationId: session.user.organizationId,
+      branchId: session.user.branchId,
+    });
+  } catch (error) {
+    console.error("CREATE STUDENT ACTION ERROR:", error);
+
     return {
       success: false,
-      message: "Unauthorized",
+      message:
+        error instanceof Error &&
+        error.message === "Forbidden"
+          ? "You do not have permission to create students."
+          : "Unauthorized",
     };
   }
-
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
-  return StudentService.create({
-    ...data,
-    organizationId: session.user.organizationId,
-    branchId: session.user.branchId,
-  });
 }

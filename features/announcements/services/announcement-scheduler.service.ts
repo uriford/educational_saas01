@@ -4,16 +4,15 @@ export class AnnouncementSchedulerService {
   static async syncAnnouncementStatuses() {
     const now = new Date();
 
-    const scheduledAnnouncements =
-      await db.announcement.findMany({
-        where: {
-          deletedAt: null,
-          status: "SCHEDULED",
-          publishAt: {
-            lte: now,
-          },
+    const scheduledAnnouncements = await db.announcement.findMany({
+      where: {
+        deletedAt: null,
+        status: "SCHEDULED",
+        publishAt: {
+          lte: now,
         },
-      });
+      },
+    });
 
     let publishedCount = 0;
     let notificationCount = 0;
@@ -35,6 +34,11 @@ export class AnnouncementSchedulerService {
           organizationId: announcement.organizationId,
           deletedAt: null,
           status: "ACTIVE",
+          ...(announcement.branchId
+            ? {
+                branchId: announcement.branchId,
+              }
+            : {}),
         },
         select: {
           id: true,
@@ -42,14 +46,13 @@ export class AnnouncementSchedulerService {
       });
 
       for (const user of users) {
-        const existingNotification =
-          await db.notification.findFirst({
-            where: {
-              userId: user.id,
-              organizationId: announcement.organizationId,
-              href: `/announcements/${announcement.id}`,
-            },
-          });
+        const existingNotification = await db.notification.findFirst({
+          where: {
+            userId: user.id,
+            organizationId: announcement.organizationId,
+            href: `/announcements/${announcement.id}`,
+          },
+        });
 
         if (!existingNotification) {
           await db.notification.create({

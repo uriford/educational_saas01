@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
-
+import { requireAdmin } from "@/features/auth/authorization";
 import { TeacherService } from "@/features/teachers/services/teacher.service";
+
 import TeacherForm from "@/features/teachers/components/TeacherForm";
 
 type Props = {
@@ -14,10 +14,10 @@ type Props = {
 export default async function EditTeacherPage({
   params,
 }: Props) {
-  const session = await auth();
+  const session = await requireAdmin();
 
   if (
-    !session?.user?.organizationId ||
+    !session.user.organizationId ||
     !session.user.branchId
   ) {
     notFound();
@@ -36,9 +36,9 @@ export default async function EditTeacherPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-2xl font-bold">
           Edit Teacher
         </h1>
 
@@ -62,7 +62,10 @@ export default async function EditTeacherPage({
               : "",
             qualification: teacher.qualification ?? "",
             designation: teacher.designation ?? "",
-            salary: teacher.salary ? Number(teacher.salary) : undefined,
+            salary:
+              teacher.salary != null
+                ? Number(teacher.salary)
+                : undefined,
             address: teacher.address ?? "",
           }}
         />

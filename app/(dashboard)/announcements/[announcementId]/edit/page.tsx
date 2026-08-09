@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
-
 import AnnouncementForm from "@/features/announcements/components/AnnouncementForm";
 import { AnnouncementService } from "@/features/announcements/services/announcement.service";
+import { requireAdmin } from "@/features/auth/authorization";
 
 type Props = {
   params: Promise<{
@@ -14,7 +13,7 @@ type Props = {
 export default async function Page({ params }: Props) {
   const { announcementId } = await params;
 
-  const session = await auth();
+  const session = await requireAdmin();
 
   if (!session?.user?.organizationId) {
     return null;

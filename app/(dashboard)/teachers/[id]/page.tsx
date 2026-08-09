@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
-
+import { requireAdmin } from "@/features/auth/authorization";
 import { TeacherService } from "@/features/teachers/services/teacher.service";
 
 import TeacherHeader from "@/features/teachers/components/TeacherHeader";
@@ -15,10 +14,10 @@ type Props = {
 export default async function TeacherDetailsPage({
   params,
 }: Props) {
-  const session = await auth();
+  const session = await requireAdmin();
 
   if (
-    !session?.user?.organizationId ||
+    !session.user.organizationId ||
     !session.user.branchId
   ) {
     notFound();

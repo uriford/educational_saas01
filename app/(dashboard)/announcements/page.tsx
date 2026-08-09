@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Plus } from "lucide-react";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 
 import { Button } from "@/components/ui/button";
 import Pagination from "@/components/common/Pagination";
@@ -21,7 +21,7 @@ type Props = {
 export default async function AnnouncementsPage({
   searchParams,
 }: Props) {
-  const session = await auth();
+  const session = await requireAdmin();
 
   if (!session?.user?.organizationId) {
     return null;

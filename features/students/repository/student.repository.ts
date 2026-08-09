@@ -101,10 +101,13 @@ export class StudentRepository {
     };
   }
 
-  static async delete(id: string) {
-    return db.student.update({
+  static async delete(id: string, organizationId: string, branchId?: string) {
+    return db.student.updateMany({
       where: {
         id,
+        organizationId,
+        ...(branchId && { branchId }),
+        deletedAt: null,
       },
       data: {
         deletedAt: new Date(),
@@ -112,23 +115,24 @@ export class StudentRepository {
     });
   }
 
-  static async count() {
+  static async count(organizationId: string, branchId?: string) {
     return db.student.count({
       where: {
+        organizationId,
+        ...(branchId && { branchId }),
         deletedAt: null,
       },
     });
   }
-
-  static async findByEmail(email: string) {
+  static async findByEmail(email: string, organizationId: string) {
     return db.student.findFirst({
       where: {
         email,
+        organizationId,
         deletedAt: null,
       },
     });
   }
-
   static async generateStudentId() {
     const lastStudent = await db.student.findFirst({
       orderBy: {
@@ -195,63 +199,52 @@ export class StudentRepository {
       },
     });
   }
-  static async getStatistics(
-  organizationId: string,
-  branchId?: string
-) {
-  const where = {
-    organizationId,
-    ...(branchId && { branchId }),
-    deletedAt: null,
-  };
+  static async getStatistics(organizationId: string, branchId?: string) {
+    const where = {
+      organizationId,
+      ...(branchId && { branchId }),
+      deletedAt: null,
+    };
 
-  const now = new Date();
+    const now = new Date();
 
-  const firstDayOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1
-  );
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [
-    totalStudents,
-    activeStudents,
-    inactiveStudents,
-    newStudents,
-  ] = await Promise.all([
-    db.student.count({
-      where,
-    }),
+    const [totalStudents, activeStudents, inactiveStudents, newStudents] =
+      await Promise.all([
+        db.student.count({
+          where,
+        }),
 
-    db.student.count({
-      where: {
-        ...where,
-        status: "ACTIVE",
-      },
-    }),
+        db.student.count({
+          where: {
+            ...where,
+            status: "ACTIVE",
+          },
+        }),
 
-    db.student.count({
-      where: {
-        ...where,
-        status: "INACTIVE",
-      },
-    }),
+        db.student.count({
+          where: {
+            ...where,
+            status: "INACTIVE",
+          },
+        }),
 
-    db.student.count({
-      where: {
-        ...where,
-        createdAt: {
-          gte: firstDayOfMonth,
-        },
-      },
-    }),
-  ]);
+        db.student.count({
+          where: {
+            ...where,
+            createdAt: {
+              gte: firstDayOfMonth,
+            },
+          },
+        }),
+      ]);
 
-  return {
-    totalStudents,
-    activeStudents,
-    inactiveStudents,
-    newStudents,
-  };
-}
+    return {
+      totalStudents,
+      activeStudents,
+      inactiveStudents,
+      newStudents,
+    };
+  }
 }

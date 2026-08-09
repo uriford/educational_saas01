@@ -1,14 +1,17 @@
+import { requireAdmin } from "@/features/auth/authorization";
 import AnnouncementForm from "@/features/announcements/components/AnnouncementForm";
 
-export default function CreateAnnouncementPage() {
+export default async function CreateAnnouncementPage() {
+  await requireAdmin();
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           Create Announcement
         </h1>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground">
           Create an announcement for your organization.
         </p>
       </div>

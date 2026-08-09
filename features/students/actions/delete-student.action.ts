@@ -1,31 +1,37 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAdmin } from "@/features/auth/authorization";
 import { StudentService } from "../services/student.service";
 
 export async function deleteStudentAction(id: string) {
-  const session = await auth();
+  try {
+    const session = await requireAdmin();
 
-  if (!session?.user) {
+    if (
+      !session.user.organizationId ||
+      !session.user.branchId
+    ) {
+      return {
+        success: false,
+        message: "Organization or Branch not found.",
+      };
+    }
+
+    return StudentService.softDelete(
+      id,
+      session.user.organizationId,
+      session.user.branchId,
+    );
+  } catch (error) {
+    console.error("DELETE STUDENT ACTION ERROR:", error);
+
     return {
       success: false,
-      message: "Unauthorized",
+      message:
+        error instanceof Error &&
+        error.message === "Forbidden"
+          ? "You do not have permission to delete students."
+          : "Unauthorized",
     };
   }
-
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
-  return StudentService.softDelete(
-    id,
-    session.user.organizationId,
-    session.user.branchId
-  );
 }
