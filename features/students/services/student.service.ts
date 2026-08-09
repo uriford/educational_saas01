@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { StudentRepository } from "../repository/student.repository";
 import type { CreateStudentData } from "../types";
 
@@ -16,23 +15,28 @@ type CreateStudentResponse =
     };
 
 export class StudentService {
-  static async create(data: CreateStudentData): Promise<CreateStudentResponse> {
+  static async create(
+    data: CreateStudentData,
+  ): Promise<CreateStudentResponse> {
     try {
       if (data.email?.trim()) {
-        const existingStudent = await StudentRepository.findByEmail(
-          data.email,
-          data.organizationId,
-        );
+        const existingStudent =
+          await StudentRepository.findByEmail(
+            data.email,
+            data.organizationId,
+          );
 
         if (existingStudent) {
           return {
             success: false,
-            message: "A student with this email already exists.",
+            message:
+              "A student with this email already exists.",
           };
         }
       }
 
-      const student = await StudentRepository.createWithGeneratedId(data);
+      const student =
+        await StudentRepository.createWithGeneratedId(data);
 
       return {
         success: true,
@@ -40,8 +44,7 @@ export class StudentService {
         student,
       };
     } catch (error) {
-      console.error("CREATE STUDENT ERROR:");
-      console.error(error);
+      console.error("CREATE STUDENT ERROR:", error);
 
       if (error instanceof Error) {
         return {
@@ -56,6 +59,7 @@ export class StudentService {
       };
     }
   }
+
   static async getAll(
     organizationId: string,
     branchId?: string,
@@ -72,8 +76,28 @@ export class StudentService {
     );
   }
 
-  static async getById(id: string, organizationId: string, branchId?: string) {
-    return StudentRepository.findById(id, organizationId, branchId);
+  static async getById(
+    id: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return StudentRepository.findById(
+      id,
+      organizationId,
+      branchId,
+    );
+  }
+
+  static async getByUserId(
+    userId: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return StudentRepository.findByUserId(
+      userId,
+      organizationId,
+      branchId,
+    );
   }
 
   static async update(
@@ -84,15 +108,20 @@ export class StudentService {
   ) {
     try {
       if (data.email) {
-        const existingStudent = await StudentRepository.findByEmail(
-          data.email,
-          organizationId,
-        );
+        const existingStudent =
+          await StudentRepository.findByEmail(
+            data.email,
+            organizationId,
+          );
 
-        if (existingStudent && existingStudent.id !== id) {
+        if (
+          existingStudent &&
+          existingStudent.id !== id
+        ) {
           return {
             success: false,
-            message: "A student with this email already exists.",
+            message:
+              "A student with this email already exists.",
           };
         }
       }
@@ -124,17 +153,19 @@ export class StudentService {
       };
     }
   }
+
   static async softDelete(
     id: string,
     organizationId: string,
     branchId?: string,
   ) {
     try {
-      const result = await StudentRepository.softDelete(
-        id,
-        organizationId,
-        branchId,
-      );
+      const result =
+        await StudentRepository.softDelete(
+          id,
+          organizationId,
+          branchId,
+        );
 
       if (result.count === 0) {
         return {
@@ -156,7 +187,14 @@ export class StudentService {
       };
     }
   }
-  static async getStatistics(organizationId: string, branchId?: string) {
-    return StudentRepository.getStatistics(organizationId, branchId);
+
+  static async getStatistics(
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return StudentRepository.getStatistics(
+      organizationId,
+      branchId,
+    );
   }
 }

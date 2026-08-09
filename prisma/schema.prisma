@@ -118,6 +118,7 @@ model Organization {
   courses          Course[]
   announcements    Announcement[]
   notifications    Notification[]
+  classSessions    ClassSession[]
 }
 
 model OrganizationSettings {
@@ -169,6 +170,7 @@ model Branch {
   teachers      Teacher[]
   courses       Course[]
   announcements Announcement[]
+  classSessions ClassSession[]
 }
 
 model User {
@@ -300,7 +302,8 @@ model Student {
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  courseEnrollments CourseEnrollment[]
 }
 
 model Teacher {
@@ -348,7 +351,8 @@ model Teacher {
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  classSessions ClassSession[]
 }
 
 model Course {
@@ -374,7 +378,9 @@ model Course {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch        Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  enrollments   CourseEnrollment[]
+  classSessions ClassSession[]
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -382,6 +388,83 @@ model Course {
   @@index([status])
   @@index([startDate])
   @@index([endDate])
+}
+
+model CourseEnrollment {
+  id String @id @default(uuid())
+
+  studentId String
+  courseId  String
+
+  enrolledAt DateTime         @default(now())
+  status     EnrollmentStatus @default(ACTIVE)
+
+  completedAt DateTime?
+  progress    Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  SUSPENDED
+}
+
+model ClassSession {
+  id String @id @default(uuid())
+
+  organizationId String
+  branchId       String
+
+  courseId  String
+  teacherId String
+
+  title       String
+  description String?
+
+  startTime DateTime
+  endTime   DateTime
+
+  room String?
+
+  status ClassSessionStatus @default(SCHEDULED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([courseId])
+  @@index([teacherId])
+  @@index([startTime])
+  @@index([status])
+}
+
+enum ClassSessionStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
 }
 
 model TeacherIdCounter {

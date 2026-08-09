@@ -124,7 +124,27 @@ export class StudentRepository {
       },
     });
   }
-  static async findByEmail(email: string, organizationId: string) {
+  static async findByUserId(
+userId: string,
+organizationId: string,
+branchId?: string,
+) {
+return db.student.findFirst({
+where: {
+userId,
+organizationId,
+...(branchId && { branchId }),
+deletedAt: null,
+},
+include: {
+organization: true,
+branch: true,
+user: true,
+},
+});
+}
+
+static async findByEmail(email: string, organizationId: string) {
     return db.student.findFirst({
       where: {
         email,

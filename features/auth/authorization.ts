@@ -56,3 +56,6 @@ export async function requireAdmin() {
     "BRANCH_ADMIN",
   ]);
 }
+export async function requireStudent() {
+  return requireRole(["STUDENT"]);
+}

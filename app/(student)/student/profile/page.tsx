@@ -1,0 +1,46 @@
+import { redirect } from "next/navigation";
+
+import { auth } from "@/auth";
+import { StudentService } from "@/features/students/services/student.service";
+import StudentProfile from "@/features/student-portal/components/StudentProfile";
+
+export default async function StudentProfilePage() {
+  const session = await auth();
+
+  if (
+    !session?.user?.id ||
+    session.user.role !== "STUDENT" ||
+    !session.user.organizationId
+  ) {
+    redirect("/login");
+  }
+
+  const student =
+    await StudentService.getByUserId(
+      session.user.id,
+      session.user.organizationId,
+      session.user.branchId ?? undefined,
+    );
+
+  if (!student) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold">
+            Student profile not found
+          </h2>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your student profile has not been connected yet.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-6xl">
+      <StudentProfile student={student} />
+    </div>
+  );
+}
