@@ -20,6 +20,8 @@ import DeleteCourseButton from "../components/DeleteCourseButton";
 import CourseStudents from "@/features/course-enrollments/components/CourseStudents";
 import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
 import DeleteClassSessionButton from "@/features/class-sessions/components/DeleteClassSessionButton";
+import { AssessmentService } from "@/features/assessments/services/assessment.service";
+import CourseAssessments from "@/features/assessments/components/CourseAssessments";
 
 type Props = {
   courseId: string;
@@ -67,6 +69,23 @@ export default async function CourseDetailsPage({ courseId }: Props) {
     branchId,
   );
 
+  const assessments = await AssessmentService.getCourseAssessments(
+    courseId,
+    organizationId,
+    branchId,
+  );
+
+  const plainAssessments = assessments.map((assessment) => ({
+    id: assessment.id,
+    title: assessment.title,
+    description: assessment.description,
+    duration: assessment.duration,
+    totalMarks: Number(assessment.totalMarks),
+    passingMarks: Number(assessment.passingMarks),
+    status: assessment.status,
+    startDate: assessment.startDate ? assessment.startDate.toISOString() : null,
+    endDate: assessment.endDate ? assessment.endDate.toISOString() : null,
+  }));
   /*
    * Convert Prisma objects into plain serializable data.
    *
@@ -373,9 +392,9 @@ export default async function CourseDetailsPage({ courseId }: Props) {
             description="Manage lectures, discussions, tasks, and learning materials."
           />
 
-          <WorkspaceCard
-            title="Assessments"
-            description="Create assessments, exams, and academic evaluations."
+          <CourseAssessments
+            courseId={plainCourse.id}
+            assessments={plainAssessments}
           />
 
           <WorkspaceCard

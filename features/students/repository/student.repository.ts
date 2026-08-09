@@ -172,14 +172,53 @@ static async findByEmail(email: string, organizationId: string) {
     return `STD-${String(lastNumber + 1).padStart(6, "0")}`;
   }
 
-  static async createWithGeneratedId(data: CreateStudentData) {
-    const studentId = await this.generateStudentId();
+static async createWithGeneratedId(
+  data: CreateStudentData,
+  userData?: {
+    code: string;
+    password: string;
+  },
+) {
+  const studentId = await this.generateStudentId();
 
-    return this.create({
-      ...data,
-      studentId,
+  return db.$transaction(async (tx) => {
+    let userId: string | undefined;
+
+    if (userData && data.email) {
+      const user = await tx.user.create({
+        data: {
+          code: userData.code,
+          firstName: data.firstName,
+          lastName: data.lastName || null,
+          email: data.email,
+          phone: data.phone || null,
+          password: userData.password,
+          role: "STUDENT",
+          status: "ACTIVE",
+          organizationId: data.organizationId,
+          branchId: data.branchId,
+          emailVerified: false,
+        },
+      });
+
+      userId = user.id;
+    }
+
+    return tx.student.create({
+      data: {
+        ...data,
+        email: data.email || null,
+        phone: data.phone || null,
+        lastName: data.lastName || null,
+        userId,
+        dateOfBirth: data.dateOfBirth
+          ? new Date(data.dateOfBirth)
+          : null,
+        studentId,
+      },
     });
-  }
+  });
+}
 
   static async update(
     id: string,

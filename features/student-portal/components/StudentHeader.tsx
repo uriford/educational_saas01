@@ -1,28 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
   Bell,
-  Menu,
+  LogOut,
   UserCircle,
 } from "lucide-react";
 
 export default function StudentHeader() {
-  return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur lg:px-8">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="inline-flex size-9 items-center justify-center rounded-lg hover:bg-muted lg:hidden"
-          aria-label="Open menu"
-        >
-          <Menu className="size-5" />
-        </button>
+  async function handleLogout() {
+    await signOut({
+      callbackUrl: "/login",
+    });
+  }
 
-        <div className="lg:hidden">
-          <p className="font-semibold">
-            American Council
-          </p>
+  return (
+    <header className="flex h-16 items-center justify-between border-b bg-background px-4 lg:px-6">
+      <div className="flex items-center gap-3">
+        <div>
+          <p className="font-semibold">American Council</p>
           <p className="text-xs text-muted-foreground">
             Student Portal
           </p>
@@ -47,6 +44,15 @@ export default function StudentHeader() {
         >
           <UserCircle className="size-5" />
         </Link>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <LogOut className="size-4" />
+          <span className="hidden sm:inline">Log out</span>
+        </button>
       </div>
     </header>
   );

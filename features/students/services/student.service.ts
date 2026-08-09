@@ -1,5 +1,6 @@
 import { StudentRepository } from "../repository/student.repository";
 import type { CreateStudentData } from "../types";
+import bcrypt from "bcrypt";
 
 type CreateStudentResponse =
   | {
@@ -15,28 +16,46 @@ type CreateStudentResponse =
     };
 
 export class StudentService {
-  static async create(
-    data: CreateStudentData,
-  ): Promise<CreateStudentResponse> {
+  static async create(data: CreateStudentData): Promise<CreateStudentResponse> {
     try {
       if (data.email?.trim()) {
-        const existingStudent =
-          await StudentRepository.findByEmail(
-            data.email,
-            data.organizationId,
-          );
+        const existingStudent = await StudentRepository.findByEmail(
+          data.email,
+          data.organizationId,
+        );
 
         if (existingStudent) {
           return {
             success: false,
-            message:
-              "A student with this email already exists.",
+            message: "A student with this email already exists.",
           };
         }
+
+        const temporaryPassword = `Student@${Math.random()
+          .toString(36)
+          .slice(-8)}`;
+
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
+
+        const student = await StudentRepository.createWithGeneratedId(
+          {
+            ...data,
+            email: data.email.trim(),
+          },
+          {
+            code: `STU-${Date.now()}`,
+            password: hashedPassword,
+          },
+        );
+
+        return {
+          success: true,
+          message: `Student created successfully. Temporary password: ${temporaryPassword}`,
+          student,
+        };
       }
 
-      const student =
-        await StudentRepository.createWithGeneratedId(data);
+      const student = await StudentRepository.createWithGeneratedId(data);
 
       return {
         success: true,
@@ -76,16 +95,8 @@ export class StudentService {
     );
   }
 
-  static async getById(
-    id: string,
-    organizationId: string,
-    branchId?: string,
-  ) {
-    return StudentRepository.findById(
-      id,
-      organizationId,
-      branchId,
-    );
+  static async getById(id: string, organizationId: string, branchId?: string) {
+    return StudentRepository.findById(id, organizationId, branchId);
   }
 
   static async getByUserId(
@@ -93,11 +104,7 @@ export class StudentService {
     organizationId: string,
     branchId?: string,
   ) {
-    return StudentRepository.findByUserId(
-      userId,
-      organizationId,
-      branchId,
-    );
+    return StudentRepository.findByUserId(userId, organizationId, branchId);
   }
 
   static async update(
@@ -108,20 +115,15 @@ export class StudentService {
   ) {
     try {
       if (data.email) {
-        const existingStudent =
-          await StudentRepository.findByEmail(
-            data.email,
-            organizationId,
-          );
+        const existingStudent = await StudentRepository.findByEmail(
+          data.email,
+          organizationId,
+        );
 
-        if (
-          existingStudent &&
-          existingStudent.id !== id
-        ) {
+        if (existingStudent && existingStudent.id !== id) {
           return {
             success: false,
-            message:
-              "A student with this email already exists.",
+            message: "A student with this email already exists.",
           };
         }
       }
@@ -160,12 +162,11 @@ export class StudentService {
     branchId?: string,
   ) {
     try {
-      const result =
-        await StudentRepository.softDelete(
-          id,
-          organizationId,
-          branchId,
-        );
+      const result = await StudentRepository.softDelete(
+        id,
+        organizationId,
+        branchId,
+      );
 
       if (result.count === 0) {
         return {
@@ -188,13 +189,7 @@ export class StudentService {
     }
   }
 
-  static async getStatistics(
-    organizationId: string,
-    branchId?: string,
-  ) {
-    return StudentRepository.getStatistics(
-      organizationId,
-      branchId,
-    );
+  static async getStatistics(organizationId: string, branchId?: string) {
+    return StudentRepository.getStatistics(organizationId, branchId);
   }
 }
