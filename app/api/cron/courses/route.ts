@@ -24,11 +24,13 @@ export async function GET(request: Request) {
   try {
     await CourseSchedulerService.syncCourseStatuses();
 
-    await AnnouncementSchedulerService.syncAnnouncementStatuses();
+    const announcementResult =
+      await AnnouncementSchedulerService.syncAnnouncementStatuses();
 
     return NextResponse.json({
       success: true,
       message: "Scheduled jobs completed successfully.",
+      announcements: announcementResult,
     });
   } catch (error) {
     console.error("Cron job failed:", error);

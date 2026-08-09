@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import { pageTitles } from "@/config/page-titles";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 
 export default function AppHeader() {
   const pathname = usePathname();
@@ -34,9 +35,7 @@ export default function AppHeader() {
         </div>
 
         {/* Notification */}
-        <Button variant="ghost" size="icon">
-          <Bell className="size-5" />
-        </Button>
+        <NotificationBell />
 
         {/* Theme Toggle (UI only) */}
         <Button variant="ghost" size="icon">

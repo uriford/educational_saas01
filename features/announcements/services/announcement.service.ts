@@ -1,16 +1,47 @@
 import { AnnouncementRepository } from "../repository/announcement.repository";
-
 import type {
   CreateAnnouncementRepositoryData,
   UpdateAnnouncementData,
 } from "../types";
 
+import { NotificationService } from "@/features/notifications/services/notification.service";
+import { db } from "@/lib/db";
+
 export class AnnouncementService {
   static async create(
-    data: CreateAnnouncementRepositoryData,
+    data: CreateAnnouncementRepositoryData & {
+      createdById: string;
+    },
   ) {
     try {
-      await AnnouncementRepository.create(data);
+      const announcement =
+        await AnnouncementRepository.create(data);
+
+      // Only notify users when the announcement
+      // is published immediately.
+      if (data.status === "PUBLISHED") {
+        const users = await db.user.findMany({
+          where: {
+            organizationId: data.organizationId,
+            deletedAt: null,
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        for (const user of users) {
+          await NotificationService.create({
+            organizationId: data.organizationId,
+            userId: user.id,
+            type: "ANNOUNCEMENT",
+            title: "New announcement",
+            message: `"${data.title}" is now available.`,
+            href: `/announcements/${announcement.id}`,
+          });
+        }
+      }
 
       return {
         success: true,
@@ -61,12 +92,13 @@ export class AnnouncementService {
     data: UpdateAnnouncementData,
   ) {
     try {
-      const result = await AnnouncementRepository.update(
-        id,
-        organizationId,
-        branchId,
-        data,
-      );
+      const result =
+        await AnnouncementRepository.update(
+          id,
+          organizationId,
+          branchId,
+          data,
+        );
 
       if (result.count === 0) {
         return {

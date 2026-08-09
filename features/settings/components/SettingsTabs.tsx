@@ -129,7 +129,7 @@ export default function SettingsTabs({
         )}
 
         {activeTab === "security" && (
-          <AccountSecurity security={security} />
+          <AccountSecurity user={security} />
         )}
       </div>
     </div>

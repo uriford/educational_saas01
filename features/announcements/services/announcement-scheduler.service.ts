@@ -4,31 +4,70 @@ export class AnnouncementSchedulerService {
   static async syncAnnouncementStatuses() {
     const now = new Date();
 
-    // SCHEDULED → PUBLISHED
-    await db.announcement.updateMany({
-      where: {
-        deletedAt: null,
-        status: "SCHEDULED",
-        publishAt: {
-          lte: now,
+    const scheduledAnnouncements =
+      await db.announcement.findMany({
+        where: {
+          deletedAt: null,
+          status: "SCHEDULED",
+          publishAt: {
+            lte: now,
+          },
         },
-        OR: [
-          {
-            expiresAt: null,
-          },
-          {
-            expiresAt: {
-              gt: now,
-            },
-          },
-        ],
-      },
-      data: {
-        status: "PUBLISHED",
-      },
-    });
+      });
 
-    // PUBLISHED → ARCHIVED
+    let publishedCount = 0;
+    let notificationCount = 0;
+
+    for (const announcement of scheduledAnnouncements) {
+      await db.announcement.update({
+        where: {
+          id: announcement.id,
+        },
+        data: {
+          status: "PUBLISHED",
+        },
+      });
+
+      publishedCount++;
+
+      const users = await db.user.findMany({
+        where: {
+          organizationId: announcement.organizationId,
+          deletedAt: null,
+          status: "ACTIVE",
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      for (const user of users) {
+        const existingNotification =
+          await db.notification.findFirst({
+            where: {
+              userId: user.id,
+              organizationId: announcement.organizationId,
+              href: `/announcements/${announcement.id}`,
+            },
+          });
+
+        if (!existingNotification) {
+          await db.notification.create({
+            data: {
+              organizationId: announcement.organizationId,
+              userId: user.id,
+              type: "ANNOUNCEMENT",
+              title: "New announcement",
+              message: `"${announcement.title}" is now available.`,
+              href: `/announcements/${announcement.id}`,
+            },
+          });
+
+          notificationCount++;
+        }
+      }
+    }
+
     await db.announcement.updateMany({
       where: {
         deletedAt: null,
@@ -41,5 +80,10 @@ export class AnnouncementSchedulerService {
         status: "ARCHIVED",
       },
     });
+
+    return {
+      publishedCount,
+      notificationCount,
+    };
   }
 }

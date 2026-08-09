@@ -117,6 +117,7 @@ model Organization {
   teacherIdCounter TeacherIdCounter?
   courses          Course[]
   announcements    Announcement[]
+  notifications    Notification[]
 }
 
 model OrganizationSettings {
@@ -207,9 +208,10 @@ model User {
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-  auditLogs AuditLog[]
-  students  Student[]
-  teachers  Teacher[]
+  auditLogs     AuditLog[]
+  students      Student[]
+  teachers      Teacher[]
+  notifications Notification[]
 }
 
 model AuditLog {
@@ -421,4 +423,40 @@ model Announcement {
   @@index([publishAt])
   @@index([expiresAt])
   @@index([createdAt])
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  ANNOUNCEMENT
+  COURSE
+  STUDENT
+  TEACHER
+  SYSTEM
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  organizationId String
+  userId         String
+
+  type NotificationType @default(INFO)
+
+  title   String
+  message String
+  href    String?
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([organizationId, createdAt])
 }
