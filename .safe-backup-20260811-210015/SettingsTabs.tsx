@@ -13,7 +13,6 @@ import {
 import OrganizationSettingsForm from "./OrganizationSettingsForm";
 import ProfileSettingsForm from "./ProfileSettingsForm";
 import BranchSettings from "./BranchSettings";
-import BranchManagement from "@/features/branches/components/BranchManagement";
 import AccountSecurity from "./AccountSecurity";
 
 import type {
@@ -33,10 +32,6 @@ type Props = {
     isHeadquarters: boolean;
     status: string;
   } | null;
-  branchSecurity: {
-    passwordConfigured: boolean;
-    isHeadquartersAdmin: boolean;
-  };
   security: {
     email: string;
     role: string;
@@ -78,7 +73,6 @@ export default function SettingsTabs({
   organization,
   profile,
   branch,
-  branchSecurity,
   security,
 }: Props) {
   const [activeTab, setActiveTab] =
@@ -130,20 +124,9 @@ export default function SettingsTabs({
           />
         )}
 
-        {activeTab === "branch" &&
-          (security.role === "ORGANIZATION_ADMIN" ? (
-            <BranchManagement
-              branch={branch}
-              isHeadquartersAdmin={
-                branchSecurity.isHeadquartersAdmin
-              }
-              passwordConfigured={
-                branchSecurity.passwordConfigured
-              }
-            />
-          ) : (
-            <BranchSettings branch={branch} />
-          ))}
+        {activeTab === "branch" && (
+          <BranchSettings branch={branch} />
+        )}
 
         {activeTab === "security" && (
           <AccountSecurity user={security} />

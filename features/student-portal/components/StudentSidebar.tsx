@@ -25,6 +25,11 @@ const navigation = [
     icon: BookOpen,
   },
   {
+    label: "Routine",
+    href: "/student/routine",
+    icon: CalendarDays,
+  },
+  {
     label: "Schedule",
     href: "/student/schedule",
     icon: CalendarDays,

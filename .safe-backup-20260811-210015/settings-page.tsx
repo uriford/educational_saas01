@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 
 import { SettingsService } from "@/features/settings/services/settings.service";
 import SettingsTabs from "@/features/settings/components/SettingsTabs";
-import { BranchService } from "@/features/branches/services/branch.service";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -14,17 +13,12 @@ export default async function SettingsPage() {
     return null;
   }
 
-  const [settings, branchSecurity] =
-    await Promise.all([
-      SettingsService.getSettings(
-        session.user.organizationId,
-        session.user.id,
-        session.user.branchId ?? undefined,
-      ),
-      BranchService.getSecurityStatus(
-        session.user.organizationId,
-      ),
-    ]);
+  const settings =
+    await SettingsService.getSettings(
+      session.user.organizationId,
+      session.user.id,
+      session.user.branchId ?? undefined,
+    );
 
   if (!settings.organization || !settings.user) {
     return null;
@@ -70,15 +64,6 @@ export default async function SettingsPage() {
             settings.user.phone ?? "",
         }}
         branch={settings.branch}
-        branchSecurity={{
-          passwordConfigured:
-            branchSecurity.configured,
-          isHeadquartersAdmin:
-            settings.user.role === "ORGANIZATION_ADMIN" &&
-            Boolean(
-              settings.branch?.isHeadquarters,
-            ),
-        }}
         security={{
           email: settings.user.email,
           role: String(settings.user.role),

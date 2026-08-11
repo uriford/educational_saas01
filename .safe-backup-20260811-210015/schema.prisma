@@ -107,20 +107,19 @@ model Organization {
   updatedById String?
 
   // Relations
-  settings                 OrganizationSettings?
-  branches                 Branch[]
-  branchCreationCredential BranchCreationCredential?
-  users                    User[]
-  auditLogs                AuditLog[]
-  subscriptions            Subscription[]
-  students                 Student[]
-  teachers                 Teacher[]
-  teacherIdCounter         TeacherIdCounter?
-  courses                  Course[]
-  announcements            Announcement[]
-  notifications            Notification[]
-  classSessions            ClassSession[]
-  assessments              Assessment[]
+  settings         OrganizationSettings?
+  branches         Branch[]
+  users            User[]
+  auditLogs        AuditLog[]
+  subscriptions    Subscription[]
+  students         Student[]
+  teachers         Teacher[]
+  teacherIdCounter TeacherIdCounter?
+  courses          Course[]
+  announcements    Announcement[]
+  notifications    Notification[]
+  classSessions    ClassSession[]
+  assessments      Assessment[]
 }
 
 model OrganizationSettings {
@@ -174,21 +173,6 @@ model Branch {
   announcements Announcement[]
   classSessions ClassSession[]
   assessments   Assessment[]
-}
-
-model BranchCreationCredential {
-  id String @id @default(uuid())
-
-  organizationId String @unique
-
-  passwordHash String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId])
 }
 
 model User {
@@ -495,12 +479,12 @@ model Assessment {
   passingMarks Decimal @db.Decimal(10, 2)
 
   status AssessmentStatus @default(DRAFT)
-  mode   AssessmentMode   @default(EXAM)
+  mode AssessmentMode @default(EXAM)
 
-  instantFeedback    Boolean @default(false)
-  randomizeQuestions Boolean @default(false)
-  randomizeOptions   Boolean @default(false)
-  maxAttempts        Int     @default(1)
+  instantFeedback    Boolean        @default(false)
+  randomizeQuestions Boolean        @default(false)
+  randomizeOptions   Boolean        @default(false)
+  maxAttempts        Int            @default(1)
 
   startDate DateTime?
   endDate   DateTime?

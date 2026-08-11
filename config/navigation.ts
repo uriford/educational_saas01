@@ -3,6 +3,7 @@ import {
   Users,
   GraduationCap,
   BookOpen,
+  CalendarDays,
   Bell,
   BarChart3,
   Settings,
@@ -28,6 +29,11 @@ export const items = [
     title: "Courses",
     href: "/courses",
     icon: BookOpen,
+  },
+  {
+    title: "Schedule",
+    href: "/schedule",
+    icon: CalendarDays,
   },
   {
     title: "Announcements",

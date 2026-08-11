@@ -6,9 +6,9 @@ import { StudentService } from "@/features/students/services/student.service";
 import { EnrollmentService } from "@/features/enrollments/services/enrollment.service";
 import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
 
-import StudentScheduleBoard from "@/features/schedule/components/StudentScheduleBoard";
+import StudentRoutineBoard from "@/features/routine/components/StudentRoutineBoard";
 
-export default async function StudentSchedulePage() {
+export default async function StudentRoutinePage() {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -40,7 +40,7 @@ export default async function StudentSchedulePage() {
       <div className="space-y-6">
         <section className="rounded-2xl border bg-card p-8 shadow-sm">
           <h1 className="text-2xl font-bold tracking-tight">
-            Schedule
+            Routine
           </h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
@@ -77,24 +77,21 @@ export default async function StudentSchedulePage() {
   const serializedSessions = sessions.map((item) => ({
     id: item.id,
     courseId: item.courseId,
+    courseCode: item.course.code,
+    courseName: item.course.name,
     title: item.title,
     description: item.description,
+    teacherName: `${item.teacher.firstName} ${
+      item.teacher.lastName ?? ""
+    }`.trim(),
     startTime: item.startTime.toISOString(),
     endTime: item.endTime.toISOString(),
     room: item.room,
     status: item.status,
-    course: {
-      code: item.course.code,
-      name: item.course.name,
-    },
-    teacher: {
-      firstName: item.teacher.firstName,
-      lastName: item.teacher.lastName,
-    },
   }));
 
   return (
-    <StudentScheduleBoard
+    <StudentRoutineBoard
       sessions={serializedSessions}
       courses={courses}
     />
