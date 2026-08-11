@@ -60,9 +60,7 @@ export default function AssessmentQuestions({
             <Plus className="h-6 w-6 text-muted-foreground" />
           </div>
 
-          <h3 className="mt-4 font-semibold">
-            No questions added
-          </h3>
+          <h3 className="mt-4 font-semibold">No questions added</h3>
 
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
             Add questions to build this assessment.
@@ -81,10 +79,7 @@ export default function AssessmentQuestions({
       ) : (
         <div className="divide-y">
           {questions.map((question, index) => (
-            <div
-              key={question.id}
-              className="p-6 transition hover:bg-muted/30"
-            >
+            <div key={question.id} className="p-6 transition hover:bg-muted/30">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -101,31 +96,24 @@ export default function AssessmentQuestions({
                     </span>
                   </div>
 
-                  <p className="mt-3 text-sm leading-6">
-                    {question.question}
-                  </p>
+                  <p className="mt-3 text-sm leading-6">{question.question}</p>
 
                   {question.type === "MCQ" &&
                     Array.isArray(question.options) &&
                     question.options.length > 0 && (
                       <div className="mt-4 space-y-2">
-                        {question.options.map(
-                          (option, optionIndex) => (
-                            <div
-                              key={`${question.id}-${optionIndex}`}
-                              className="rounded-md border px-3 py-2 text-sm"
-                            >
-                              <span className="mr-2 font-medium">
-                                {String.fromCharCode(
-                                  65 + optionIndex,
-                                )}
-                                .
-                              </span>
+                        {question.options.map((option, optionIndex) => (
+                          <div
+                            key={`${question.id}-${optionIndex}`}
+                            className="rounded-md border px-3 py-2 text-sm"
+                          >
+                            <span className="mr-2 font-medium">
+                              {String.fromCharCode(65 + optionIndex)}.
+                            </span>
 
-                              {String(option)}
-                            </div>
-                          ),
-                        )}
+                            {String(option)}
+                          </div>
+                        ))}
                       </div>
                     )}
                 </div>
@@ -140,9 +128,7 @@ export default function AssessmentQuestions({
                     </Button>
                   </Link>
 
-                  <DeleteQuestionButton
-                    questionId={question.id}
-                  />
+                  <DeleteQuestionButton questionId={question.id} />
                 </div>
               </div>
             </div>

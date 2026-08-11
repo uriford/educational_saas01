@@ -1,4 +1,4 @@
-import EnrollStudentPage from "@/features/course-enrollments/pages/EnrollStudentPage";
+import EnrollStudentPage from "@/features/enrollments/pages/EnrollStudentPage";
 
 type Props = {
   params: Promise<{

@@ -1,23 +1,77 @@
 import { db } from "@/lib/db";
 
 export class AssessmentSubmissionRepository {
-static async findByAssessmentAndStudent(
-  assessmentId: string,
-  studentId: string,
-) {
-  return db.assessmentSubmission.findFirst({
-    where: {
-      assessmentId,
-      studentId,
-    },
-    include: {
-      answers: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-}
+  static async findByAssessmentAndStudent(
+    assessmentId: string,
+    studentId: string,
+  ) {
+    return db.assessmentSubmission.findFirst({
+      where: {
+        assessmentId,
+        studentId,
+      },
+      include: {
+        answers: {
+          include: {
+            question: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  static async countAttempts(
+    assessmentId: string,
+    studentId: string,
+  ) {
+    return db.assessmentSubmission.count({
+      where: {
+        assessmentId,
+        studentId,
+      },
+    });
+  }
+
+  static async findStudentForAssessment(
+    studentId: string,
+    organizationId: string,
+    branchId: string,
+    assessmentId: string,
+  ) {
+    return db.student.findFirst({
+      where: {
+        id: studentId,
+        organizationId,
+        branchId,
+        status: "ACTIVE",
+        deletedAt: null,
+        courseEnrollments: {
+          some: {
+            status: "ACTIVE",
+            course: {
+              assessments: {
+                some: {
+                  id: assessmentId,
+                  organizationId,
+                  branchId,
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        studentId: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+  }
 
   static async create(
     assessmentId: string,
@@ -42,7 +96,11 @@ static async findByAssessmentAndStudent(
             },
           },
         },
-        answers: true,
+        answers: {
+          include: {
+            question: true,
+          },
+        },
       },
     });
   }
@@ -92,14 +150,14 @@ static async findByAssessmentAndStudent(
       create: {
         submissionId: data.submissionId,
         questionId: data.questionId,
-        answer: data.answer,
-        marksAwarded: data.marksAwarded,
-        isCorrect: data.isCorrect,
+        answer: data.answer ?? null,
+        marksAwarded: data.marksAwarded ?? null,
+        isCorrect: data.isCorrect ?? null,
       },
       update: {
-        answer: data.answer,
-        marksAwarded: data.marksAwarded,
-        isCorrect: data.isCorrect,
+        answer: data.answer ?? null,
+        marksAwarded: data.marksAwarded ?? null,
+        isCorrect: data.isCorrect ?? null,
       },
     });
   }
@@ -112,6 +170,7 @@ static async findByAssessmentAndStudent(
     return db.assessmentSubmission.update({
       where: {
         id,
+        status: "IN_PROGRESS",
       },
       data: {
         status: "SUBMITTED",
@@ -119,15 +178,101 @@ static async findByAssessmentAndStudent(
         score,
         percentage,
       },
+      include: {
+        assessment: {
+          include: {
+            questions: {
+              where: {
+                deletedAt: null,
+              },
+              orderBy: {
+                order: "asc",
+              },
+            },
+          },
+        },
+        answers: {
+          include: {
+            question: true,
+          },
+        },
+      },
     });
   }
+
+  static async findAssessmentHistory(
+    assessmentId: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    return db.assessmentSubmission.findMany({
+      where: {
+        assessmentId,
+        assessment: {
+          organizationId,
+          branchId,
+          deletedAt: null,
+        },
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            studentId: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        answers: {
+          select: {
+            questionId: true,
+            answer: true,
+            marksAwarded: true,
+            isCorrect: true,
+            question: {
+              select: {
+                type: true,
+                marks: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
   static async findAssessmentForStart(
-  assessmentId: string,
-) {
-  return db.assessment.findUnique({
-    where: {
-      id: assessmentId,
-    },
-  });
-}
+    assessmentId: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    return db.assessment.findFirst({
+      where: {
+        id: assessmentId,
+        organizationId,
+        branchId,
+        deletedAt: null,
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+        questions: {
+          where: {
+            deletedAt: null,
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
+      },
+    });
+  }
 }

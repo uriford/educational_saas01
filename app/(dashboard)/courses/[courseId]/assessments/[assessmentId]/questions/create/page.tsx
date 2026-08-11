@@ -70,7 +70,7 @@ export default async function CreateQuestionPage({
           </h1>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Add a question to "{assessment.title}".
+            Add a question to &quot;{assessment.title}&quot;.
           </p>
         </div>
       </div>

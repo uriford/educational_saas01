@@ -12,6 +12,7 @@ export async function createAssessmentAction(data: {
   duration?: number;
   totalMarks: number;
   passingMarks: number;
+  maxAttempts: number;
   status?:
     | "DRAFT"
     | "PUBLISHED"
@@ -104,6 +105,7 @@ export async function createAssessmentAction(data: {
     duration: data.duration ?? null,
     totalMarks: data.totalMarks,
     passingMarks: data.passingMarks,
+    maxAttempts: data.maxAttempts,
     status: data.status ?? "DRAFT",
     startDate,
     endDate,

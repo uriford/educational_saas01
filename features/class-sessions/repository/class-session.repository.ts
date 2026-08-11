@@ -121,6 +121,41 @@ export class ClassSessionRepository {
     });
   }
 
+  static async findByStudent(
+    studentId: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    return db.classSession.findMany({
+      where: {
+        organizationId,
+        branchId,
+        deletedAt: null,
+        status: {
+          not: "CANCELLED",
+        },
+        course: {
+          enrollments: {
+            some: {
+              studentId,
+              status: {
+                in: ["ACTIVE", "COMPLETED"],
+              },
+            },
+          },
+        },
+      },
+      include: {
+        course: true,
+        teacher: true,
+        branch: true,
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    });
+  }
+
   static async update(
     id: string,
     organizationId: string,

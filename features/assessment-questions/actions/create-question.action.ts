@@ -8,11 +8,7 @@ import { AssessmentQuestionService } from "../services/assessment-question.servi
 export async function createQuestionAction(data: {
   assessmentId: string;
   question: string;
-  type:
-    | "MCQ"
-    | "TRUE_FALSE"
-    | "SHORT_ANSWER"
-    | "LONG_ANSWER";
+  type: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER";
   marks: number;
   options?: string[];
   correctAnswer?: string | null;
@@ -72,6 +68,16 @@ export async function createQuestionAction(data: {
     return {
       success: false,
       message: "Question marks must be greater than zero.",
+    };
+  }
+
+  if (
+    data.order !== undefined &&
+    (!Number.isInteger(data.order) || data.order <= 0)
+  ) {
+    return {
+      success: false,
+      message: "Question order must be a positive whole number.",
     };
   }
 

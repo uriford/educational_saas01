@@ -12,6 +12,7 @@ type Assessment = {
   duration: number | null;
   totalMarks: number;
   passingMarks: number;
+  maxAttempts: number;
   status: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
   startDate: string | null;
   endDate: string | null;

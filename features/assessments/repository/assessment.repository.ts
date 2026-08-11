@@ -10,6 +10,7 @@ export class AssessmentRepository {
     duration?: number | null;
     totalMarks: number;
     passingMarks: number;
+    maxAttempts: number;
     status?:
       | "DRAFT"
       | "PUBLISHED"
@@ -29,6 +30,7 @@ export class AssessmentRepository {
         duration: data.duration,
         totalMarks: data.totalMarks,
         passingMarks: data.passingMarks,
+        maxAttempts: data.maxAttempts,
         status: data.status,
         startDate: data.startDate,
         endDate: data.endDate,
@@ -116,6 +118,7 @@ export class AssessmentRepository {
       duration?: number | null;
       totalMarks?: number;
       passingMarks?: number;
+    maxAttempts?: number;
       status?:
         | "DRAFT"
         | "PUBLISHED"

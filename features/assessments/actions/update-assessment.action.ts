@@ -13,6 +13,7 @@ export async function updateAssessmentAction(data: {
   duration?: number;
   totalMarks: number;
   passingMarks: number;
+  maxAttempts: number;
   status: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
   startDate?: string;
   endDate?: string;
@@ -100,6 +101,7 @@ export async function updateAssessmentAction(data: {
     duration: data.duration ?? null,
     totalMarks: data.totalMarks,
     passingMarks: data.passingMarks,
+    maxAttempts: data.maxAttempts,
     status: data.status,
     startDate,
     endDate,

@@ -5,11 +5,7 @@ export class AssessmentQuestionRepository {
   static async create(data: {
     assessmentId: string;
     question: string;
-    type:
-      | "MCQ"
-      | "TRUE_FALSE"
-      | "SHORT_ANSWER"
-      | "LONG_ANSWER";
+    type: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER";
     marks: number;
     options?: Prisma.InputJsonValue;
     correctAnswer?: string | null;
@@ -56,11 +52,7 @@ export class AssessmentQuestionRepository {
     id: string,
     data: {
       question?: string;
-      type?:
-        | "MCQ"
-        | "TRUE_FALSE"
-        | "SHORT_ANSWER"
-        | "LONG_ANSWER";
+      type?: "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER";
       marks?: number;
       options?: Prisma.InputJsonValue;
       correctAnswer?: string | null;

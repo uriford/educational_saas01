@@ -1,11 +1,7 @@
 import { db } from "@/lib/db";
 import { AssessmentQuestionRepository } from "../repository/assessment-question.repository";
 
-type QuestionType =
-  | "MCQ"
-  | "TRUE_FALSE"
-  | "SHORT_ANSWER"
-  | "LONG_ANSWER";
+type QuestionType = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER";
 
 type QuestionOptions = string[];
 
@@ -36,6 +32,16 @@ export class AssessmentQuestionService {
         };
       }
 
+      if (
+        data.order !== undefined &&
+        (!Number.isInteger(data.order) || data.order <= 0)
+      ) {
+        return {
+          success: false,
+          message: "Question order must be a positive whole number.",
+        };
+      }
+
       const assessment = await db.assessment.findFirst({
         where: {
           id: data.assessmentId,
@@ -55,8 +61,7 @@ export class AssessmentQuestionService {
       if (assessment.status !== "DRAFT") {
         return {
           success: false,
-          message:
-            "Questions can only be added to a draft assessment.",
+          message: "Questions can only be added to a draft assessment.",
         };
       }
 
@@ -98,17 +103,16 @@ export class AssessmentQuestionService {
       }
 
       if (data.type === "TRUE_FALSE") {
-        if (!data.correctAnswer) {
+        const normalizedAnswer = data.correctAnswer?.trim().toUpperCase();
+
+        if (!normalizedAnswer) {
           return {
             success: false,
             message: "Please provide the correct answer.",
           };
         }
 
-        if (
-          data.correctAnswer !== "TRUE" &&
-          data.correctAnswer !== "FALSE"
-        ) {
+        if (normalizedAnswer !== "TRUE" && normalizedAnswer !== "FALSE") {
           return {
             success: false,
             message: "True/False answer must be TRUE or FALSE.",
@@ -116,40 +120,40 @@ export class AssessmentQuestionService {
         }
 
         data.options = ["TRUE", "FALSE"];
+        data.correctAnswer = normalizedAnswer;
       }
 
-      if (
-        data.type === "SHORT_ANSWER" ||
-        data.type === "LONG_ANSWER"
-      ) {
+      if (data.type === "SHORT_ANSWER" || data.type === "LONG_ANSWER") {
         data.options = undefined;
       }
 
-      const existingQuestions =
-        await AssessmentQuestionRepository.findAll(
-          data.assessmentId,
-        );
+      const existingQuestions = await AssessmentQuestionRepository.findAll(
+        data.assessmentId,
+      );
 
-      const questionOrder =
-        data.order ??
-        (existingQuestions.length > 0
-          ? Math.max(
-              ...existingQuestions.map(
-                (question) => question.order,
-              ),
-            ) + 1
-          : 1);
+      const highestExistingOrder =
+        existingQuestions.length > 0
+          ? Math.max(...existingQuestions.map((question) => question.order))
+          : 0;
 
-      const question =
-        await AssessmentQuestionRepository.create({
-          assessmentId: data.assessmentId,
-          question: data.question.trim(),
-          type: data.type,
-          marks: data.marks,
-          options: data.options,
-          correctAnswer: data.correctAnswer?.trim() || null,
-          order: questionOrder,
-        });
+      const requestedOrder =
+        data.order !== undefined &&
+        Number.isInteger(data.order) &&
+        data.order > 0
+          ? data.order
+          : undefined;
+
+      const questionOrder = requestedOrder ?? highestExistingOrder + 1;
+
+      const question = await AssessmentQuestionRepository.create({
+        assessmentId: data.assessmentId,
+        question: data.question.trim(),
+        type: data.type,
+        marks: data.marks,
+        options: data.options,
+        correctAnswer: data.correctAnswer?.trim() || null,
+        order: questionOrder,
+      });
 
       return {
         success: true,
@@ -157,10 +161,7 @@ export class AssessmentQuestionService {
         question,
       };
     } catch (error) {
-      console.error(
-        "CREATE ASSESSMENT QUESTION ERROR:",
-        error,
-      );
+      console.error("CREATE ASSESSMENT QUESTION ERROR:", error);
 
       return {
         success: false,
@@ -169,13 +170,8 @@ export class AssessmentQuestionService {
     }
   }
 
-  static async getById(
-    id: string,
-    organizationId: string,
-    branchId: string,
-  ) {
-    const question =
-      await AssessmentQuestionRepository.findById(id);
+  static async getById(id: string, organizationId: string, branchId: string) {
+    const question = await AssessmentQuestionRepository.findById(id);
 
     if (
       !question ||
@@ -207,9 +203,7 @@ export class AssessmentQuestionService {
       return [];
     }
 
-    return AssessmentQuestionRepository.findAll(
-      assessmentId,
-    );
+    return AssessmentQuestionRepository.findAll(assessmentId);
   }
 
   static async update(data: {
@@ -224,10 +218,7 @@ export class AssessmentQuestionService {
     order?: number;
   }) {
     try {
-      const existing =
-        await AssessmentQuestionRepository.findById(
-          data.id,
-        );
+      const existing = await AssessmentQuestionRepository.findById(data.id);
 
       if (
         !existing ||
@@ -249,10 +240,7 @@ export class AssessmentQuestionService {
         };
       }
 
-      if (
-        data.question !== undefined &&
-        !data.question.trim()
-      ) {
+      if (data.question !== undefined && !data.question.trim()) {
         return {
           success: false,
           message: "Question text is required.",
@@ -261,8 +249,7 @@ export class AssessmentQuestionService {
 
       if (
         data.marks !== undefined &&
-        (!Number.isFinite(data.marks) ||
-          data.marks <= 0)
+        (!Number.isFinite(data.marks) || data.marks <= 0)
       ) {
         return {
           success: false,
@@ -277,13 +264,11 @@ export class AssessmentQuestionService {
 
       if (type === "MCQ") {
         if (!options) {
-          const existingOptions =
-            existing.options;
+          const existingOptions = existing.options;
 
           options = Array.isArray(existingOptions)
             ? existingOptions.filter(
-                (option): option is string =>
-                  typeof option === "string",
+                (option): option is string => typeof option === "string",
               )
             : [];
         }
@@ -295,13 +280,11 @@ export class AssessmentQuestionService {
         if (cleanedOptions.length < 2) {
           return {
             success: false,
-            message:
-              "MCQ questions must have at least two valid options.",
+            message: "MCQ questions must have at least two valid options.",
           };
         }
 
-        correctAnswer =
-          correctAnswer ?? existing.correctAnswer;
+        correctAnswer = correctAnswer ?? existing.correctAnswer;
 
         if (!correctAnswer?.trim()) {
           return {
@@ -313,8 +296,7 @@ export class AssessmentQuestionService {
         if (!cleanedOptions.includes(correctAnswer.trim())) {
           return {
             success: false,
-            message:
-              "Correct answer must match one of the options.",
+            message: "Correct answer must match one of the options.",
           };
         }
 
@@ -325,42 +307,32 @@ export class AssessmentQuestionService {
       if (type === "TRUE_FALSE") {
         options = ["TRUE", "FALSE"];
 
-        correctAnswer =
-          correctAnswer ?? existing.correctAnswer;
+        correctAnswer = correctAnswer ?? existing.correctAnswer;
 
-        if (
-          correctAnswer !== "TRUE" &&
-          correctAnswer !== "FALSE"
-        ) {
+        const normalizedAnswer = correctAnswer?.trim().toUpperCase();
+
+        if (normalizedAnswer !== "TRUE" && normalizedAnswer !== "FALSE") {
           return {
             success: false,
-            message:
-              "True/False answer must be TRUE or FALSE.",
+            message: "True/False answer must be TRUE or FALSE.",
           };
         }
+
+        correctAnswer = normalizedAnswer;
       }
 
-      if (
-        type === "SHORT_ANSWER" ||
-        type === "LONG_ANSWER"
-      ) {
+      if (type === "SHORT_ANSWER" || type === "LONG_ANSWER") {
         options = undefined;
       }
 
-      const result =
-        await AssessmentQuestionRepository.update(
-          data.id,
-          {
-            question:
-              data.question?.trim(),
-            type,
-            marks: data.marks,
-            options,
-            correctAnswer:
-              correctAnswer?.trim() || null,
-            order: data.order,
-          },
-        );
+      const result = await AssessmentQuestionRepository.update(data.id, {
+        question: data.question?.trim(),
+        type,
+        marks: data.marks,
+        options,
+        correctAnswer: correctAnswer?.trim() || null,
+        order: data.order,
+      });
 
       if (result.count === 0) {
         return {
@@ -374,10 +346,7 @@ export class AssessmentQuestionService {
         message: "Question updated successfully.",
       };
     } catch (error) {
-      console.error(
-        "UPDATE ASSESSMENT QUESTION ERROR:",
-        error,
-      );
+      console.error("UPDATE ASSESSMENT QUESTION ERROR:", error);
 
       return {
         success: false,
@@ -392,17 +361,12 @@ export class AssessmentQuestionService {
     branchId: string;
   }) {
     try {
-      const existing =
-        await AssessmentQuestionRepository.findById(
-          data.id,
-        );
+      const existing = await AssessmentQuestionRepository.findById(data.id);
 
       if (
         !existing ||
-        existing.assessment.organizationId !==
-          data.organizationId ||
-        existing.assessment.branchId !==
-          data.branchId ||
+        existing.assessment.organizationId !== data.organizationId ||
+        existing.assessment.branchId !== data.branchId ||
         existing.deletedAt
       ) {
         return {
@@ -419,10 +383,7 @@ export class AssessmentQuestionService {
         };
       }
 
-      const result =
-        await AssessmentQuestionRepository.softDelete(
-          data.id,
-        );
+      const result = await AssessmentQuestionRepository.softDelete(data.id);
 
       if (result.count === 0) {
         return {
@@ -436,10 +397,7 @@ export class AssessmentQuestionService {
         message: "Question deleted successfully.",
       };
     } catch (error) {
-      console.error(
-        "DELETE ASSESSMENT QUESTION ERROR:",
-        error,
-      );
+      console.error("DELETE ASSESSMENT QUESTION ERROR:", error);
 
       return {
         success: false,

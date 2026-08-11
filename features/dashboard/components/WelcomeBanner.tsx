@@ -32,7 +32,7 @@ export default function WelcomeBanner({ userName, organizationName }: WelcomeBan
         </h2>
 
         <p className="mt-2 text-muted-foreground">
-          Welcome back! Here's what's happening at {organizationName} today.
+          Welcome back! Here&apos;s what&apos;s happening at {organizationName} today.
         </p>
 
         <p className="mt-4 text-sm text-muted-foreground">{formatDate()}</p>

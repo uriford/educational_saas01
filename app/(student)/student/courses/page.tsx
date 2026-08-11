@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ROLES } from "@/features/auth/roles";
 import { StudentService } from "@/features/students/services/student.service";
-import { CourseEnrollmentService } from "@/features/course-enrollments/services/course-enrollment.service";
+import { EnrollmentService } from "@/features/enrollments/services/enrollment.service";
 
 import StudentCourseCard from "@/features/student-portal/components/StudentCourseCard";
 
@@ -47,8 +47,10 @@ export default async function StudentCoursesPage() {
   }
 
   const enrollments =
-    await CourseEnrollmentService.getStudentCourses(
+    await EnrollmentService.getStudentEnrollments(
       student.id,
+      session.user.organizationId,
+      session.user.branchId,
     );
 
   return (

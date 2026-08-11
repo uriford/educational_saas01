@@ -10,11 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { updateQuestionAction } from "../actions/update-question.action";
 
-type QuestionType =
-  | "MCQ"
-  | "TRUE_FALSE"
-  | "SHORT_ANSWER"
-  | "LONG_ANSWER";
+type QuestionType = "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER";
 
 type Props = {
   question: {
@@ -41,9 +37,7 @@ export default function EditQuestionForm({
   const [type, setType] = useState<QuestionType>(question.type);
   const [marks, setMarks] = useState(String(question.marks));
   const [options, setOptions] = useState<string[]>(
-    question.options.length > 0
-      ? question.options
-      : ["", "", "", ""],
+    question.options.length > 0 ? question.options : ["", "", "", ""],
   );
   const [correctAnswer, setCorrectAnswer] = useState(
     question.correctAnswer ?? "",
@@ -52,26 +46,20 @@ export default function EditQuestionForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const isChoiceQuestion =
-    type === "MCQ" || type === "TRUE_FALSE";
+  const isChoiceQuestion = type === "MCQ" || type === "TRUE_FALSE";
 
   function handleTypeChange(value: QuestionType) {
     setType(value);
 
     if (value === "TRUE_FALSE") {
-      setOptions(["True", "False"]);
+      setOptions(["TRUE", "FALSE"]);
 
-      if (
-        correctAnswer !== "True" &&
-        correctAnswer !== "False"
-      ) {
+      if (correctAnswer !== "TRUE" && correctAnswer !== "FALSE") {
         setCorrectAnswer("");
       }
     } else if (value === "MCQ") {
       setOptions((current) =>
-        current.length >= 2
-          ? current
-          : ["", "", "", ""],
+        current.length >= 2 ? current : ["", "", "", ""],
       );
     } else {
       setOptions([]);
@@ -81,15 +69,11 @@ export default function EditQuestionForm({
 
   function updateOption(index: number, value: string) {
     setOptions((current) =>
-      current.map((option, i) =>
-        i === index ? value : option,
-      ),
+      current.map((option, i) => (i === index ? value : option)),
     );
   }
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
@@ -112,9 +96,7 @@ export default function EditQuestionForm({
       return;
     }
 
-    router.push(
-      `/courses/${courseId}/assessments/${assessmentId}/questions`,
-    );
+    router.push(`/courses/${courseId}/assessments/${assessmentId}/questions`);
 
     router.refresh();
   }
@@ -125,9 +107,7 @@ export default function EditQuestionForm({
       className="space-y-6 rounded-xl border bg-card p-6"
     >
       <div>
-        <h2 className="text-lg font-semibold">
-          Edit Question
-        </h2>
+        <h2 className="text-lg font-semibold">Edit Question</h2>
 
         <p className="mt-1 text-sm text-muted-foreground">
           Update the question, marks, options, or correct answer.
@@ -141,16 +121,12 @@ export default function EditQuestionForm({
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="question">
-          Question
-        </Label>
+        <Label htmlFor="question">Question</Label>
 
         <Textarea
           id="question"
           value={questionText}
-          onChange={(event) =>
-            setQuestionText(event.target.value)
-          }
+          onChange={(event) => setQuestionText(event.target.value)}
           placeholder="Enter the question..."
           rows={5}
           required
@@ -159,17 +135,13 @@ export default function EditQuestionForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="type">
-            Question Type
-          </Label>
+          <Label htmlFor="type">Question Type</Label>
 
           <select
             id="type"
             value={type}
             onChange={(event) =>
-              handleTypeChange(
-                event.target.value as QuestionType,
-              )
+              handleTypeChange(event.target.value as QuestionType)
             }
             className="h-10 w-full rounded-md border bg-background px-3 text-sm"
           >
@@ -181,9 +153,7 @@ export default function EditQuestionForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="marks">
-            Marks
-          </Label>
+          <Label htmlFor="marks">Marks</Label>
 
           <Input
             id="marks"
@@ -191,9 +161,7 @@ export default function EditQuestionForm({
             min="0.01"
             step="0.01"
             value={marks}
-            onChange={(event) =>
-              setMarks(event.target.value)
-            }
+            onChange={(event) => setMarks(event.target.value)}
             required
           />
         </div>
@@ -210,23 +178,13 @@ export default function EditQuestionForm({
           </div>
 
           {options.map((option, index) => (
-            <div
-              key={index}
-              className="space-y-2"
-            >
-              <Label htmlFor={`option-${index}`}>
-                Option {index + 1}
-              </Label>
+            <div key={index} className="space-y-2">
+              <Label htmlFor={`option-${index}`}>Option {index + 1}</Label>
 
               <Input
                 id={`option-${index}`}
                 value={option}
-                onChange={(event) =>
-                  updateOption(
-                    index,
-                    event.target.value,
-                  )
-                }
+                onChange={(event) => updateOption(index, event.target.value)}
                 placeholder={`Option ${index + 1}`}
               />
             </div>
@@ -236,52 +194,37 @@ export default function EditQuestionForm({
 
       {type === "TRUE_FALSE" && (
         <div className="space-y-2">
-          <Label htmlFor="trueFalseAnswer">
-            Correct Answer
-          </Label>
+          <Label htmlFor="trueFalseAnswer">Correct Answer</Label>
 
           <select
             id="trueFalseAnswer"
             value={correctAnswer}
-            onChange={(event) =>
-              setCorrectAnswer(event.target.value)
-            }
+            onChange={(event) => setCorrectAnswer(event.target.value)}
             className="h-10 w-full rounded-md border bg-background px-3 text-sm"
           >
-            <option value="">
-              Select correct answer
-            </option>
-            <option value="True">True</option>
-            <option value="False">False</option>
+            <option value="">Select correct answer</option>
+            <option value="TRUE">True</option>
+            <option value="FALSE">False</option>
           </select>
         </div>
       )}
 
       {type === "MCQ" && (
         <div className="space-y-2">
-          <Label htmlFor="correctAnswer">
-            Correct Answer
-          </Label>
+          <Label htmlFor="correctAnswer">Correct Answer</Label>
 
           <select
             id="correctAnswer"
             value={correctAnswer}
-            onChange={(event) =>
-              setCorrectAnswer(event.target.value)
-            }
+            onChange={(event) => setCorrectAnswer(event.target.value)}
             className="h-10 w-full rounded-md border bg-background px-3 text-sm"
           >
-            <option value="">
-              Select correct answer
-            </option>
+            <option value="">Select correct answer</option>
 
             {options
               .filter((option) => option.trim())
               .map((option, index) => (
-                <option
-                  key={`${option}-${index}`}
-                  value={option}
-                >
+                <option key={`${option}-${index}`} value={option}>
                   {option}
                 </option>
               ))}
@@ -289,19 +232,14 @@ export default function EditQuestionForm({
         </div>
       )}
 
-      {(type === "SHORT_ANSWER" ||
-        type === "LONG_ANSWER") && (
+      {(type === "SHORT_ANSWER" || type === "LONG_ANSWER") && (
         <div className="space-y-2">
-          <Label htmlFor="correctAnswer">
-            Expected Answer
-          </Label>
+          <Label htmlFor="correctAnswer">Expected Answer</Label>
 
           <Textarea
             id="correctAnswer"
             value={correctAnswer}
-            onChange={(event) =>
-              setCorrectAnswer(event.target.value)
-            }
+            onChange={(event) => setCorrectAnswer(event.target.value)}
             placeholder="Enter the expected answer..."
             rows={4}
           />
@@ -322,13 +260,8 @@ export default function EditQuestionForm({
           Cancel
         </Button>
 
-        <Button
-          type="submit"
-          disabled={loading}
-        >
-          {loading
-            ? "Saving..."
-            : "Save Changes"}
+        <Button type="submit" disabled={loading}>
+          {loading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </form>

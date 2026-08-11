@@ -85,6 +85,65 @@ export class AnnouncementRepository {
     };
   }
 
+  static async findPublishedForStudent(
+    organizationId: string,
+    branchId: string,
+    limit = 10,
+  ) {
+    const now = new Date();
+
+    return db.announcement.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        status: "PUBLISHED",
+        OR: [
+          {
+            branchId: null,
+          },
+          {
+            branchId,
+          },
+        ],
+        AND: [
+          {
+            OR: [
+              {
+                publishAt: null,
+              },
+              {
+                publishAt: {
+                  lte: now,
+                },
+              },
+            ],
+          },
+          {
+            OR: [
+              {
+                expiresAt: null,
+              },
+              {
+                expiresAt: {
+                  gt: now,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      orderBy: [
+        {
+          publishAt: "desc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
+      take: limit,
+    });
+  }
+
   static async findById(
     id: string,
     organizationId: string,
@@ -141,4 +200,60 @@ export class AnnouncementRepository {
       },
     });
   }
+
+static async findPublishedByIdForStudent(
+    id: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    const now = new Date();
+
+    return db.announcement.findFirst({
+      where: {
+        id,
+        organizationId,
+        deletedAt: null,
+        status: "PUBLISHED",
+        OR: [
+          {
+            publishAt: null,
+          },
+          {
+            publishAt: {
+              lte: now,
+            },
+          },
+        ],
+        AND: [
+          {
+            OR: [
+              {
+                expiresAt: null,
+              },
+              {
+                expiresAt: {
+                  gt: now,
+                },
+              },
+            ],
+          },
+          {
+            OR: [
+              {
+                branchId: null,
+              },
+              {
+                branchId,
+              },
+            ],
+          },
+        ],
+      },
+      include: {
+        branch: true,
+        organization: true,
+      },
+    });
+  }
+
 }

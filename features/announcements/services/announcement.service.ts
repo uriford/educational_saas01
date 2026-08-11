@@ -73,6 +73,18 @@ export class AnnouncementService {
     );
   }
 
+  static async getPublishedForStudent(
+    organizationId: string,
+    branchId: string,
+    limit = 10,
+  ) {
+    return AnnouncementRepository.findPublishedForStudent(
+      organizationId,
+      branchId,
+      limit,
+    );
+  }
+
   static async getById(
     id: string,
     organizationId: string,
@@ -154,4 +166,17 @@ export class AnnouncementService {
       };
     }
   }
+
+static async getPublishedByIdForStudent(
+    id: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    return AnnouncementRepository.findPublishedByIdForStudent(
+      id,
+      organizationId,
+      branchId,
+    );
+  }
+
 }

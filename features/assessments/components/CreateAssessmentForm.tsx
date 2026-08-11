@@ -26,6 +26,7 @@ export default function CreateAssessmentForm({
   const [duration, setDuration] = useState("");
   const [totalMarks, setTotalMarks] = useState("");
   const [passingMarks, setPassingMarks] = useState("");
+  const [maxAttempts, setMaxAttempts] = useState("1");
   const [status, setStatus] = useState<
     "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED"
   >("DRAFT");
@@ -52,6 +53,7 @@ export default function CreateAssessmentForm({
         : undefined,
       totalMarks: Number(totalMarks),
       passingMarks: Number(passingMarks),
+      maxAttempts: Number(maxAttempts),
       status,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
@@ -144,7 +146,6 @@ export default function CreateAssessmentForm({
               id="totalMarks"
               type="number"
               min="1"
-              step="0.01"
               value={totalMarks}
               onChange={(event) =>
                 setTotalMarks(event.target.value)
@@ -163,7 +164,6 @@ export default function CreateAssessmentForm({
               id="passingMarks"
               type="number"
               min="0"
-              step="0.01"
               value={passingMarks}
               onChange={(event) =>
                 setPassingMarks(event.target.value)
@@ -172,9 +172,29 @@ export default function CreateAssessmentForm({
               required
             />
           </div>
-        </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="maxAttempts">
+              Maximum Attempts
+            </Label>
+
+            <Input
+              id="maxAttempts"
+              type="number"
+              min="1"
+              value={maxAttempts}
+              onChange={(event) =>
+                setMaxAttempts(event.target.value)
+              }
+              placeholder="1"
+              required
+            />
+
+            <p className="text-xs text-muted-foreground">
+              How many times a student can attempt this assessment.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="duration">
               Duration (minutes)
@@ -190,75 +210,10 @@ export default function CreateAssessmentForm({
               }
               placeholder="60"
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">
-              Status
-            </Label>
-
-            <select
-              id="status"
-              value={status}
-              onChange={(event) =>
-                setStatus(
-                  event.target.value as
-                    | "DRAFT"
-                    | "PUBLISHED"
-                    | "CLOSED"
-                    | "ARCHIVED",
-                )
-              }
-              className="flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm"
-            >
-              <option value="DRAFT">
-                Draft
-              </option>
-
-              <option value="PUBLISHED">
-                Published
-              </option>
-
-              <option value="CLOSED">
-                Closed
-              </option>
-
-              <option value="ARCHIVED">
-                Archived
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="startDate">
-              Start Date
-            </Label>
-
-            <Input
-              id="startDate"
-              type="datetime-local"
-              value={startDate}
-              onChange={(event) =>
-                setStartDate(event.target.value)
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="endDate">
-              End Date
-            </Label>
-
-            <Input
-              id="endDate"
-              type="datetime-local"
-              value={endDate}
-              onChange={(event) =>
-                setEndDate(event.target.value)
-              }
-            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty for no time limit.
+            </p>
           </div>
         </div>
 

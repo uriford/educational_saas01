@@ -15,10 +15,7 @@ type Props = {
   assessmentId: string;
 };
 
-export default function CreateQuestionForm({
-  courseId,
-  assessmentId,
-}: Props) {
+export default function CreateQuestionForm({ courseId, assessmentId }: Props) {
   const router = useRouter();
 
   const [question, setQuestion] = useState("");
@@ -28,13 +25,11 @@ export default function CreateQuestionForm({
   const [marks, setMarks] = useState("");
   const [options, setOptions] = useState("");
   const [correctAnswer, setCorrectAnswer] = useState("");
-  const [order, setOrder] = useState("0");
+  const [order, setOrder] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
@@ -48,6 +43,9 @@ export default function CreateQuestionForm({
             .filter(Boolean)
         : undefined;
 
+    const parsedOrder = order.trim() !== "" ? Number(order) : undefined;
+
+
     const result = await createQuestionAction({
       assessmentId,
       question,
@@ -55,7 +53,7 @@ export default function CreateQuestionForm({
       marks: Number(marks),
       options: parsedOptions,
       correctAnswer: correctAnswer.trim() || undefined,
-      order: Number(order),
+      order: parsedOrder,
     });
 
     if (!result.success) {
@@ -64,9 +62,7 @@ export default function CreateQuestionForm({
       return;
     }
 
-    router.push(
-      `/courses/${courseId}/assessments/${assessmentId}/questions`,
-    );
+    router.push(`/courses/${courseId}/assessments/${assessmentId}/questions`);
 
     router.refresh();
   }
@@ -83,16 +79,12 @@ export default function CreateQuestionForm({
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="question">
-          Question
-        </Label>
+        <Label htmlFor="question">Question</Label>
 
         <Textarea
           id="question"
           value={question}
-          onChange={(event) =>
-            setQuestion(event.target.value)
-          }
+          onChange={(event) => setQuestion(event.target.value)}
           placeholder="Enter the question"
           required
         />
@@ -100,9 +92,7 @@ export default function CreateQuestionForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="type">
-            Question Type
-          </Label>
+          <Label htmlFor="type">Question Type</Label>
 
           <select
             id="type"
@@ -110,29 +100,20 @@ export default function CreateQuestionForm({
             onChange={(event) =>
               setType(
                 event.target.value as
-                  | "MCQ"
-                  | "TRUE_FALSE"
-                  | "SHORT_ANSWER"
-                  | "LONG_ANSWER",
+                  "MCQ" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER",
               )
             }
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
             <option value="MCQ">Multiple Choice</option>
             <option value="TRUE_FALSE">True / False</option>
-            <option value="SHORT_ANSWER">
-              Short Answer
-            </option>
-            <option value="LONG_ANSWER">
-              Long Answer
-            </option>
+            <option value="SHORT_ANSWER">Short Answer</option>
+            <option value="LONG_ANSWER">Long Answer</option>
           </select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="marks">
-            Marks
-          </Label>
+          <Label htmlFor="marks">Marks</Label>
 
           <Input
             id="marks"
@@ -140,9 +121,7 @@ export default function CreateQuestionForm({
             min="0.01"
             step="0.01"
             value={marks}
-            onChange={(event) =>
-              setMarks(event.target.value)
-            }
+            onChange={(event) => setMarks(event.target.value)}
             placeholder="e.g. 5"
             required
           />
@@ -151,16 +130,12 @@ export default function CreateQuestionForm({
 
       {type === "MCQ" && (
         <div className="space-y-2">
-          <Label htmlFor="options">
-            Options
-          </Label>
+          <Label htmlFor="options">Options</Label>
 
           <Textarea
             id="options"
             value={options}
-            onChange={(event) =>
-              setOptions(event.target.value)
-            }
+            onChange={(event) => setOptions(event.target.value)}
             placeholder={`Enter one option per line
 Option A
 Option B
@@ -177,81 +152,63 @@ Option D`}
 
       {type === "TRUE_FALSE" && (
         <div className="space-y-2">
-          <Label htmlFor="correctAnswer">
-            Correct Answer
-          </Label>
+          <Label htmlFor="correctAnswer">Correct Answer</Label>
 
           <select
             id="correctAnswer"
             value={correctAnswer}
-            onChange={(event) =>
-              setCorrectAnswer(event.target.value)
-            }
+            onChange={(event) => setCorrectAnswer(event.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             required
           >
-            <option value="">
-              Select correct answer
-            </option>
-            <option value="true">True</option>
-            <option value="false">False</option>
+            <option value="">Select correct answer</option>
+            <option value="TRUE">True</option>
+            <option value="FALSE">False</option>
           </select>
         </div>
       )}
 
       {type === "MCQ" && (
         <div className="space-y-2">
-          <Label htmlFor="correctAnswer">
-            Correct Answer
-          </Label>
+          <Label htmlFor="correctAnswer">Correct Answer</Label>
 
           <Input
             id="correctAnswer"
             value={correctAnswer}
-            onChange={(event) =>
-              setCorrectAnswer(event.target.value)
-            }
+            onChange={(event) => setCorrectAnswer(event.target.value)}
             placeholder="Enter the exact correct option"
             required
           />
         </div>
       )}
 
-      {(type === "SHORT_ANSWER" ||
-        type === "LONG_ANSWER") && (
+      {(type === "SHORT_ANSWER" || type === "LONG_ANSWER") && (
         <div className="space-y-2">
-          <Label htmlFor="correctAnswer">
-            Correct Answer
-          </Label>
+          <Label htmlFor="correctAnswer">Correct Answer</Label>
 
           <Textarea
             id="correctAnswer"
             value={correctAnswer}
-            onChange={(event) =>
-              setCorrectAnswer(event.target.value)
-            }
+            onChange={(event) => setCorrectAnswer(event.target.value)}
             placeholder="Enter the expected answer"
           />
         </div>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="order">
-          Question Order
-        </Label>
+        <Label htmlFor="order">Question Order (Optional)</Label>
 
         <Input
           id="order"
           type="number"
           min="0"
           value={order}
-          onChange={(event) =>
-            setOrder(event.target.value)
-          }
+          onChange={(event) => setOrder(event.target.value)}
         />
 
         <p className="text-xs text-muted-foreground">
-          Lower numbers appear first.
+          Leave blank to automatically place this question after the existing
+          questions.
         </p>
       </div>
 

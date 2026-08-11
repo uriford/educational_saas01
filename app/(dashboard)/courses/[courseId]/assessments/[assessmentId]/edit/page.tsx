@@ -54,6 +54,7 @@ export default async function EditAssessmentPage({
     duration: assessment.duration,
     totalMarks: Number(assessment.totalMarks),
     passingMarks: Number(assessment.passingMarks),
+    maxAttempts: assessment.maxAttempts,
     status: assessment.status,
     startDate: assessment.startDate
       ? assessment.startDate.toISOString()

@@ -19,10 +19,13 @@ export default async function EnrollStudentPage({
     notFound();
   }
 
+  const organizationId = session.user.organizationId;
+  const branchId = session.user.branchId ?? undefined;
+
   const course = await CourseService.getById(
     courseId,
-    session.user.organizationId,
-    session.user.branchId ?? undefined,
+    organizationId,
+    branchId,
   );
 
   if (!course) {
@@ -30,8 +33,8 @@ export default async function EnrollStudentPage({
   }
 
   const result = await StudentService.getAll(
-    session.user.organizationId,
-    session.user.branchId ?? undefined,
+    organizationId,
+    branchId,
     undefined,
     1,
     100,

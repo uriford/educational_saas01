@@ -18,6 +18,8 @@ import { requireAdmin } from "@/features/auth/authorization";
 import { CourseService } from "@/features/courses/services/course.service";
 import { AssessmentService } from "@/features/assessments/services/assessment.service";
 import DeleteAssessmentButton from "@/features/assessments/components/DeleteAssessmentButton";
+import AssessmentHistory from "@/features/results/components/AssessmentHistory";
+import { ResultService } from "@/features/results/services/result.service";
 
 type Props = {
   params: Promise<{
@@ -74,6 +76,32 @@ export default async function AssessmentDetailsPage({
   ) {
     notFound();
   }
+
+  if (!branchId) {
+    notFound();
+  }
+
+  const historyResult =
+    await ResultService.getAssessmentHistory({
+      assessmentId,
+      organizationId,
+      branchId,
+    });
+
+  const history =
+    historyResult.success
+      ? historyResult.history
+      : {
+          submissions: [],
+          totalSubmissions: 0,
+          completedSubmissions: 0,
+          inProgressSubmissions: 0,
+          averageScore: 0,
+          averagePercentage: 0,
+          passedCount: 0,
+          failedCount: 0,
+          pendingManualGradingCount: 0,
+        };
 
   return (
     <div className="space-y-8">
@@ -155,6 +183,12 @@ export default async function AssessmentDetailsPage({
           value={Number(
             assessment.passingMarks,
           ).toLocaleString()}
+        />
+
+        <InfoCard
+          icon={<Target className="h-4 w-4" />}
+          label="Maximum Attempts"
+          value={assessment.maxAttempts.toString()}
         />
 
         <InfoCard
@@ -276,6 +310,14 @@ export default async function AssessmentDetailsPage({
           </div>
         )}
       </div>
+
+      {history && (
+        <AssessmentHistory
+          history={history}
+          courseId={courseId}
+          assessmentId={assessmentId}
+        />
+      )}
 
       <div className="rounded-xl border bg-card p-6">
         <h2 className="text-lg font-semibold">

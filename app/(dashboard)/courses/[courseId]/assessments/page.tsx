@@ -48,6 +48,7 @@ export default async function AssessmentsPage({ params }: Props) {
     duration: assessment.duration,
     totalMarks: Number(assessment.totalMarks),
     passingMarks: Number(assessment.passingMarks),
+    maxAttempts: Number(assessment.maxAttempts),
     status: assessment.status,
     startDate: assessment.startDate
       ? assessment.startDate.toISOString()

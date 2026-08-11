@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Search, UserCircle2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Search,
+  UserCircle2,
+} from "lucide-react";
 
 import type { Student } from "@prisma/client";
 
-import { enrollStudentByAdminAction } from "../actions/enroll-student-by-admin.action";
+import { createEnrollmentAction } from "../actions/create-enrollment.action";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,10 +58,10 @@ export default function EnrollStudentForm({
     setLoadingStudentId(studentId);
     setMessage("");
 
-    const result = await enrollStudentByAdminAction(
+    const result = await createEnrollmentAction({
       studentId,
       courseId,
-    );
+    });
 
     setLoadingStudentId(null);
     setMessage(result.message);

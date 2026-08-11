@@ -5,9 +5,7 @@ import { ROLES } from "@/features/auth/roles";
 
 import { AssessmentQuestionService } from "../services/assessment-question.service";
 
-export async function deleteQuestionAction(data: {
-  id: string;
-}) {
+export async function deleteQuestionAction(data: { id: string }) {
   const session = await auth();
 
   if (!session?.user?.id) {

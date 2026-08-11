@@ -14,7 +14,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { ROLES } from "@/features/auth/roles";
 import { StudentService } from "@/features/students/services/student.service";
-import { CourseEnrollmentService } from "@/features/course-enrollments/services/course-enrollment.service";
+import { EnrollmentService } from "@/features/enrollments/services/enrollment.service";
 import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
 import { AssessmentRepository } from "@/features/assessments/repository/assessment.repository";
 
@@ -105,8 +105,10 @@ export default async function StudentCoursePage({
   }
 
   const enrollments =
-    await CourseEnrollmentService.getStudentCourses(
+    await EnrollmentService.getStudentEnrollments(
       student.id,
+      session.user.organizationId,
+      session.user.branchId,
     );
 
   const enrollment = enrollments.find(
@@ -542,9 +544,12 @@ export default async function StudentCoursePage({
                   </div>
 
                   <div className="shrink-0">
-                    <span className="inline-flex h-10 items-center rounded-md bg-muted px-4 text-sm font-medium text-muted-foreground">
-                      Assessment details
-                    </span>
+                    <Link
+                      href={`/student/assessments/${assessment.id}`}
+                      className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                    >
+                      Start Assessment
+                    </Link>
                   </div>
                 </div>
               </div>

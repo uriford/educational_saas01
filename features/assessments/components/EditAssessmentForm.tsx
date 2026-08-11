@@ -18,6 +18,7 @@ type Props = {
     duration: number | null;
     totalMarks: number;
     passingMarks: number;
+    maxAttempts: number;
     status: "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED";
     startDate: string | null;
     endDate: string | null;
@@ -41,6 +42,10 @@ export default function EditAssessmentForm({
   );
   const [passingMarks, setPassingMarks] = useState(
     assessment.passingMarks.toString(),
+  );
+
+  const [maxAttempts, setMaxAttempts] = useState(
+    assessment.maxAttempts.toString(),
   );
   const [status, setStatus] = useState(assessment.status);
   const [startDate, setStartDate] = useState(
@@ -74,6 +79,7 @@ export default function EditAssessmentForm({
         duration: duration ? Number(duration) : undefined,
         totalMarks: Number(totalMarks),
         passingMarks: Number(passingMarks),
+        maxAttempts: Number(maxAttempts),
         status,
         startDate: startDate || undefined,
         endDate: endDate || undefined,

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   CalendarDays,
+  ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
   Megaphone,
@@ -27,6 +28,11 @@ const navigation = [
     label: "Schedule",
     href: "/student/schedule",
     icon: CalendarDays,
+  },
+  {
+    label: "Results",
+    href: "/student/results",
+    icon: ClipboardCheck,
   },
   {
     label: "Announcements",

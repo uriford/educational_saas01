@@ -12,6 +12,7 @@ export class AssessmentService {
     duration?: number | null;
     totalMarks: number;
     passingMarks: number;
+    maxAttempts: number;
     status?:
       | "DRAFT"
       | "PUBLISHED"
@@ -40,6 +41,13 @@ export class AssessmentService {
         return {
           success: false,
           message: "Passing marks cannot be negative.",
+        };
+      }
+
+      if (data.maxAttempts < 1) {
+        return {
+          success: false,
+          message: "Maximum attempts must be at least 1.",
         };
       }
 
@@ -125,6 +133,7 @@ export class AssessmentService {
     duration?: number | null;
     totalMarks?: number;
     passingMarks?: number;
+    maxAttempts?: number;
     status?:
       | "DRAFT"
       | "PUBLISHED"
@@ -157,6 +166,10 @@ export class AssessmentService {
         data.passingMarks ??
         Number(existing.passingMarks);
 
+      const maxAttempts =
+        data.maxAttempts ??
+        Number(existing.maxAttempts);
+
       if (data.title !== undefined && !data.title.trim()) {
         return {
           success: false,
@@ -177,6 +190,13 @@ export class AssessmentService {
           success: false,
           message:
             "Passing marks cannot be negative.",
+        };
+      }
+
+      if (maxAttempts < 1) {
+        return {
+          success: false,
+          message: "Maximum attempts must be at least 1.",
         };
       }
 
@@ -223,6 +243,7 @@ export class AssessmentService {
             duration: data.duration,
             totalMarks: data.totalMarks,
             passingMarks: data.passingMarks,
+            maxAttempts: data.maxAttempts,
             status: data.status,
             startDate: data.startDate,
             endDate: data.endDate,

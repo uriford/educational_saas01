@@ -285,4 +285,16 @@ static async softDelete(data: {
       branchId,
     );
   }
+
+  static async getStudentSessions(
+    studentId: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    return ClassSessionRepository.findByStudent(
+      studentId,
+      organizationId,
+      branchId,
+    );
+  }
 }

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 
 import { CourseService } from "../services/course.service";
 import DeleteCourseButton from "../components/DeleteCourseButton";
-import CourseStudents from "@/features/course-enrollments/components/CourseStudents";
+import CourseStudents from "@/features/enrollments/components/CourseStudents";
 import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
 import DeleteClassSessionButton from "@/features/class-sessions/components/DeleteClassSessionButton";
 import { AssessmentService } from "@/features/assessments/services/assessment.service";
@@ -82,6 +82,7 @@ export default async function CourseDetailsPage({ courseId }: Props) {
     duration: assessment.duration,
     totalMarks: Number(assessment.totalMarks),
     passingMarks: Number(assessment.passingMarks),
+    maxAttempts: assessment.maxAttempts,
     status: assessment.status,
     startDate: assessment.startDate ? assessment.startDate.toISOString() : null,
     endDate: assessment.endDate ? assessment.endDate.toISOString() : null,
@@ -409,7 +410,11 @@ export default async function CourseDetailsPage({ courseId }: Props) {
         </div>
 
         <div className="mt-6">
-          <CourseStudents courseId={plainCourse.id} />
+          <CourseStudents
+        courseId={plainCourse.id}
+        organizationId={organizationId}
+        branchId={branchId}
+      />
         </div>
       </div>
     </div>
