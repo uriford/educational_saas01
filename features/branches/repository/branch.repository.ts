@@ -34,6 +34,36 @@ export class BranchRepository {
     });
   }
 
+  static async getAllBranches(
+    organizationId: string,
+  ) {
+    return db.branch.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+      },
+      orderBy: [
+        {
+          isHeadquarters: "desc",
+        },
+        {
+          createdAt: "asc",
+        },
+      ],
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        email: true,
+        phone: true,
+        address: true,
+        isHeadquarters: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+  }
+
   static async findBranch(
     organizationId: string,
     branchId: string,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Building2,
@@ -33,17 +34,33 @@ type Branch = {
   status: string;
 } | null;
 
+type AllBranch = {
+  id: string;
+  name: string;
+  code: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  isHeadquarters: boolean;
+  status: string;
+  createdAt: Date;
+};
+
 type Props = {
   branch: Branch;
+  allBranches: AllBranch[];
   isHeadquartersAdmin: boolean;
   passwordConfigured: boolean;
 };
 
 export default function BranchManagement({
   branch,
+  allBranches,
   isHeadquartersAdmin,
   passwordConfigured,
 }: Props) {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -90,6 +107,8 @@ export default function BranchManagement({
       setPhone("");
       setAddress("");
       setCreationPassword("");
+
+      router.refresh();
     }
 
     setSavingBranch(false);
@@ -128,7 +147,7 @@ export default function BranchManagement({
 
           <CardDescription>
             Create another branch under your organization.
-            Branch creation requires the organization's
+            Branch creation requires the organization&apos;s
             special branch creation password.
           </CardDescription>
         </CardHeader>
@@ -278,7 +297,7 @@ export default function BranchManagement({
 
             <CardDescription>
               Only the headquarters administrator can set or
-              change the organization's special branch
+              change the organization&apos;s special branch
               creation password.
             </CardDescription>
           </CardHeader>
@@ -357,7 +376,108 @@ export default function BranchManagement({
       )}
 
       <BranchSettingsSummary branch={branch} />
+
+      <AllBranchesSummary branches={allBranches} />
     </div>
+  );
+}
+
+function AllBranchesSummary({
+  branches,
+}: {
+  branches: AllBranch[];
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          All Branches
+        </CardTitle>
+
+        <CardDescription>
+          All active branches belonging to your organization.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        {branches.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center">
+            <Building2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+
+            <p className="text-sm font-medium">
+              No branches found
+            </p>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create your first branch to see it here.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {branches.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-lg border p-4 transition-colors hover:bg-muted/40"
+              >
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold">
+                        {item.name}
+                      </h3>
+
+                      {item.isHeadquarters && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          Headquarters
+                        </span>
+                      )}
+
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                        {item.status}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Branch Code: {item.code}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 text-sm md:min-w-[420px] md:grid-cols-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Email
+                      </p>
+                      <p className="font-medium">
+                        {item.email || "Not provided"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Phone
+                      </p>
+                      <p className="font-medium">
+                        {item.phone || "Not provided"}
+                      </p>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-muted-foreground">
+                        Address
+                      </p>
+                      <p className="font-medium">
+                        {item.address || "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

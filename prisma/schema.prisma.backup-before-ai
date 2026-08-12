@@ -1,0 +1,717 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ORGANIZATION_ADMIN
+  BRANCH_ADMIN
+  STUDENT
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SUSPEND
+  RESTORE
+  LOGIN
+  LOGOUT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  TRIAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  GRADUATED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  RESIGNED
+}
+
+enum CourseStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+model Organization {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+  slug String @unique
+
+  email  String?
+  phone  String?
+  domain String?
+  logo   String?
+
+  status OrganizationStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  // Relations
+  settings                 OrganizationSettings?
+  branches                 Branch[]
+  branchCreationCredential BranchCreationCredential?
+  users                    User[]
+  auditLogs                AuditLog[]
+  subscriptions            Subscription[]
+  students                 Student[]
+  teachers                 Teacher[]
+  teacherIdCounter         TeacherIdCounter?
+  courses                  Course[]
+  announcements            Announcement[]
+  notifications            Notification[]
+  classSessions            ClassSession[]
+  assessments              Assessment[]
+}
+
+model OrganizationSettings {
+  id String @id @default(uuid())
+
+  organizationId String @unique
+
+  timezone String @default("Asia/Dhaka")
+  language String @default("en")
+  currency String @default("BDT")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Branch {
+  id   String @id @default(uuid())
+  code String @unique
+
+  organizationId String
+
+  name String
+  slug String @unique
+
+  email   String?
+  phone   String?
+  address String?
+  logo    String?
+
+  isHeadquarters Boolean @default(false)
+
+  status BranchStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  users         User[]
+  auditLogs     AuditLog[]
+  students      Student[]
+  teachers      Teacher[]
+  courses       Course[]
+  announcements Announcement[]
+  classSessions ClassSession[]
+  assessments   Assessment[]
+
+  aiSourceDocuments AISourceDocument[]
+  aiQuestionGenerations AIQuestionGeneration[]
+}
+
+model BranchCreationCredential {
+  id String @id @default(uuid())
+
+  organizationId String @unique
+
+  passwordHash String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model User {
+  id String @id @default(uuid())
+
+  organizationId String?
+  branchId       String?
+
+  code String @unique
+
+  firstName String
+  lastName  String?
+
+  email String  @unique
+  phone String?
+
+  password String
+
+  role   Role
+  status UserStatus @default(ACTIVE)
+
+  avatar String?
+
+  emailVerified Boolean   @default(false)
+  lastLoginAt   DateTime?
+
+  isBranchManager Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  auditLogs     AuditLog[]
+  students      Student[]
+  teachers      Teacher[]
+  notifications Notification[]
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  organizationId String?
+  branchId       String?
+  userId         String?
+
+  action AuditAction
+
+  entityType String
+  entityId   String
+
+  description String?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  organizationId String
+
+  planName String
+  status   SubscriptionStatus @default(TRIAL)
+
+  startDate DateTime
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Student {
+  id String @id @default(uuid())
+
+  userId String? @unique
+
+  organizationId String
+  branchId       String
+
+  studentId String @unique
+
+  firstName String
+  lastName  String?
+
+  email String? @unique
+  phone String?
+
+  gender Gender?
+
+  dateOfBirth DateTime?
+
+  guardianName  String?
+  guardianPhone String?
+
+  address String?
+
+  admissionDate DateTime @default(now())
+
+  status StudentStatus @default(ACTIVE)
+
+  avatar String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  user                  User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  courseEnrollments     CourseEnrollment[]
+  assessmentSubmissions AssessmentSubmission[]
+}
+
+model Teacher {
+  id String @id @default(uuid())
+
+  userId String? @unique
+
+  organizationId String
+  branchId       String
+
+  teacherId String @unique
+
+  firstName String
+  lastName  String?
+
+  email String? @unique
+  phone String?
+
+  gender Gender?
+
+  dateOfBirth DateTime?
+
+  qualification String?
+
+  designation String?
+
+  joiningDate DateTime @default(now())
+
+  salary Decimal? @db.Decimal(10, 2)
+
+  address String?
+
+  status TeacherStatus @default(ACTIVE)
+
+  avatar String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  classSessions ClassSession[]
+}
+
+model Course {
+  id             String       @id @default(uuid())
+  organizationId String
+  branchId       String
+  code           String
+  name           String
+  description    String?
+  duration       Int?
+  fee            Decimal?     @db.Decimal(10, 2)
+  capacity       Int?
+  status         CourseStatus @default(INACTIVE)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branch        Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  enrollments   CourseEnrollment[]
+  classSessions ClassSession[]
+  assessments   Assessment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model CourseEnrollment {
+  id String @id @default(uuid())
+
+  studentId String
+  courseId  String
+
+  enrolledAt DateTime         @default(now())
+  status     EnrollmentStatus @default(ACTIVE)
+
+  completedAt DateTime?
+  progress    Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  SUSPENDED
+}
+
+model ClassSession {
+  id String @id @default(uuid())
+
+  organizationId String
+  branchId       String
+
+  courseId  String
+  teacherId String
+
+  title       String
+  description String?
+
+  startTime DateTime
+  endTime   DateTime
+
+  room String?
+
+  status ClassSessionStatus @default(SCHEDULED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([courseId])
+  @@index([teacherId])
+  @@index([startTime])
+  @@index([status])
+}
+
+model Assessment {
+  id String @id @default(uuid())
+
+  organizationId String
+  branchId       String
+  courseId       String
+
+  title       String
+  description String?
+
+  duration     Int?
+  totalMarks   Decimal @db.Decimal(10, 2)
+  passingMarks Decimal @db.Decimal(10, 2)
+
+  status AssessmentStatus @default(DRAFT)
+  mode   AssessmentMode   @default(EXAM)
+
+  instantFeedback    Boolean @default(false)
+  randomizeQuestions Boolean @default(false)
+  randomizeOptions   Boolean @default(false)
+  maxAttempts        Int     @default(1)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  questions   AssessmentQuestion[]
+  submissions AssessmentSubmission[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([courseId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model AssessmentQuestion {
+  id String @id @default(uuid())
+
+  assessmentId String
+
+  question String
+  type     AssessmentQuestionType
+
+  marks Decimal @db.Decimal(10, 2)
+
+  options       Json?
+  correctAnswer String?
+
+  order Int @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  answers AssessmentAnswer[]
+
+  @@index([assessmentId])
+  @@index([order])
+}
+
+model AssessmentSubmission {
+  id String @id @default(uuid())
+
+  assessmentId String
+  studentId    String
+
+  status AssessmentSubmissionStatus @default(IN_PROGRESS)
+
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+
+  score      Decimal? @db.Decimal(10, 2)
+  percentage Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  answers AssessmentAnswer[]
+
+  @@index([assessmentId, studentId])
+  @@index([assessmentId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model AssessmentAnswer {
+  id String @id @default(uuid())
+
+  submissionId String
+  questionId   String
+
+  answer       String?
+  marksAwarded Decimal? @db.Decimal(10, 2)
+
+  isCorrect Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submission AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question   AssessmentQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, questionId])
+  @@index([submissionId])
+  @@index([questionId])
+}
+
+enum ClassSessionStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum AssessmentMode {
+  EXAM
+  PRACTICE
+}
+
+enum AssessmentQuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+}
+
+enum AssessmentSubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+model TeacherIdCounter {
+  id             String   @id @default(uuid())
+  organizationId String   @unique
+  nextNumber     Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id             String  @id @default(uuid())
+  organizationId String
+  branchId       String?
+
+  title   String
+  content String
+
+  status AnnouncementStatus @default(DRAFT)
+
+  publishAt DateTime?
+  expiresAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([publishAt])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  ANNOUNCEMENT
+  COURSE
+  STUDENT
+  TEACHER
+  SYSTEM
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  organizationId String
+  userId         String
+
+  type NotificationType @default(INFO)
+
+  title   String
+  message String
+  href    String?
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([organizationId, createdAt])
+}

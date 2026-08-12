@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { updateProfileAction } from "../actions/update-profile.action";
 
@@ -23,6 +24,7 @@ type Props = {
 export default function ProfileSettingsForm({
   initialData,
 }: Props) {
+  const router = useRouter();
   const [form, setForm] = useState(initialData);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -39,6 +41,10 @@ export default function ProfileSettingsForm({
 
     setMessage(result.message);
     setSaving(false);
+
+    if (result.success) {
+      router.refresh();
+    }
   }
 
   return (

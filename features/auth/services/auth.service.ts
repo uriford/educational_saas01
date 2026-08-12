@@ -5,7 +5,6 @@ import { AuthRepository } from "../repository/auth.repository";
 import type { LoginFormData } from "../types";
 import type { User } from "@prisma/client";
 
-
 type LoginResponse =
   | {
       success: true;
@@ -17,16 +16,11 @@ type LoginResponse =
       message: string;
     };
 
-
 export class AuthService {
-
   static async login(
-    data: LoginFormData
+    data: LoginFormData,
   ): Promise<LoginResponse> {
-
-    const user =
-      await AuthRepository.findUserByEmail(data.email);
-
+    const user = await AuthRepository.findUserByEmail(data.email);
 
     if (!user) {
       return {
@@ -35,13 +29,24 @@ export class AuthService {
       };
     }
 
+    if (user.status !== "ACTIVE") {
+      return {
+        success: false,
+        message: "This account is not active",
+      };
+    }
 
-    const isPasswordCorrect =
-      await bcrypt.compare(
-        data.password,
-        user.password
-      );
+    if (user.deletedAt) {
+      return {
+        success: false,
+        message: "Invalid email or password",
+      };
+    }
 
+    const isPasswordCorrect = await bcrypt.compare(
+      data.password,
+      user.password,
+    );
 
     if (!isPasswordCorrect) {
       return {
@@ -50,9 +55,7 @@ export class AuthService {
       };
     }
 
-
     await AuthRepository.updateLastLogin(user.id);
-
 
     return {
       success: true,

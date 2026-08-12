@@ -2,17 +2,19 @@ import { db } from "@/lib/db";
 
 export class AuthRepository {
   static async findUserByEmail(email: string) {
-    return db.user.findUnique({
+    return db.user.findFirst({
       where: {
         email,
+        deletedAt: null,
       },
     });
   }
 
   static async findUserById(id: string) {
-    return db.user.findUnique({
+    return db.user.findFirst({
       where: {
         id,
+        deletedAt: null,
       },
     });
   }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import OrganizationSettingsForm from "./OrganizationSettingsForm";
+import PreferencesSettingsForm from "./PreferencesSettingsForm";
 import ProfileSettingsForm from "./ProfileSettingsForm";
 import BranchSettings from "./BranchSettings";
 import BranchManagement from "@/features/branches/components/BranchManagement";
@@ -37,6 +38,17 @@ type Props = {
     passwordConfigured: boolean;
     isHeadquartersAdmin: boolean;
   };
+  allBranches: {
+    id: string;
+    name: string;
+    code: string;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    isHeadquarters: boolean;
+    status: string;
+    createdAt: Date;
+  }[];
   security: {
     email: string;
     role: string;
@@ -79,6 +91,7 @@ export default function SettingsTabs({
   profile,
   branch,
   branchSecurity,
+  allBranches,
   security,
 }: Props) {
   const [activeTab, setActiveTab] =
@@ -125,8 +138,12 @@ export default function SettingsTabs({
         )}
 
         {activeTab === "preferences" && (
-          <OrganizationSettingsForm
-            initialData={organization}
+          <PreferencesSettingsForm
+            initialData={{
+              timezone: organization.timezone,
+              language: organization.language,
+              currency: organization.currency,
+            }}
           />
         )}
 
@@ -134,6 +151,7 @@ export default function SettingsTabs({
           (security.role === "ORGANIZATION_ADMIN" ? (
             <BranchManagement
               branch={branch}
+              allBranches={allBranches}
               isHeadquartersAdmin={
                 branchSecurity.isHeadquartersAdmin
               }

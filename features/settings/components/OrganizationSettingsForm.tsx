@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { updateOrganizationAction } from "../actions/update-organization.action";
 import { updatePreferencesAction } from "../actions/update-preferences.action";
@@ -24,6 +25,7 @@ type Props = {
 export default function OrganizationSettingsForm({
   initialData,
 }: Props) {
+  const router = useRouter();
   const [form, setForm] = useState(initialData);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -57,8 +59,17 @@ export default function OrganizationSettingsForm({
         currency: form.currency,
       });
 
-    setMessage(preferencesResult.message);
+    setMessage(
+      preferencesResult.success
+        ? "Changes saved successfully."
+        : preferencesResult.message,
+    );
+
     setSaving(false);
+
+    if (preferencesResult.success) {
+      router.refresh();
+    }
   }
 
   function updateField(

@@ -6,14 +6,6 @@ type Role = keyof typeof ROLES;
 export async function requireAuth() {
   const session = await auth();
 
-  console.log("========== REQUIRE AUTH ==========");
-  console.log("USER ID:", session?.user?.id);
-  console.log("USER EMAIL:", session?.user?.email);
-  console.log("USER ROLE:", session?.user?.role);
-  console.log("ORG ID:", session?.user?.organizationId);
-  console.log("BRANCH ID:", session?.user?.branchId);
-  console.log("===================================");
-
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
@@ -26,21 +18,9 @@ export async function requireRole(
 ) {
   const session = await requireAuth();
 
-  const userRole = session.user.role;
+  const userRole = session.user.role as Role;
 
-  console.log("========== REQUIRE ROLE ==========");
-  console.log("CURRENT ROLE:", userRole);
-  console.log("ALLOWED ROLES:", allowedRoles);
-  console.log(
-    "IS ALLOWED:",
-    allowedRoles.includes(userRole as Role),
-  );
-  console.log("===================================");
-
-  if (
-    !userRole ||
-    !allowedRoles.includes(userRole as Role)
-  ) {
+  if (!allowedRoles.includes(userRole)) {
     throw new Error("Forbidden");
   }
 
@@ -48,14 +28,71 @@ export async function requireRole(
 }
 
 export async function requireAdmin() {
-  console.log("========== REQUIRE ADMIN ==========");
-
   return requireRole([
     "SUPER_ADMIN",
     "ORGANIZATION_ADMIN",
     "BRANCH_ADMIN",
   ]);
 }
+
+export async function requireOrganizationAdmin() {
+  return requireRole([
+    "ORGANIZATION_ADMIN",
+  ]);
+}
+
+export async function requireBranchAdmin() {
+  return requireRole([
+    "BRANCH_ADMIN",
+  ]);
+}
+
 export async function requireStudent() {
-  return requireRole(["STUDENT"]);
+  return requireRole([
+    "STUDENT",
+  ]);
+}
+
+export async function requireOrganizationAccess(
+  organizationId: string,
+) {
+  const session = await requireAuth();
+
+  if (
+    session.user.role !== "SUPER_ADMIN" &&
+    session.user.organizationId !== organizationId
+  ) {
+    throw new Error("Forbidden");
+  }
+
+  return session;
+}
+
+export async function requireBranchAccess(
+  organizationId: string,
+  branchId: string,
+) {
+  const session = await requireAuth();
+
+  if (session.user.role === "SUPER_ADMIN") {
+    return session;
+  }
+
+  if (session.user.organizationId !== organizationId) {
+    throw new Error("Forbidden");
+  }
+
+  if (
+    session.user.role === "ORGANIZATION_ADMIN"
+  ) {
+    return session;
+  }
+
+  if (
+    session.user.branchId !== branchId
+  ) {
+    throw new Error("Forbidden");
+  }
+
+  return session;
 }

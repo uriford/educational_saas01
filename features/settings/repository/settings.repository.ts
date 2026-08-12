@@ -1,7 +1,9 @@
 import { db } from "@/lib/db";
 
 export class SettingsRepository {
-  static async getOrganization(organizationId: string) {
+  static async getOrganization(
+    organizationId: string,
+  ) {
     return db.organization.findFirst({
       where: {
         id: organizationId,
@@ -68,7 +70,12 @@ export class SettingsRepository {
         id: organizationId,
         deletedAt: null,
       },
-      data,
+      data: {
+        name: data.name,
+        email: data.email || null,
+        phone: data.phone || null,
+        domain: data.domain || null,
+      },
     });
   }
 
@@ -86,9 +93,15 @@ export class SettingsRepository {
       },
       create: {
         organizationId,
-        ...data,
+        timezone: data.timezone,
+        language: data.language,
+        currency: data.currency,
       },
-      update: data,
+      update: {
+        timezone: data.timezone,
+        language: data.language,
+        currency: data.currency,
+      },
     });
   }
 
@@ -105,7 +118,11 @@ export class SettingsRepository {
         id: userId,
         deletedAt: null,
       },
-      data,
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName || null,
+        phone: data.phone || null,
+      },
     });
   }
 }

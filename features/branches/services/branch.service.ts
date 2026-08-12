@@ -64,6 +64,14 @@ function assertStrongPassword(password: string) {
 }
 
 export class BranchService {
+  static async getAllBranches(
+    organizationId: string,
+  ) {
+    return BranchRepository.getAllBranches(
+      organizationId,
+    );
+  }
+
   static async getSecurityStatus(
     organizationId: string,
   ) {

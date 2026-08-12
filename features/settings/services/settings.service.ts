@@ -1,4 +1,14 @@
+import "server-only";
+
 import { SettingsRepository } from "../repository/settings.repository";
+import {
+  organizationSettingsSchema,
+  organizationPreferencesSchema,
+  profileSettingsSchema,
+  type OrganizationSettingsInput,
+  type OrganizationPreferencesInput,
+  type ProfileSettingsInput,
+} from "../schemas/settings.schema";
 
 export class SettingsService {
   static async getSettings(
@@ -26,39 +36,107 @@ export class SettingsService {
 
   static async updateOrganization(
     organizationId: string,
-    data: {
-      name: string;
-      email?: string;
-      phone?: string;
-      domain?: string;
-    },
+    userId: string,
+    data: OrganizationSettingsInput,
   ) {
+    const parsed =
+      organizationSettingsSchema.safeParse(data);
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message:
+          parsed.error.issues[0]?.message ??
+          "Invalid organization settings.",
+      };
+    }
+
+    const user =
+      await SettingsRepository.getUser(userId);
+
+    if (
+      !user ||
+      user.organizationId !== organizationId
+    ) {
+      return {
+        success: false,
+        message: "Unauthorized.",
+      };
+    }
+
+    if (user.role !== "ORGANIZATION_ADMIN") {
+      return {
+        success: false,
+        message:
+          "Only organization admins can update organization settings.",
+      };
+    }
+
     const result =
       await SettingsRepository.updateOrganization(
         organizationId,
-        data,
+        {
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          domain: parsed.data.domain,
+        },
       );
 
     return {
       success: result.count > 0,
       message:
         result.count > 0
-          ? "Organization settings updated successfully."
+          ? "Organization information updated successfully."
           : "Organization not found.",
     };
   }
 
   static async updateOrganizationSettings(
     organizationId: string,
-    data: {
-      timezone: string;
-      language: string;
-      currency: string;
-    },
+    userId: string,
+    data: OrganizationPreferencesInput,
   ) {
+    const parsed =
+      organizationPreferencesSchema.safeParse(data);
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message:
+          parsed.error.issues[0]?.message ??
+          "Invalid preferences.",
+      };
+    }
+
+    const user =
+      await SettingsRepository.getUser(userId);
+
+    if (
+      !user ||
+      user.organizationId !== organizationId
+    ) {
+      return {
+        success: false,
+        message: "Unauthorized.",
+      };
+    }
+
+    if (user.role !== "ORGANIZATION_ADMIN") {
+      return {
+        success: false,
+        message:
+          "Only organization admins can update organization preferences.",
+      };
+    }
+
     await SettingsRepository.updateOrganizationSettings(
       organizationId,
-      data,
+      {
+        timezone: parsed.data.timezone,
+        language: parsed.data.language,
+        currency: parsed.data.currency,
+      },
     );
 
     return {
@@ -69,16 +147,28 @@ export class SettingsService {
 
   static async updateUser(
     userId: string,
-    data: {
-      firstName: string;
-      lastName?: string;
-      phone?: string;
-    },
+    data: ProfileSettingsInput,
   ) {
+    const parsed =
+      profileSettingsSchema.safeParse(data);
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message:
+          parsed.error.issues[0]?.message ??
+          "Invalid profile information.",
+      };
+    }
+
     const result =
       await SettingsRepository.updateUser(
         userId,
-        data,
+        {
+          firstName: parsed.data.firstName,
+          lastName: parsed.data.lastName,
+          phone: parsed.data.phone,
+        },
       );
 
     return {

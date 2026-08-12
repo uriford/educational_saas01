@@ -14,7 +14,7 @@ export default async function SettingsPage() {
     return null;
   }
 
-  const [settings, branchSecurity] =
+  const [settings, branchSecurity, allBranches] =
     await Promise.all([
       SettingsService.getSettings(
         session.user.organizationId,
@@ -22,6 +22,9 @@ export default async function SettingsPage() {
         session.user.branchId ?? undefined,
       ),
       BranchService.getSecurityStatus(
+        session.user.organizationId,
+      ),
+      BranchService.getAllBranches(
         session.user.organizationId,
       ),
     ]);
@@ -79,6 +82,7 @@ export default async function SettingsPage() {
               settings.branch?.isHeadquarters,
             ),
         }}
+        allBranches={allBranches}
         security={{
           email: settings.user.email,
           role: String(settings.user.role),

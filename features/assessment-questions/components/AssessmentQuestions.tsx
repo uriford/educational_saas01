@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -44,14 +44,25 @@ export default function AssessmentQuestions({
           </p>
         </div>
 
-        <Link
-          href={`/courses/${courseId}/assessments/${assessmentId}/questions/create`}
-        >
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Question
-          </Button>
-        </Link>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link
+            href={`/courses/${courseId}/assessments/${assessmentId}/questions/ai-generate`}
+          >
+            <Button variant="outline">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Generate with AI
+            </Button>
+          </Link>
+
+          <Link
+            href={`/courses/${courseId}/assessments/${assessmentId}/questions/create`}
+          >
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Question
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {questions.length === 0 ? (
@@ -66,15 +77,25 @@ export default function AssessmentQuestions({
             Add questions to build this assessment.
           </p>
 
-          <Link
-            href={`/courses/${courseId}/assessments/${assessmentId}/questions/create`}
-            className="mt-4"
-          >
-            <Button variant="outline" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add First Question
-            </Button>
-          </Link>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={`/courses/${courseId}/assessments/${assessmentId}/questions/ai-generate`}
+            >
+              <Button size="sm">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate with AI
+              </Button>
+            </Link>
+
+            <Link
+              href={`/courses/${courseId}/assessments/${assessmentId}/questions/create`}
+            >
+              <Button variant="outline" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add First Question
+              </Button>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="divide-y">

@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 import { SettingsService } from "../services/settings.service";
 
 export async function updateProfileAction(data: {
@@ -17,8 +18,14 @@ export async function updateProfileAction(data: {
     };
   }
 
-  return SettingsService.updateUser(
+  const result = await SettingsService.updateUser(
     session.user.id,
     data,
   );
+
+  if (result.success) {
+    revalidatePath("/settings");
+  }
+
+  return result;
 }

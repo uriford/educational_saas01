@@ -25,8 +25,8 @@ export default {
         }
 
         const response = await AuthService.login({
-          email: credentials.email as string,
-          password: credentials.password as string,
+          email: String(credentials.email),
+          password: String(credentials.password),
         });
 
         if (!response.success) {
@@ -36,10 +36,10 @@ export default {
         return {
           id: response.user.id,
           email: response.user.email,
-          name: `${response.user.firstName} ${response.user.lastName ?? ""}`,
+          name: `${response.user.firstName} ${response.user.lastName ?? ""}`.trim(),
           role: response.user.role,
-          organizationId: response.user.organizationId!,
-          branchId: response.user.branchId!,
+          organizationId: response.user.organizationId,
+          branchId: response.user.branchId,
         };
       },
     }),
@@ -66,10 +66,10 @@ export default {
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub!;
-        session.user.role = token.role;
-        session.user.organizationId = token.organizationId;
-        session.user.branchId = token.branchId;
+        session.user.id = token.sub ?? "";
+        session.user.role = token.role!;
+        session.user.organizationId = token.organizationId ?? null;
+        session.user.branchId = token.branchId ?? null;
       }
 
       return session;

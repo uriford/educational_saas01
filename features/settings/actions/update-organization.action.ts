@@ -1,25 +1,34 @@
 "use server";
 
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 import { SettingsService } from "../services/settings.service";
+import type { OrganizationSettingsInput } from "../schemas/settings.schema";
 
-export async function updateOrganizationAction(data: {
-  name: string;
-  email?: string;
-  phone?: string;
-  domain?: string;
-}) {
+export async function updateOrganizationAction(
+  data: OrganizationSettingsInput,
+) {
   const session = await auth();
 
-  if (!session?.user?.organizationId) {
+  if (
+    !session?.user?.id ||
+    !session.user.organizationId
+  ) {
     return {
       success: false,
       message: "Unauthorized.",
     };
   }
 
-  return SettingsService.updateOrganization(
+  const result = await SettingsService.updateOrganization(
     session.user.organizationId,
+    session.user.id,
     data,
   );
+
+  if (result.success) {
+    revalidatePath("/settings");
+  }
+
+  return result;
 }

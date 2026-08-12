@@ -121,6 +121,8 @@ model Organization {
   notifications            Notification[]
   classSessions            ClassSession[]
   assessments              Assessment[]
+  aisourceDocuments        AISourceDocument[]
+  aiquestionGenerations    AIQuestionGeneration[]
 }
 
 model OrganizationSettings {
@@ -174,6 +176,9 @@ model Branch {
   announcements Announcement[]
   classSessions ClassSession[]
   assessments   Assessment[]
+
+  aiSourceDocuments     AISourceDocument[]
+  aiQuestionGenerations AIQuestionGeneration[]
 }
 
 model BranchCreationCredential {
@@ -519,6 +524,8 @@ model Assessment {
   questions   AssessmentQuestion[]
   submissions AssessmentSubmission[]
 
+  aiQuestionGenerations AIQuestionGeneration[]
+
   @@index([organizationId])
   @@index([branchId])
   @@index([courseId])
@@ -549,6 +556,8 @@ model AssessmentQuestion {
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
   answers AssessmentAnswer[]
+
+  aiGeneratedQuestions AIGeneratedQuestion[]
 
   @@index([assessmentId])
   @@index([order])
@@ -636,6 +645,155 @@ enum AssessmentSubmissionStatus {
   GRADED
 }
 
+model AISourceDocument {
+  id String @id @default(uuid())
+
+  organizationId String
+  branchId       String
+
+  name        String
+  description String?
+
+  fileName String
+  fileUrl  String
+  fileType String
+  fileSize Int?
+
+  status AISourceDocumentStatus @default(PROCESSING)
+
+  extractedText String?
+
+  selectedSections Json?
+
+  pageCount Int?
+
+  processingError String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  questionGenerations AIQuestionGeneration[]
+
+  pages AISourceDocumentPage[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AIQuestionGeneration {
+  id String @id @default(uuid())
+
+  organizationId String
+  branchId       String
+
+  assessmentId String?
+
+  title       String?
+  description String?
+
+  status AIQuestionGenerationStatus @default(PENDING)
+
+  questionCount Int @default(0)
+
+  questionTypes Json?
+  difficulty    String?
+
+  instructions String?
+
+  generatedQuestions Json?
+
+  model         String?
+  promptVersion String?
+
+  errorMessage String?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  assessment Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+
+  sourceDocuments          AISourceDocument[]
+  generatedQuestionsReview AIGeneratedQuestion[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([assessmentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum AISourceDocumentStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum AIQuestionGenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AIQuestionReviewStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model AIGeneratedQuestion {
+  id String @id @default(uuid())
+
+  generationId String
+
+  question String
+  type     AssessmentQuestionType
+  marks    Decimal                @db.Decimal(10, 2)
+
+  options       Json?
+  correctAnswer String?
+
+  status AIQuestionReviewStatus @default(PENDING_REVIEW)
+
+  reviewNote   String?
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  assessmentQuestionId String?
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  generation AIQuestionGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  assessmentQuestion AssessmentQuestion? @relation(fields: [assessmentQuestionId], references: [id], onDelete: SetNull)
+
+  @@index([generationId])
+  @@index([status])
+  @@index([assessmentQuestionId])
+  @@index([reviewedById])
+  @@index([createdAt])
+}
+
 model TeacherIdCounter {
   id             String   @id @default(uuid())
   organizationId String   @unique
@@ -711,4 +869,20 @@ model Notification {
 
   @@index([userId, isRead])
   @@index([organizationId, createdAt])
+}
+
+model AISourceDocumentPage {
+  id String @id @default(uuid())
+
+  sourceDocumentId String
+
+  pageNumber Int
+  content    String
+
+  createdAt DateTime @default(now())
+
+  sourceDocument AISourceDocument @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceDocumentId, pageNumber])
+  @@index([sourceDocumentId])
 }
