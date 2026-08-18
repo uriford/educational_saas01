@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   ArrowRight,
   GraduationCap,
@@ -68,10 +69,12 @@ export default function StudentWelcome({
 
         <div className="hidden shrink-0 md:block">
           {avatar ? (
-            <img
+            <Image
               src={avatar}
               alt={fullName}
-              className="size-36 rounded-3xl object-cover ring-4 ring-primary-foreground/10"
+              width={144}
+              height={144}
+              className="size-36 rounded-3xl bg-primary-foreground/10 object-contain p-1 ring-4 ring-primary-foreground/10"
             />
           ) : (
             <div className="flex size-36 items-center justify-center rounded-3xl bg-primary-foreground/10 text-5xl font-bold">

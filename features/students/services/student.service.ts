@@ -107,6 +107,139 @@ export class StudentService {
     return StudentRepository.findByUserId(userId, organizationId, branchId);
   }
 
+  static async updateOwnAvatar(
+    id: string,
+    userId: string,
+    organizationId: string,
+    branchId: string,
+    avatar: string,
+  ) {
+    try {
+      const result = await StudentRepository.updateOwnAvatar(
+        id,
+        userId,
+        organizationId,
+        branchId,
+        avatar,
+      );
+
+      console.log("========== STUDENT AVATAR DB UPDATE ==========");
+      console.log({
+        id,
+        userId,
+        organizationId,
+        branchId,
+        avatar,
+        updatedCount: result.count,
+      });
+
+      if (result.count === 0) {
+        return {
+          success: false,
+          message: "Student profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Profile photo updated successfully.",
+      };
+    } catch (error) {
+      console.error("UPDATE OWN AVATAR SERVICE ERROR:", error);
+
+      return {
+        success: false,
+        message: "Failed to update profile photo.",
+      };
+    }
+  }
+
+  static async removeOwnAvatar(
+    id: string,
+    userId: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    try {
+      const result = await StudentRepository.removeOwnAvatar(
+        id,
+        userId,
+        organizationId,
+        branchId,
+      );
+
+      if (result.count === 0) {
+        return {
+          success: false,
+          message: "Student profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Profile photo removed successfully.",
+      };
+    } catch (error) {
+      console.error("REMOVE OWN AVATAR SERVICE ERROR:", error);
+
+      return {
+        success: false,
+        message: "Failed to remove profile photo.",
+      };
+    }
+  }
+
+  static async updateOwnProfile(
+    id: string,
+    userId: string,
+    organizationId: string,
+    branchId: string,
+    data: {
+      firstName: string;
+      lastName?: string;
+      phone?: string;
+      gender?: "MALE" | "FEMALE" | "OTHER";
+      dateOfBirth?: string;
+      address?: string;
+      guardianName?: string;
+      guardianPhone?: string;
+      guardianEmail?: string;
+    },
+  ) {
+    try {
+      const result =
+        await StudentRepository.updateOwnProfile(
+          id,
+          userId,
+          organizationId,
+          branchId,
+          data,
+        );
+
+      if (result.count === 0) {
+        return {
+          success: false,
+          message: "Student profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Profile updated successfully.",
+      };
+    } catch (error) {
+      console.error(
+        "UPDATE OWN STUDENT PROFILE ERROR:",
+        error,
+      );
+
+      return {
+        success: false,
+        message: "Failed to update profile.",
+      };
+    }
+  }
+
   static async update(
     id: string,
     organizationId: string,

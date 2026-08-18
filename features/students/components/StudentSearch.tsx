@@ -26,9 +26,9 @@ export default function StudentSearch() {
   }
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+    <div className="w-full">
       <Input
-        className="w-full md:max-w-sm"
+        className="h-10 w-full sm:max-w-md"
         value={search}
         placeholder="Search by name, phone or student ID..."
         onChange={(e) => handleChange(e.target.value)}

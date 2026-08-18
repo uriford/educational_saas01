@@ -4,7 +4,7 @@ import type {
   UpdateAnnouncementData,
 } from "../types";
 
-import { NotificationService } from "@/features/notifications/services/notification.service";
+import { NotificationAutomationService } from "@/features/notifications/services/notification-automation.service";
 import { db } from "@/lib/db";
 
 export class AnnouncementService {
@@ -17,30 +17,69 @@ export class AnnouncementService {
       const announcement =
         await AnnouncementRepository.create(data);
 
-      // Only notify users when the announcement
-      // is published immediately.
+      // Published announcements notify active non-admin users directly.
+      // Administrators are handled by the scoped automation service.
       if (data.status === "PUBLISHED") {
-        const users = await db.user.findMany({
+        const students = await db.student.findMany({
           where: {
             organizationId: data.organizationId,
+            ...(data.branchId
+              ? {
+                  branchId: data.branchId,
+                }
+              : {}),
             deletedAt: null,
             status: "ACTIVE",
+            user: {
+              is: {
+                status: "ACTIVE",
+                role: "STUDENT",
+                deletedAt: null,
+              },
+            },
           },
           select: {
             id: true,
           },
         });
 
-        for (const user of users) {
-          await NotificationService.create({
+        for (const student of students) {
+          await NotificationAutomationService.notifyStudent({
+            studentId: student.id,
             organizationId: data.organizationId,
-            userId: user.id,
             type: "ANNOUNCEMENT",
             title: "New announcement",
             message: `"${data.title}" is now available.`,
             href: `/announcements/${announcement.id}`,
+            dedupeKey:
+              `announcement-student-published:${announcement.id}:${student.id}`,
           });
         }
+
+        await NotificationAutomationService.notifyAdmins({
+          organizationId: data.organizationId,
+          branchId: data.branchId,
+          actorId: data.createdById,
+          type: "ANNOUNCEMENT",
+          title: "Announcement published",
+          message: `"${data.title}" was published.`,
+          href: `/announcements/${announcement.id}`,
+          dedupeKey:
+            `announcement-admin-published:${announcement.id}`,
+        });
+
+        await db.auditLog.create({
+          data: {
+            organizationId: data.organizationId,
+            branchId: data.branchId ?? null,
+            userId: data.createdById,
+            action: "CREATE",
+            entityType: "Announcement",
+            entityId: announcement.id,
+            description:
+              `Announcement "${data.title}" was published.`,
+          },
+        });
       }
 
       return {

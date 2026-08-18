@@ -16,6 +16,7 @@ declare module "next-auth" {
     role: Role;
     organizationId: string | null;
     branchId: string | null;
+    rememberMe: boolean;
   }
 }
 
@@ -24,5 +25,6 @@ declare module "next-auth/jwt" {
     role?: Role;
     organizationId?: string | null;
     branchId?: string | null;
+    rememberMe?: boolean;
   }
 }

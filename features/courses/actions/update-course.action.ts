@@ -2,12 +2,12 @@
 
 import { requireAdmin } from "@/features/auth/authorization";
 
-import type { UpdateCourseData } from "../types";
+import { updateCourseSchema } from "../schemas/course.schema";
 import { CourseService } from "../services/course.service";
 
 export async function updateCourseAction(
   id: string,
-  data: UpdateCourseData,
+  data: unknown,
 ) {
   const session = await requireAdmin();
 
@@ -21,10 +21,31 @@ export async function updateCourseAction(
     };
   }
 
+  if (!id) {
+    return {
+      success: false,
+      message: "Course ID is required.",
+    };
+  }
+
+  const parsed = updateCourseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message:
+        parsed.error.issues[0]?.message ??
+        "Invalid course data.",
+    };
+  }
+
   return CourseService.update(
     id,
     session.user.organizationId,
     session.user.branchId,
-    data,
+    {
+      ...parsed.data,
+      updatedById: session.user.id,
+    },
   );
 }

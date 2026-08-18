@@ -1,14 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import {
+  CalendarDays,
+  Plus,
+} from "lucide-react";
 
 function getGreeting() {
   const hour = new Date().getHours();
 
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 function formatDate() {
@@ -19,29 +22,49 @@ function formatDate() {
     year: "numeric",
   }).format(new Date());
 }
+
 type WelcomeBannerProps = {
   userName: string;
   organizationName: string;
 };
-export default function WelcomeBanner({ userName, organizationName }: WelcomeBannerProps) {
+
+export default function WelcomeBanner({
+  userName,
+  organizationName,
+}: WelcomeBannerProps) {
   return (
-    <section className="flex flex-col justify-between gap-6 rounded-xl border bg-background p-6 shadow-sm md:flex-row md:items-center">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">
-          {getGreeting()}, {userName} 👋
-        </h2>
+    <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/[0.08] via-background to-background shadow-sm">
+      <div className="relative flex flex-col justify-between gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:p-8">
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
+            <CalendarDays className="size-4" />
+            <span>{formatDate()}</span>
+          </div>
 
-        <p className="mt-2 text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening at {organizationName} today.
-        </p>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+            {getGreeting()}, {userName}
+            <span className="ml-2 inline-block">👋</span>
+          </h2>
 
-        <p className="mt-4 text-sm text-muted-foreground">{formatDate()}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+            Welcome back. Here&apos;s what&apos;s happening at{" "}
+            <span className="font-medium text-foreground">
+              {organizationName}
+            </span>{" "}
+            today.
+          </p>
+        </div>
+
+        <Button
+          size="lg"
+          className="w-full shrink-0 gap-2 rounded-lg shadow-sm sm:w-auto"
+        >
+          <Plus className="size-4" />
+          New Student
+        </Button>
       </div>
 
-      <Button className="gap-2">
-        <Plus className="size-4" />
-        New Student
-      </Button>
+      <div className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-primary/5 blur-3xl" />
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { ROLES } from "./roles";
+import { SubscriptionService } from "@/features/subscriptions/services/subscription.service";
 
 type Role = keyof typeof ROLES;
 
@@ -53,6 +54,12 @@ export async function requireStudent() {
   ]);
 }
 
+export async function requireGuardian() {
+  return requireRole([
+    "GUARDIAN",
+  ]);
+}
+
 export async function requireOrganizationAccess(
   organizationId: string,
 ) {
@@ -96,3 +103,53 @@ export async function requireBranchAccess(
 
   return session;
 }
+
+export async function requireActiveSubscription() {
+  const session = await requireAuth();
+
+  // Platform-level administrators are never restricted
+  // by a tenant organization's subscription.
+  if (session.user.role === "SUPER_ADMIN") {
+    return session;
+  }
+
+  if (!session.user.organizationId) {
+    throw new Error("Organization access required");
+  }
+
+  const hasAccess =
+    await SubscriptionService.hasAccess(
+      session.user.organizationId,
+    );
+
+  if (!hasAccess) {
+    throw new Error("Subscription inactive");
+  }
+
+  return session;
+}
+
+export async function requireActiveOrganizationAccess(
+  organizationId: string,
+) {
+  const session =
+    await requireOrganizationAccess(
+      organizationId,
+    );
+
+  if (session.user.role === "SUPER_ADMIN") {
+    return session;
+  }
+
+  const hasAccess =
+    await SubscriptionService.hasAccess(
+      organizationId,
+    );
+
+  if (!hasAccess) {
+    throw new Error("Subscription inactive");
+  }
+
+  return session;
+}
+

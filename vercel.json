@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/courses",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/payments",
+      "schedule": "* * * * *"
     }
   ]
 }

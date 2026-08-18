@@ -6,6 +6,7 @@ import { BranchRepository } from "../repository/branch.repository";
 import type {
   CreateBranchInput,
   SetBranchCreationPasswordInput,
+  AssignBranchAdminInput,
 } from "../types";
 
 const MIN_BRANCH_PASSWORD_LENGTH = 16;
@@ -64,6 +65,124 @@ function assertStrongPassword(password: string) {
 }
 
 export class BranchService {
+  static async getOrganizationUsers(
+    organizationId: string,
+    userId: string,
+  ) {
+    const currentUser =
+      await BranchRepository.getUserForBranchSecurity(
+        userId,
+        organizationId,
+      );
+
+    if (
+      !currentUser ||
+      currentUser.role !== "ORGANIZATION_ADMIN" ||
+      !currentUser.branch ||
+      currentUser.branch.deletedAt ||
+      !currentUser.branch.isHeadquarters
+    ) {
+      throw new Error(
+        "Only the headquarters organization administrator can manage branch administrators.",
+      );
+    }
+
+    return BranchRepository.getOrganizationUsers(
+      organizationId,
+    );
+  }
+
+  static async assignBranchAdmin(
+    organizationId: string,
+    actorUserId: string,
+    data: AssignBranchAdminInput,
+  ) {
+    const actor =
+      await BranchRepository.getUserForBranchSecurity(
+        actorUserId,
+        organizationId,
+      );
+
+    if (
+      !actor ||
+      actor.role !== "ORGANIZATION_ADMIN" ||
+      !actor.branch ||
+      actor.branch.deletedAt ||
+      !actor.branch.isHeadquarters
+    ) {
+      throw new Error(
+        "Only the headquarters organization administrator can assign branch administrators.",
+      );
+    }
+
+    const target =
+      await BranchRepository.getUserForBranchAssignment(
+        organizationId,
+        data.userId,
+      );
+
+    if (!target) {
+      throw new Error("User not found.");
+    }
+
+    if (target.role === "ORGANIZATION_ADMIN") {
+      throw new Error(
+        "An organization administrator cannot be assigned as a branch administrator.",
+      );
+    }
+
+    if (target.role !== "BRANCH_ADMIN") {
+      throw new Error(
+        "Only an existing branch administrator account can be assigned to a branch.",
+      );
+    }
+
+    const branch =
+      await BranchRepository.findBranch(
+        organizationId,
+        data.branchId,
+      );
+
+    if (!branch) {
+      throw new Error("Branch not found.");
+    }
+
+    if (branch.status !== "ACTIVE") {
+      throw new Error(
+        "Only an active branch can have a branch administrator.",
+      );
+    }
+
+    const previousBranchId = target.branchId;
+
+    await BranchRepository.updateBranchAdministrator(
+      organizationId,
+      target.id,
+      branch.id,
+    );
+
+    await db.auditLog.create({
+      data: {
+        organizationId,
+        branchId: branch.id,
+        userId: actorUserId,
+        action: "UPDATE",
+        entityType: "User",
+        entityId: target.id,
+        description:
+          `User "${target.email}" was assigned as branch administrator for "${branch.name}".`,
+      },
+    });
+
+    return {
+      success: true,
+      message:
+        `${target.email} is now the branch administrator of ${branch.name}.`,
+      previousBranchId,
+      branchId: branch.id,
+    };
+  }
+
   static async getAllBranches(
     organizationId: string,
   ) {

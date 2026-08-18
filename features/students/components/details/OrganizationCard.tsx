@@ -46,7 +46,7 @@ export default function OrganizationCard({
         <DetailItem
           icon={<GitBranch size={18} />}
           label="Branch"
-          value={student.branch.name}
+          value={student.branch?.name ?? "Organization-level"}
         />
 
         <DetailItem

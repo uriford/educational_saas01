@@ -143,6 +143,7 @@ export default function SettingsTabs({
               timezone: organization.timezone,
               language: organization.language,
               currency: organization.currency,
+              attendanceEnabled: organization.attendanceEnabled,
             }}
           />
         )}

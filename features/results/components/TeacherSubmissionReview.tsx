@@ -2,9 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
-  Clock3,
-  FileCheck2,
-  User,
+  Clock3,  User,
   XCircle,
 } from "lucide-react";
 

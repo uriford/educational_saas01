@@ -27,11 +27,11 @@ export default function CreateAssessmentForm({
   const [totalMarks, setTotalMarks] = useState("");
   const [passingMarks, setPassingMarks] = useState("");
   const [maxAttempts, setMaxAttempts] = useState("1");
-  const [status, setStatus] = useState<
+  const [status] = useState<
     "DRAFT" | "PUBLISHED" | "CLOSED" | "ARCHIVED"
   >("DRAFT");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate] = useState("");
+  const [endDate] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

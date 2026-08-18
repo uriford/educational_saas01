@@ -9,3 +9,9 @@ export type CreateBranchInput = {
 export type SetBranchCreationPasswordInput = {
   password: string;
 };
+
+
+export type AssignBranchAdminInput = {
+  userId: string;
+  branchId: string;
+};

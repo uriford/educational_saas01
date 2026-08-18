@@ -14,19 +14,35 @@ export default async function SettingsPage() {
     return null;
   }
 
+  const isOrganizationAdmin =
+    session.user.role === "ORGANIZATION_ADMIN";
+
+  const settingsPromise = SettingsService.getSettings(
+    session.user.organizationId,
+    session.user.id,
+    session.user.branchId ?? undefined,
+  );
+
+  const branchSecurityPromise = isOrganizationAdmin
+    ? BranchService.getSecurityStatus(
+        session.user.organizationId,
+      )
+    : Promise.resolve({
+        configured: false,
+        updatedAt: null,
+      });
+
+  const allBranchesPromise = isOrganizationAdmin
+    ? BranchService.getAllBranches(
+        session.user.organizationId,
+      )
+    : Promise.resolve([]);
+
   const [settings, branchSecurity, allBranches] =
     await Promise.all([
-      SettingsService.getSettings(
-        session.user.organizationId,
-        session.user.id,
-        session.user.branchId ?? undefined,
-      ),
-      BranchService.getSecurityStatus(
-        session.user.organizationId,
-      ),
-      BranchService.getAllBranches(
-        session.user.organizationId,
-      ),
+      settingsPromise,
+      branchSecurityPromise,
+      allBranchesPromise,
     ]);
 
   if (!settings.organization || !settings.user) {
@@ -59,13 +75,19 @@ export default async function SettingsPage() {
             settings.organization.settings?.timezone ??
             "Asia/Dhaka",
           language:
-            settings.organization.settings?.language ??
-            "en",
+            settings.organization.settings?.language === "bn"
+              ? "bn"
+              : "en",
           currency:
             settings.organization.settings?.currency ??
             "BDT",
+          attendanceEnabled:
+            settings.organization.settings?.attendanceEnabled ??
+            false,
         }}
         profile={{
+          avatar:
+            settings.user.avatar ?? null,
           firstName: settings.user.firstName,
           lastName:
             settings.user.lastName ?? "",
@@ -77,7 +99,7 @@ export default async function SettingsPage() {
           passwordConfigured:
             branchSecurity.configured,
           isHeadquartersAdmin:
-            settings.user.role === "ORGANIZATION_ADMIN" &&
+            isOrganizationAdmin &&
             Boolean(
               settings.branch?.isHeadquarters,
             ),
@@ -85,7 +107,7 @@ export default async function SettingsPage() {
         allBranches={allBranches}
         security={{
           email: settings.user.email,
-          role: String(settings.user.role),
+          role: String(session.user.role),
           status: String(settings.user.status),
           emailVerified:
             settings.user.emailVerified,

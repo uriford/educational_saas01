@@ -7,6 +7,7 @@ import {
   Building2,
   CheckCircle2,
   KeyRound,
+  UserCog,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ import {
 import {
   createBranchAction,
   setBranchCreationPasswordAction,
+  getOrganizationUsersAction,
+  assignBranchAdminAction,
 } from "../actions/branch.actions";
 
 type Branch = {
@@ -44,6 +47,22 @@ type AllBranch = {
   isHeadquarters: boolean;
   status: string;
   createdAt: Date;
+};
+
+type OrganizationUser = {
+  id: string;
+  firstName: string;
+  lastName: string | null;
+  email: string;
+  role: string;
+  branchId: string | null;
+  isBranchManager: boolean;
+  branch: {
+    id: string;
+    name: string;
+    code: string;
+    isHeadquarters: boolean;
+  } | null;
 };
 
 type Props = {
@@ -80,8 +99,114 @@ export default function BranchManagement({
   const [branchMessage, setBranchMessage] =
     useState("");
 
+  const [organizationUsers, setOrganizationUsers] =
+    useState<OrganizationUser[]>([]);
+
+  const [selectedUserId, setSelectedUserId] =
+    useState("");
+
+  const [selectedBranchId, setSelectedBranchId] =
+    useState("");
+
+  const [loadingUsers, setLoadingUsers] =
+    useState(false);
+
+  const [assigningAdmin, setAssigningAdmin] =
+    useState(false);
+
+  const [assignmentMessage, setAssignmentMessage] =
+    useState("");
+
   const [passwordMessage, setPasswordMessage] =
     useState("");
+
+  if (!isHeadquartersAdmin) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Branch
+            </CardTitle>
+
+            <CardDescription>
+              View information about your assigned branch.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm font-medium">
+                {branch?.name ?? "No branch assigned"}
+              </p>
+
+              {branch?.code && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {branch.code}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  async function loadOrganizationUsers() {
+    setLoadingUsers(true);
+    setAssignmentMessage("");
+
+    const result =
+      await getOrganizationUsersAction();
+
+    if (result.success) {
+      setOrganizationUsers(
+        result.users as OrganizationUser[],
+      );
+
+      if (result.users.length > 0) {
+        setSelectedUserId(
+          result.users[0].id,
+        );
+      }
+    } else {
+      setAssignmentMessage(result.message);
+    }
+
+    setLoadingUsers(false);
+  }
+
+  async function handleAssignBranchAdmin(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    if (!selectedUserId || !selectedBranchId) {
+      setAssignmentMessage(
+        "Select a user and a branch.",
+      );
+      return;
+    }
+
+    setAssigningAdmin(true);
+    setAssignmentMessage("");
+
+    const result =
+      await assignBranchAdminAction({
+        userId: selectedUserId,
+        branchId: selectedBranchId,
+      });
+
+    setAssignmentMessage(result.message);
+
+    if (result.success) {
+      await loadOrganizationUsers();
+      router.refresh();
+    }
+
+    setAssigningAdmin(false);
+  }
 
   async function handleCreateBranch(
     event: React.FormEvent<HTMLFormElement>,
@@ -374,6 +499,216 @@ export default function BranchManagement({
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserCog className="h-5 w-5" />
+            Branch Administrators
+          </CardTitle>
+
+          <CardDescription>
+            Assign an existing organization user to manage a
+            specific branch.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-6">
+          <form
+            onSubmit={handleAssignBranchAdmin}
+            className="flex flex-col gap-5"
+          >
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">
+                  User
+                </label>
+
+                <select
+                  className="h-10 rounded-md border bg-background px-3 text-sm"
+                  value={selectedUserId}
+                  onChange={(event) =>
+                    setSelectedUserId(
+                      event.target.value,
+                    )
+                  }
+                  onFocus={() => {
+                    if (
+                      organizationUsers.length === 0 &&
+                      !loadingUsers
+                    ) {
+                      loadOrganizationUsers();
+                    }
+                  }}
+                  disabled={loadingUsers || assigningAdmin}
+                >
+                  <option value="">
+                    {loadingUsers
+                      ? "Loading users..."
+                      : "Select a user"}
+                  </option>
+
+                  {organizationUsers
+                    .filter(
+                      (user) =>
+                        user.role !==
+                        "ORGANIZATION_ADMIN",
+                    )
+                    .map((user) => (
+                      <option
+                        key={user.id}
+                        value={user.id}
+                      >
+                        {user.email}
+                        {" — "}
+                        {user.firstName}
+                        {user.lastName
+                          ? ` ${user.lastName}`
+                          : ""}
+                        {user.branch
+                          ? ` — ${user.branch.name}`
+                          : ""}
+                      </option>
+                    ))}
+                </select>
+
+                <p className="text-xs text-muted-foreground">
+                  Organization and branch administrators are
+                  protected from accidental reassignment.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">
+                  Working Branch
+                </label>
+
+                <select
+                  className="h-10 rounded-md border bg-background px-3 text-sm"
+                  value={selectedBranchId}
+                  onChange={(event) =>
+                    setSelectedBranchId(
+                      event.target.value,
+                    )
+                  }
+                  disabled={assigningAdmin}
+                >
+                  <option value="">
+                    Select a branch
+                  </option>
+
+                  {allBranches
+                    .filter(
+                      (item) =>
+                        item.status === "ACTIVE" &&
+                        !item.isHeadquarters,
+                    )
+                    .map((item) => (
+                      <option
+                        key={item.id}
+                        value={item.id}
+                      >
+                        {item.name} ({item.code})
+                      </option>
+                    ))}
+                </select>
+
+                <p className="text-xs text-muted-foreground">
+                  Branch administrators are assigned to
+                  non-headquarters branches.
+                </p>
+              </div>
+            </div>
+
+            {assignmentMessage && (
+              <p
+                className={`text-sm ${
+                  assignmentMessage.includes(
+                    "now the branch administrator",
+                  )
+                    ? "text-green-600"
+                    : "text-destructive"
+                }`}
+              >
+                {assignmentMessage}
+              </p>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                disabled={
+                  assigningAdmin ||
+                  loadingUsers ||
+                  !selectedUserId ||
+                  !selectedBranchId
+                }
+              >
+                {assigningAdmin
+                  ? "Assigning..."
+                  : "Assign Branch Administrator"}
+              </Button>
+            </div>
+          </form>
+
+          <div className="border-t pt-5">
+            <h3 className="mb-3 text-sm font-semibold">
+              Current Branch Administrators
+            </h3>
+
+            {organizationUsers.filter(
+              (user) =>
+                user.role === "BRANCH_ADMIN",
+            ).length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No branch administrators have been assigned
+                yet.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {organizationUsers
+                  .filter(
+                    (user) =>
+                      user.role ===
+                      "BRANCH_ADMIN",
+                  )
+                  .map((user) => (
+                    <div
+                      key={user.id}
+                      className="rounded-lg border p-4"
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-medium">
+                            {user.email}
+                          </p>
+
+                          <p className="text-sm text-muted-foreground">
+                            {user.firstName}
+                            {user.lastName
+                              ? ` ${user.lastName}`
+                              : ""}
+                          </p>
+                        </div>
+
+                        <div className="text-sm">
+                          <p className="text-muted-foreground">
+                            Working Branch
+                          </p>
+
+                          <p className="font-medium">
+                            {user.branch?.name ??
+                              "No branch"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <BranchSettingsSummary branch={branch} />
 

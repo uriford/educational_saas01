@@ -17,6 +17,9 @@ import { StudentService } from "@/features/students/services/student.service";
 import { EnrollmentService } from "@/features/enrollments/services/enrollment.service";
 import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
 import { AssessmentRepository } from "@/features/assessments/repository/assessment.repository";
+import { LessonProgressService } from "@/features/lessons-progress/services/lesson-progress.service";
+import { getAIPersonalizationAction } from "@/features/ai-personalization/actions/ai-personalization.actions";
+import AIPersonalizationCard from "@/features/ai-personalization/components/AIPersonalizationCard";
 
 type Props = {
   params: Promise<{
@@ -121,7 +124,12 @@ export default async function StudentCoursePage({
 
   const { course } = enrollment;
 
-  const [sessions, assessments] = await Promise.all([
+  const [
+    sessions,
+    assessments,
+    lessonResult,
+    aiPersonalizationResult,
+  ] = await Promise.all([
     ClassSessionService.getCourseSessions(
       course.id,
       session.user.organizationId,
@@ -132,7 +140,25 @@ export default async function StudentCoursePage({
       session.user.organizationId,
       session.user.branchId,
     ),
+    LessonProgressService.getCourseLessons(
+      session.user.id,
+      course.id,
+      session.user.organizationId,
+      session.user.branchId,
+    ),
+    getAIPersonalizationAction(course.id),
   ]);
+
+  const courseLessons =
+    lessonResult.success
+      ? lessonResult.lessons ?? []
+      : [];
+
+  const aiPersonalization =
+    aiPersonalizationResult.success &&
+    "personalization" in aiPersonalizationResult
+      ? aiPersonalizationResult.personalization
+      : null;
 
   const now = new Date();
 
@@ -449,6 +475,120 @@ export default async function StudentCoursePage({
           </div>
         </section>
       </div>
+
+      {/* AI Personalization */}
+      <AIPersonalizationCard
+        courseId={course.id}
+        personalization={aiPersonalization}
+      />
+
+      {/* Lessons */}
+      <section className="rounded-2xl border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b p-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <GraduationCap className="size-5 text-primary" />
+
+              <h2 className="text-lg font-semibold">
+                Course Lessons
+              </h2>
+            </div>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Work through the published lessons in order.
+            </p>
+          </div>
+
+          <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
+            {courseLessons.length}
+          </span>
+        </div>
+
+        {courseLessons.length === 0 ? (
+          <div className="flex min-h-52 items-center justify-center p-8">
+            <div className="text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-muted">
+                <GraduationCap className="size-6 text-muted-foreground" />
+              </div>
+
+              <h3 className="mt-4 font-semibold">
+                No lessons available
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Published lessons for this course will appear here.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {courseLessons.map((lesson, index) => {
+              const completed =
+                lesson.progress?.completed ?? false;
+
+              return (
+                <Link
+                  key={lesson.id}
+                  href={`/student/courses/${course.id}/lessons/${lesson.id}`}
+                  className="group block p-5 transition hover:bg-muted/30 sm:p-6"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
+                        completed
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                          : "bg-primary/10 text-primary"
+                      }`}
+                    >
+                      {completed ? (
+                        <CheckCircle2 className="size-5" />
+                      ) : (
+                        <span className="text-sm font-bold">
+                          {index + 1}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold group-hover:text-primary">
+                          {lesson.title}
+                        </h3>
+
+                        {completed && (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                            Completed
+                          </span>
+                        )}
+                      </div>
+
+                      {lesson.description && (
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                          {lesson.description}
+                        </p>
+                      )}
+
+                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                        <span>
+                          {lesson.type}
+                        </span>
+
+                        {lesson.duration && (
+                          <span>
+                            {lesson.duration} min
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <ArrowLeft className="size-4 shrink-0 rotate-180 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       {/* Assessments */}
       <section className="rounded-2xl border bg-card shadow-sm">

@@ -23,15 +23,19 @@ export const organizationPreferencesSchema = z.object({
     .trim()
     .min(1, "Timezone is required."),
 
-  language: z
-    .string()
-    .trim()
-    .min(1, "Language is required."),
+  language: z.enum(
+    ["en", "bn"],
+    {
+      message: "Please select a supported language.",
+    },
+  ),
 
   currency: z
     .string()
     .trim()
     .min(1, "Currency is required."),
+
+  attendanceEnabled: z.boolean(),
 });
 
 export const profileSettingsSchema = z.object({

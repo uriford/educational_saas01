@@ -18,8 +18,9 @@ import {
 type Props = {
   initialData: {
     timezone: string;
-    language: string;
+    language: "en" | "bn";
     currency: string;
+    attendanceEnabled: boolean;
   };
 };
 
@@ -52,7 +53,7 @@ export default function PreferencesSettingsForm({
 
   function updateField(
     field: keyof typeof form,
-    value: string,
+    value: string | boolean,
   ) {
     setForm((current) => ({
       ...current,
@@ -64,8 +65,9 @@ export default function PreferencesSettingsForm({
     <Card>
       <CardHeader>
         <CardTitle>Preferences</CardTitle>
+
         <CardDescription>
-          Configure the regional settings used by your organization.
+          Configure the regional settings and features used by your organization.
         </CardDescription>
       </CardHeader>
 
@@ -101,19 +103,40 @@ export default function PreferencesSettingsForm({
                 Language
               </label>
 
-              <Input
-                value={form.language}
-                onChange={(event) =>
-                  updateField(
-                    "language",
-                    event.target.value,
-                  )
-                }
-                placeholder="en"
-              />
+              <div className="flex w-full max-w-md rounded-xl border bg-muted/40 p-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("language", "en")
+                  }
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                    form.language === "en"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>🇬🇧</span>
+                  <span>English</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("language", "bn")
+                  }
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                    form.language === "bn"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>🇧🇩</span>
+                  <span>বাংলা</span>
+                </button>
+              </div>
 
               <p className="text-xs text-muted-foreground">
-                Example: en
+                Select the default language for your organization.
               </p>
             </div>
 
@@ -135,6 +158,51 @@ export default function PreferencesSettingsForm({
 
               <p className="text-xs text-muted-foreground">
                 Example: BDT
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-xl border p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <label className="text-sm font-medium">
+                    Attendance
+                  </label>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Enable attendance tracking for students and class sessions.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={form.attendanceEnabled}
+                  onClick={() =>
+                    updateField(
+                      "attendanceEnabled",
+                      !form.attendanceEnabled,
+                    )
+                  }
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                    form.attendanceEnabled
+                      ? "bg-primary"
+                      : "bg-muted"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-sm ring-0 transition-transform ${
+                      form.attendanceEnabled
+                        ? "translate-x-5"
+                        : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {form.attendanceEnabled
+                  ? "Attendance tracking is enabled."
+                  : "Attendance tracking is disabled."}
               </p>
             </div>
           </div>

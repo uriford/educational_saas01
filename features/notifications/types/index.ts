@@ -7,6 +7,7 @@ export type CreateNotificationInput = {
   title: string;
   message: string;
   href?: string;
+  dedupeKey?: string;
 };
 
 export type NotificationItem = {

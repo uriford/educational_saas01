@@ -47,6 +47,13 @@ export const createStudentSchema = z.object({
     .optional()
     .or(z.literal("")),
 
+  guardianEmail: z
+    .string()
+    .trim()
+    .email("Invalid guardian email")
+    .optional()
+    .or(z.literal("")),
+
   address: z
     .string()
     .trim()

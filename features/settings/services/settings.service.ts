@@ -136,6 +136,8 @@ export class SettingsService {
         timezone: parsed.data.timezone,
         language: parsed.data.language,
         currency: parsed.data.currency,
+        attendanceEnabled:
+          parsed.data.attendanceEnabled,
       },
     );
 
@@ -143,6 +145,66 @@ export class SettingsService {
       success: true,
       message: "Preferences updated successfully.",
     };
+  }
+
+  static async updateUserAvatar(
+    userId: string,
+    avatar: string,
+  ) {
+    try {
+      const result =
+        await SettingsRepository.updateUserAvatar(
+          userId,
+          avatar,
+        );
+
+      return {
+        success: result.count > 0,
+        message:
+          result.count > 0
+            ? "Profile photo updated successfully."
+            : "User not found.",
+      };
+    } catch (error) {
+      console.error(
+        "UPDATE USER AVATAR SERVICE ERROR:",
+        error,
+      );
+
+      return {
+        success: false,
+        message: "Failed to update profile photo.",
+      };
+    }
+  }
+
+  static async removeUserAvatar(
+    userId: string,
+  ) {
+    try {
+      const result =
+        await SettingsRepository.removeUserAvatar(
+          userId,
+        );
+
+      return {
+        success: result.count > 0,
+        message:
+          result.count > 0
+            ? "Profile photo removed successfully."
+            : "User not found.",
+      };
+    } catch (error) {
+      console.error(
+        "REMOVE USER AVATAR SERVICE ERROR:",
+        error,
+      );
+
+      return {
+        success: false,
+        message: "Failed to remove profile photo.",
+      };
+    }
   }
 
   static async updateUser(

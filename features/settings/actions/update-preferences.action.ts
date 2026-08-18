@@ -29,6 +29,7 @@ export async function updatePreferencesAction(
 
   if (result.success) {
     revalidatePath("/settings");
+    revalidatePath("/");
   }
 
   return result;

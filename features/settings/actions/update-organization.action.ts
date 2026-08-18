@@ -28,6 +28,7 @@ export async function updateOrganizationAction(
 
   if (result.success) {
     revalidatePath("/settings");
+    revalidatePath("/");
   }
 
   return result;

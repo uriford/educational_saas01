@@ -59,25 +59,25 @@ export const quickActions: QuickActionData[] = [
   {
     title: "Add Student",
     description: "Register a new student",
-    href: "/students/new",
+    href: "/students/create",
     icon: UserPlus,
   },
   {
     title: "Add Teacher",
     description: "Create a teacher profile",
-    href: "/teachers/new",
+    href: "/teachers/create",
     icon: GraduationCap,
   },
   {
     title: "Announcement",
     description: "Publish an announcement",
-    href: "/announcements/new",
+    href: "/announcements/create",
     icon: Megaphone,
   },
   {
     title: "Schedule Class",
     description: "Create a new class schedule",
-    href: "/classes/new",
+    href: "/schedule/create",
     icon: CalendarPlus,
   },
 ];

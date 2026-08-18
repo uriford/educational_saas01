@@ -34,6 +34,7 @@ export class SettingsRepository {
         branchId: true,
         emailVerified: true,
         lastLoginAt: true,
+        themePreference: true,
       },
     });
   }
@@ -85,6 +86,7 @@ export class SettingsRepository {
       timezone: string;
       language: string;
       currency: string;
+      attendanceEnabled: boolean;
     },
   ) {
     return db.organizationSettings.upsert({
@@ -96,11 +98,69 @@ export class SettingsRepository {
         timezone: data.timezone,
         language: data.language,
         currency: data.currency,
+        attendanceEnabled: data.attendanceEnabled,
       },
       update: {
         timezone: data.timezone,
         language: data.language,
         currency: data.currency,
+        attendanceEnabled: data.attendanceEnabled,
+      },
+    });
+  }
+
+  static async getUserTheme(userId: string) {
+    return db.user.findFirst({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+      select: {
+        themePreference: true,
+      },
+    });
+  }
+
+  static async updateUserTheme(
+    userId: string,
+    themePreference: "LIGHT" | "DARK" | "SYSTEM",
+  ) {
+    return db.user.updateMany({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+      data: {
+        themePreference,
+      },
+    });
+  }
+
+  static async updateUserAvatar(
+    userId: string,
+    avatar: string,
+  ) {
+    return db.user.updateMany({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+      data: {
+        avatar,
+      },
+    });
+  }
+
+  static async removeUserAvatar(
+    userId: string,
+  ) {
+    return db.user.updateMany({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+      data: {
+        avatar: null,
       },
     });
   }

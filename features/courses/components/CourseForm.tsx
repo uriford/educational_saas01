@@ -2,17 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  BookOpen,
+  CalendarDays,
+  CircleDollarSign,
+  GraduationCap,
+} from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectItem } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import LoadingButton from "@/components/common/LoadingButton";
 
 import {
   courseSchema,
-  type CourseFormInput,
   type CourseFormValues,
 } from "../schemas/course.schema";
 
@@ -25,14 +32,55 @@ type Props = {
   defaultValues?: Partial<CourseFormValues>;
 };
 
-export default function CourseForm({ mode, courseId, defaultValues }: Props) {
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+
+  return (
+    <p className="text-xs font-medium text-destructive">
+      {message}
+    </p>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof BookOpen;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="size-4" />
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold">{title}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function CourseForm({
+  mode,
+  courseId,
+  defaultValues,
+}: Props) {
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<CourseFormInput, undefined, CourseFormValues>({
+  } = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
 
     defaultValues: {
@@ -49,8 +97,19 @@ export default function CourseForm({ mode, courseId, defaultValues }: Props) {
     },
   });
 
+  const selectedStatus = watch("status");
+
   async function onSubmit(data: CourseFormValues) {
     try {
+      if (
+        data.startDate &&
+        data.endDate &&
+        data.endDate < data.startDate
+      ) {
+        toast.error("End date cannot be before the start date.");
+        return;
+      }
+
       const result =
         mode === "create"
           ? await createCourseAction(data)
@@ -67,169 +126,298 @@ export default function CourseForm({ mode, courseId, defaultValues }: Props) {
       router.refresh();
     } catch (error) {
       console.error(error);
-
-      toast.error("Something went wrong.");
+      toast.error("Something went wrong. Please try again.");
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Course Code */}
-        <div className="space-y-2">
-          <Label htmlFor="code">Course Code</Label>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-8"
+    >
+      {/* Basic Information */}
+      <section className="space-y-6">
+        <SectionHeader
+          icon={BookOpen}
+          title="Basic Information"
+          description="Define the identity and purpose of this course."
+        />
 
-          <Input id="code" placeholder="IELTS-01" {...register("code")} />
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="code">
+              Course Code
+              <span className="text-destructive">*</span>
+            </Label>
 
-          {errors.code && (
-            <p className="text-sm text-destructive">{errors.code.message}</p>
-          )}
-        </div>
+            <Input
+              id="code"
+              placeholder="IELTS-01"
+              autoComplete="off"
+              aria-invalid={!!errors.code}
+              {...register("code")}
+            />
 
-        {/* Course Name */}
-        <div className="space-y-2">
-          <Label htmlFor="name">Course Name</Label>
-
-          <Input
-            id="name"
-            placeholder="IELTS Preparation"
-            {...register("name")}
-          />
-
-          {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="description">Description</Label>
-
-          <Input
-            id="description"
-            placeholder="Course description"
-            {...register("description")}
-          />
-
-          {errors.description && (
-            <p className="text-sm text-destructive">
-              {errors.description.message}
+            <p className="text-xs text-muted-foreground">
+              Use a short unique identifier for this course.
             </p>
-          )}
-        </div>
 
-        {/* Duration */}
-        <div className="space-y-2">
-          <Label htmlFor="duration">Duration (Days)</Label>
+            <FieldError message={errors.code?.message} />
+          </div>
 
-          <Input
-            id="duration"
-            type="number"
-            placeholder="90"
-            {...register("duration", {
-              valueAsNumber: true,
-            })}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="name">
+              Course Name
+              <span className="text-destructive">*</span>
+            </Label>
 
-          {errors.duration && (
-            <p className="text-sm text-destructive">
-              {errors.duration.message}
+            <Input
+              id="name"
+              placeholder="IELTS Preparation"
+              aria-invalid={!!errors.name}
+              {...register("name")}
+            />
+
+            <p className="text-xs text-muted-foreground">
+              Choose a clear name students and staff will recognize.
             </p>
-          )}
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="startDate">Start Date</Label>
+            <FieldError message={errors.name?.message} />
+          </div>
 
-          <Input id="startDate" type="date" {...register("startDate")} />
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="description">
+              Description
+            </Label>
 
-          {errors.startDate && (
-            <p className="text-sm text-destructive">
-              {errors.startDate.message}
+            <Textarea
+              id="description"
+              placeholder="Describe what students will learn, who the course is for, and what it includes..."
+              className="min-h-28 resize-y"
+              aria-invalid={!!errors.description}
+              {...register("description")}
+            />
+
+            <p className="text-xs text-muted-foreground">
+              Give students and staff useful context about the course.
             </p>
-          )}
+
+            <FieldError message={errors.description?.message} />
+          </div>
         </div>
+      </section>
 
-        <div className="space-y-2">
-          <Label htmlFor="endDate">End Date</Label>
+      <div className="border-t" />
 
-          <Input id="endDate" type="date" {...register("endDate")} />
+      {/* Schedule */}
+      <section className="space-y-6">
+        <SectionHeader
+          icon={CalendarDays}
+          title="Course Schedule"
+          description="Set the expected duration and course dates."
+        />
 
-          {errors.endDate && (
-            <p className="text-sm text-destructive">{errors.endDate.message}</p>
-          )}
+        <div className="grid gap-5 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="duration">Duration</Label>
+
+            <div className="relative">
+              <Input
+                id="duration"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="90"
+                className="pr-16"
+                aria-invalid={!!errors.duration}
+                {...register("duration", {
+                  setValueAs: (value) =>
+                    value === "" ? undefined : Number(value),
+                })}
+              />
+
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                days
+              </span>
+            </div>
+
+            <FieldError message={errors.duration?.message} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="startDate">Start Date</Label>
+
+            <Input
+              id="startDate"
+              type="date"
+              aria-invalid={!!errors.startDate}
+              {...register("startDate")}
+            />
+
+            <FieldError message={errors.startDate?.message} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="endDate">End Date</Label>
+
+            <Input
+              id="endDate"
+              type="date"
+              min={watch("startDate") || undefined}
+              aria-invalid={!!errors.endDate}
+              {...register("endDate")}
+            />
+
+            <FieldError message={errors.endDate?.message} />
+          </div>
         </div>
+      </section>
 
-        {/* Fee */}
-        <div className="space-y-2">
-          <Label htmlFor="fee">Course Fee</Label>
+      <div className="border-t" />
 
-          <Input
-            id="fee"
-            type="number"
-            placeholder="15000"
-            {...register("fee", {
-              valueAsNumber: true,
-            })}
-          />
+      {/* Enrollment & Pricing */}
+      <section className="space-y-6">
+        <SectionHeader
+          icon={GraduationCap}
+          title="Enrollment & Pricing"
+          description="Configure capacity and the course fee."
+        />
 
-          {errors.fee && (
-            <p className="text-sm text-destructive">{errors.fee.message}</p>
-          )}
-        </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="fee">Course Fee</Label>
 
-        {/* Capacity */}
-        <div className="space-y-2">
-          <Label htmlFor="capacity">Student Capacity</Label>
+            <div className="relative">
+              <CircleDollarSign className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-          <Input
-            id="capacity"
-            type="number"
-            placeholder="30"
-            {...register("capacity", {
-              valueAsNumber: true,
-            })}
-          />
+              <Input
+                id="fee"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="15000"
+                className="pl-9"
+                aria-invalid={!!errors.fee}
+                {...register("fee", {
+                  setValueAs: (value) =>
+                    value === "" ? undefined : Number(value),
+                })}
+              />
+            </div>
 
-          {errors.capacity && (
-            <p className="text-sm text-destructive">
-              {errors.capacity.message}
+            <p className="text-xs text-muted-foreground">
+              Leave empty if the course is free.
             </p>
-          )}
-        </div>
 
-        {/* Status */}
-        <div className="space-y-2">
+            <FieldError message={errors.fee?.message} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="capacity">
+              Student Capacity
+            </Label>
+
+            <div className="relative">
+              <Input
+                id="capacity"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="30"
+                className="pr-16"
+                aria-invalid={!!errors.capacity}
+                {...register("capacity", {
+                  setValueAs: (value) =>
+                    value === "" ? undefined : Number(value),
+                })}
+              />
+
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                seats
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Leave empty if enrollment is unlimited.
+            </p>
+
+            <FieldError message={errors.capacity?.message} />
+          </div>
+        </div>
+      </section>
+
+      <div className="border-t" />
+
+      {/* Status */}
+      <section className="space-y-6">
+        <SectionHeader
+          icon={BookOpen}
+          title="Course Status"
+          description="Control whether this course is currently available."
+        />
+
+        <div className="max-w-md space-y-2">
           <Label htmlFor="status">Status</Label>
 
-          <select
-            id="status"
-            {...register("status")}
-            className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
+          <Select
+            value={selectedStatus}
+            onValueChange={(value) =>
+              setValue(
+                "status",
+                value as CourseFormValues["status"],
+                {
+                  shouldValidate: true,
+                },
+              )
+            }
           >
-            <option value="INACTIVE">Inactive</option>
+            <SelectItem value="INACTIVE">
+              Inactive
+            </SelectItem>
 
-            <option value="ACTIVE">Active</option>
+            <SelectItem value="ACTIVE">
+              Active
+            </SelectItem>
 
-            <option value="ARCHIVED">Archived</option>
-          </select>
+            <SelectItem value="ARCHIVED">
+              Archived
+            </SelectItem>
+          </Select>
 
-          {errors.status && (
-            <p className="text-sm text-destructive">{errors.status.message}</p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Active courses can be made available for enrollment.
+            Archived courses should generally no longer be used.
+          </p>
+
+          <FieldError message={errors.status?.message} />
         </div>
-      </div>
+      </section>
 
-      <LoadingButton
-        type="submit"
-        className="w-full"
-        loading={isSubmitting}
-        loadingText={
-          mode === "create" ? "Creating Course..." : "Updating Course..."
-        }
-      >
-        {mode === "create" ? "Create Course" : "Update Course"}
-      </LoadingButton>
+      {/* Actions */}
+      <div className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isSubmitting}
+          onClick={() => router.back()}
+        >
+          Cancel
+        </Button>
+
+        <LoadingButton
+          type="submit"
+          loading={isSubmitting}
+          loadingText={
+            mode === "create"
+              ? "Creating Course..."
+              : "Updating Course..."
+          }
+        >
+          {mode === "create"
+            ? "Create Course"
+            : "Save Changes"}
+        </LoadingButton>
+      </div>
     </form>
   );
 }

@@ -83,7 +83,7 @@ export default async function StudentAnnouncementsPage() {
   const announcements =
     await AnnouncementService.getPublishedForStudent(
       student.organizationId,
-      student.branchId,
+      session.user.branchId,
     );
 
   return (

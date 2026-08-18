@@ -41,3 +41,17 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# Local development backups / audit artifacts
+*.bak
+*.backup
+*.before-*
+chat-*.txt
+staff-*.txt
+output.txt
+
+# Additional local backup artifacts
+*.backup-*
+
+# Local chat snapshots
+.chat-*/

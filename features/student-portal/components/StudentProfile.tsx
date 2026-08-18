@@ -1,3 +1,4 @@
+import StudentAvatarUpload from "./StudentAvatarUpload";
 import {
   CalendarDays,
   Mail,
@@ -27,7 +28,7 @@ type StudentProfileProps = {
     };
     branch: {
       name: string;
-    };
+    } | null;
   };
 };
 
@@ -80,53 +81,62 @@ export default function StudentProfile({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          My Profile
-        </h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            My Profile
+          </h1>
 
-        <p className="mt-1 text-sm text-muted-foreground">
-          View your personal and academic information.
-        </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            View your personal and academic information.
+          </p>
+        </div>
+
+        <a
+          href="/student/profile/edit"
+          className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+        >
+          Edit Profile
+        </a>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border bg-card shadow-sm">
-        <div className="h-32 bg-primary" />
+      <div className="relative overflow-hidden rounded-3xl border bg-primary text-primary-foreground shadow-sm dark:border-white/10 dark:bg-slate-950 dark:text-white">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-primary/60 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
 
-        <div className="px-6 pb-6 sm:px-8">
-          <div className="-mt-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4">
-              {student.avatar ? (
-                <img
-                  src={student.avatar}
-                  alt={fullName}
-                  className="size-24 rounded-2xl border-4 border-card object-cover shadow-md"
-                />
-              ) : (
-                <div className="flex size-24 items-center justify-center rounded-2xl border-4 border-card bg-primary/10 text-3xl font-bold text-primary shadow-md">
-                  {student.firstName
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-              )}
+        <div className="absolute -right-24 -top-32 size-96 rounded-full bg-white/10 blur-3xl dark:bg-primary/10" />
+        <div className="absolute -left-32 bottom-[-180px] size-96 rounded-full bg-black/10 blur-3xl dark:bg-primary/5" />
 
-              <div className="pb-1">
-                <h2 className="text-xl font-bold">
+        <div className="absolute right-[18%] top-8 size-32 rounded-full border border-white/10" />
+        <div className="absolute right-[15%] top-3 size-44 rounded-full border border-white/5" />
+
+        <div className="relative flex min-h-[220px] flex-col justify-end p-6 sm:min-h-[240px] sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+
+            <div className="flex min-w-0 items-end gap-4">
+              <StudentAvatarUpload
+                firstName={student.firstName}
+                fullName={fullName}
+                avatar={student.avatar}
+              />
+
+              <div className="min-w-0 pb-1">
+                <h2 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
                   {fullName}
                 </h2>
 
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-sm text-white/75 dark:text-white/80">
                   {student.studentId}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-600">
-                <span className="size-1.5 rounded-full bg-green-500" />
+            <div className="self-start sm:self-auto">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow-sm backdrop-blur-md dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100">
+                <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 {student.status}
               </span>
             </div>
+
           </div>
         </div>
       </div>
@@ -217,7 +227,7 @@ export default function StudentProfile({
             <Detail
               icon={MapPin}
               label="Branch"
-              value={student.branch.name}
+              value={student.branch?.name ?? "Organization-level"}
             />
 
             <Detail

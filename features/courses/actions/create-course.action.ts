@@ -2,11 +2,11 @@
 
 import { requireAdmin } from "@/features/auth/authorization";
 
-import type { CreateCourseData } from "../types";
+import { courseSchema } from "../schemas/course.schema";
 import { CourseService } from "../services/course.service";
 
 export async function createCourseAction(
-  data: CreateCourseData,
+  data: unknown,
 ) {
   const session = await requireAdmin();
 
@@ -20,9 +20,22 @@ export async function createCourseAction(
     };
   }
 
+  const parsed = courseSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message:
+        parsed.error.issues[0]?.message ??
+        "Invalid course data.",
+    };
+  }
+
   return CourseService.create({
-    ...data,
-    organizationId: session.user.organizationId,
+    ...parsed.data,
+    organizationId:
+      session.user.organizationId,
     branchId: session.user.branchId,
+    createdById: session.user.id,
   });
 }

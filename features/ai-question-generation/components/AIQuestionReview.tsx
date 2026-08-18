@@ -207,56 +207,8 @@ function toggleSelect(id:string){
 }
 
 
-async function bulkApprove(){
-
-  if(!selected.length) return;
-
-  const result =
-    await approveManyAIGeneratedQuestionsAction({
-      ids:selected,
-    });
-
-  if(result.success){
-
-    setQuestions(current =>
-      current.map(q =>
-        selected.includes(q.id)
-          ? {...q,status:"APPROVED"}
-          : q
-      )
-    );
-
-    setSelected([]);
-
-  }
-
-}
 
 
-async function bulkReject(){
-
-  if(!selected.length) return;
-
-  const result =
-    await rejectManyAIGeneratedQuestionsAction({
-      ids:selected,
-    });
-
-  if(result.success){
-
-    setQuestions(current =>
-      current.map(q =>
-        selected.includes(q.id)
-          ? {...q,status:"REJECTED"}
-          : q
-      )
-    );
-
-    setSelected([]);
-
-  }
-
-}
 
 
 async function importQuestion(id:string){
@@ -629,58 +581,182 @@ async function importQuestion(id:string){
 
 
 
-            {question.type === "MCQ" &&
-              question.options && (
-                <div className="space-y-2">
+            {question.type === "MCQ" && (
+              <div className="space-y-4 rounded-lg border p-4">
+
+                <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium">
-                    Options
+                    MCQ Options
                   </p>
 
-                  {question.options.map((option,index)=>(
-                    <Input
-                      key={index}
-                      value={option}
-                      onChange={e =>
-                        setQuestions(current =>
-                          current.map(q =>
-                            q.id===question.id
-                            ? {
-                              ...q,
-                              options:q.options?.map(
-                                (item,i)=>
-                                  i===index
-                                  ? e.target.value
-                                  : item
-                              )
-                            }
-                            : q
-                          )
-                        )
-                      }
-                    />
+                  <span className="text-xs text-muted-foreground">
+                    {question.options?.length ?? 0} options
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+
+                  {(question.options ?? []).map((option,index)=>(
+                    <div
+                      key={`${question.id}-option-${index}`}
+                      className="flex items-center gap-2"
+                    >
+
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-medium">
+                        {String.fromCharCode(65 + index)}
+                      </div>
+
+                      <Input
+                        value={option}
+                        placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                        onChange={e => {
+                          const newValue = e.target.value;
+
+                          setQuestions(current =>
+                            current.map(q => {
+                              if (q.id !== question.id) {
+                                return q;
+                              }
+
+                              const oldValue =
+                                q.options?.[index] ?? "";
+
+                              const updatedOptions =
+                                (q.options ?? []).map(
+                                  (item,i) =>
+                                    i === index
+                                      ? newValue
+                                      : item
+                                );
+
+                              return {
+                                ...q,
+                                options: updatedOptions,
+                                correctAnswer:
+                                  q.correctAnswer === oldValue
+                                    ? newValue
+                                    : q.correctAnswer,
+                              };
+                            })
+                          );
+                        }}
+                      />
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        disabled={(question.options?.length ?? 0) <= 2}
+                        onClick={() => {
+                          setQuestions(current =>
+                            current.map(q => {
+                              if (q.id !== question.id) {
+                                return q;
+                              }
+
+                              const updatedOptions =
+                                [...(q.options ?? [])];
+
+                              const removedOption =
+                                updatedOptions[index];
+
+                              updatedOptions.splice(index,1);
+
+                              return {
+                                ...q,
+                                options: updatedOptions,
+                                correctAnswer:
+                                  q.correctAnswer === removedOption
+                                    ? updatedOptions[0] ?? null
+                                    : q.correctAnswer,
+                              };
+                            })
+                          );
+                        }}
+                        aria-label={`Remove option ${String.fromCharCode(65 + index)}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+
+                    </div>
                   ))}
 
-                  <p className="text-sm font-medium mt-3">
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setQuestions(current =>
+                      current.map(q =>
+                        q.id === question.id
+                          ? {
+                              ...q,
+                              options: [
+                                ...(q.options ?? []),
+                                "",
+                              ],
+                            }
+                          : q
+                      )
+                    );
+                  }}
+                >
+                  Add Option
+                </Button>
+
+                <div className="space-y-2 border-t pt-4">
+
+                  <p className="text-sm font-medium">
                     Correct Answer
                   </p>
 
-                  <Input
+                  <select
                     value={question.correctAnswer ?? ""}
                     onChange={e =>
                       setQuestions(current =>
                         current.map(q =>
-                          q.id===question.id
-                          ? {
-                            ...q,
-                            correctAnswer:e.target.value
-                          }
-                          : q
+                          q.id === question.id
+                            ? {
+                                ...q,
+                                correctAnswer:
+                                  e.target.value || null,
+                              }
+                            : q
                         )
                       )
                     }
-                  />
+                    className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  >
+
+                    <option value="">
+                      Select the correct option
+                    </option>
+
+                    {(question.options ?? []).map((option,index)=>(
+                      <option
+                        key={`${question.id}-correct-${index}`}
+                        value={option}
+                        disabled={!option.trim()}
+                      >
+                        {String.fromCharCode(65 + index)}
+                        {option.trim()
+                          ? ` — ${option}`
+                          : " — Empty option"}
+                      </option>
+                    ))}
+
+                  </select>
+
+                  <p className="text-xs text-muted-foreground">
+                    Select which option is the correct answer.
+                  </p>
+
                 </div>
-              )}
+
+              </div>
+            )}
 
             {question.type === "TRUE_FALSE" && (
               <div>

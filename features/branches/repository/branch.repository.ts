@@ -109,6 +109,87 @@ export class BranchRepository {
     });
   }
 
+  static async getOrganizationUsers(
+    organizationId: string,
+  ) {
+    return db.user.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        status: "ACTIVE",
+        role: {
+          in: ["BRANCH_ADMIN", "ORGANIZATION_ADMIN"],
+        },
+      },
+      orderBy: [
+        {
+          firstName: "asc",
+        },
+        {
+          lastName: "asc",
+        },
+      ],
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        branchId: true,
+        isBranchManager: true,
+        branch: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            isHeadquarters: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async getUserForBranchAssignment(
+    organizationId: string,
+    userId: string,
+  ) {
+    return db.user.findFirst({
+      where: {
+        id: userId,
+        organizationId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        branchId: true,
+        isBranchManager: true,
+      },
+    });
+  }
+
+  static async updateBranchAdministrator(
+    organizationId: string,
+    userId: string,
+    branchId: string,
+  ) {
+    return db.user.updateMany({
+      where: {
+        id: userId,
+        organizationId,
+        deletedAt: null,
+      },
+      data: {
+        role: "BRANCH_ADMIN",
+        branchId,
+        isBranchManager: true,
+      },
+    });
+  }
+
   static async getUserForBranchSecurity(
     userId: string,
     organizationId: string,

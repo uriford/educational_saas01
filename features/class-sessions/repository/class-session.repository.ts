@@ -156,6 +156,88 @@ export class ClassSessionRepository {
     });
   }
 
+  static async findTeacherConflict(data: {
+    organizationId: string;
+    branchId: string;
+    teacherId: string;
+    startTime: Date;
+    endTime: Date;
+    excludeId?: string;
+  }) {
+    return db.classSession.findFirst({
+      where: {
+        organizationId: data.organizationId,
+        branchId: data.branchId,
+        teacherId: data.teacherId,
+        deletedAt: null,
+        status: {
+          not: "CANCELLED",
+        },
+        ...(data.excludeId
+          ? {
+              id: {
+                not: data.excludeId,
+              },
+            }
+          : {}),
+        startTime: {
+          lt: data.endTime,
+        },
+        endTime: {
+          gt: data.startTime,
+        },
+      },
+      include: {
+        course: true,
+        teacher: true,
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    });
+  }
+
+  static async findRoomConflict(data: {
+    organizationId: string;
+    branchId: string;
+    room: string;
+    startTime: Date;
+    endTime: Date;
+    excludeId?: string;
+  }) {
+    return db.classSession.findFirst({
+      where: {
+        organizationId: data.organizationId,
+        branchId: data.branchId,
+        room: data.room,
+        deletedAt: null,
+        status: {
+          not: "CANCELLED",
+        },
+        ...(data.excludeId
+          ? {
+              id: {
+                not: data.excludeId,
+              },
+            }
+          : {}),
+        startTime: {
+          lt: data.endTime,
+        },
+        endTime: {
+          gt: data.startTime,
+        },
+      },
+      include: {
+        course: true,
+        teacher: true,
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    });
+  }
+
   static async update(
     id: string,
     organizationId: string,

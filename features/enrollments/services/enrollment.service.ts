@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { EnrollmentRepository } from "../repository/enrollment.repository";
+import { NotificationAutomationService } from "@/features/notifications/services/notification-automation.service";
 
 type EnrollmentStatus =
   | "ACTIVE"
@@ -22,6 +23,7 @@ export class EnrollmentService {
     data: CreateEnrollmentInput,
     organizationId: string,
     branchId?: string,
+    actorId?: string,
   ) {
     try {
       const student = await db.student.findFirst({
@@ -102,6 +104,28 @@ export class EnrollmentService {
           courseId: data.courseId,
         });
 
+      await db.auditLog.create({
+        data: {
+          organizationId,
+          branchId: student.branchId,
+          userId: actorId ?? null,
+          action: "CREATE",
+          entityType: "CourseEnrollment",
+          entityId: enrollment.id,
+          description: `Student ${student.studentId} enrolled in ${course.name}.`,
+        },
+      });
+
+      await NotificationAutomationService.notifyStudent({
+        studentId: student.id,
+        organizationId,
+        type: "SUCCESS",
+        title: "Enrollment confirmed",
+        message: `You have been successfully enrolled in ${course.name}.`,
+        href: `/student/courses/${course.id}`,
+        dedupeKey: `student-enrollment-created:${enrollment.id}`,
+      });
+
       return {
         success: true,
         message: "Student enrolled successfully.",
@@ -161,6 +185,7 @@ export class EnrollmentService {
     data: UpdateEnrollmentInput,
     organizationId: string,
     branchId?: string,
+    actorId?: string,
   ) {
     try {
       if (
@@ -217,6 +242,37 @@ export class EnrollmentService {
         };
       }
 
+      await db.auditLog.create({
+        data: {
+          organizationId,
+          branchId: branchId ?? null,
+          userId: actorId ?? null,
+          action: "UPDATE",
+          entityType: "CourseEnrollment",
+          entityId: id,
+          description: `Enrollment updated: status ${data.status}, progress ${data.progress}%.`,
+        },
+      });
+
+      await NotificationAutomationService.notifyStudent({
+        studentId: enrollment.studentId,
+        organizationId,
+        type:
+          data.status === "COMPLETED"
+            ? "SUCCESS"
+            : "STUDENT",
+        title:
+          data.status === "COMPLETED"
+            ? "Course completed"
+            : "Enrollment updated",
+        message:
+          data.status === "COMPLETED"
+            ? "Congratulations! Your course enrollment has been marked as completed."
+            : `Your enrollment status is now ${data.status}. Your progress is ${data.progress}%.`,
+        href: `/student/courses/${enrollment.courseId}`,
+        dedupeKey: `student-enrollment-updated:${id}:${data.status}:${data.progress}`,
+      });
+
       return {
         success: true,
         message:
@@ -241,6 +297,7 @@ export class EnrollmentService {
     organizationId: string,
     branchId: string | undefined,
     status: EnrollmentStatus,
+    actorId?: string,
   ) {
     try {
       const enrollment =
@@ -271,6 +328,29 @@ export class EnrollmentService {
           message: "Enrollment not found.",
         };
       }
+
+      await db.auditLog.create({
+        data: {
+          organizationId,
+          branchId: branchId ?? null,
+          userId: actorId ?? null,
+          action: "UPDATE",
+          entityType: "CourseEnrollment",
+          entityId: id,
+          description: `Enrollment status changed to ${status}.`,
+        },
+      });
+
+      await NotificationAutomationService.notifyAdmins({
+        organizationId,
+        branchId,
+        actorId,
+        type: "STUDENT",
+        title: "Enrollment status updated",
+        message: `An enrollment status was changed to ${status}.`,
+        href: `/students/${enrollment.studentId}`,
+        dedupeKey: `enrollment-status:${id}:${Date.now()}`,
+      });
 
       return {
         success: true,

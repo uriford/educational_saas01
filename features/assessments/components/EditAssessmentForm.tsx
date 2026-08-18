@@ -44,7 +44,7 @@ export default function EditAssessmentForm({
     assessment.passingMarks.toString(),
   );
 
-  const [maxAttempts, setMaxAttempts] = useState(
+  const [maxAttempts] = useState(
     assessment.maxAttempts.toString(),
   );
   const [status, setStatus] = useState(assessment.status);

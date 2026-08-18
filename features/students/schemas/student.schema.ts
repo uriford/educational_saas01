@@ -21,6 +21,13 @@ export const studentSchema = z.object({
 
   guardianName: z.string().min(2, "Guardian name is required"),
 
+  guardianEmail: z
+    .string()
+    .trim()
+    .email("Invalid guardian email")
+    .optional()
+    .or(z.literal("")),
+    
   guardianPhone: z.string().min(11, "Guardian phone is required"),
 });
 

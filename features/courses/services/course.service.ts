@@ -1,11 +1,11 @@
+import { Prisma } from "@prisma/client";
+
 import { CourseRepository } from "../repository/course.repository";
 
 import type {
-  CreateCourseData,
   CreateCourseRepositoryData,
-  UpdateCourseData,
+  UpdateCourseRepositoryData,
 } from "../types";
-import { CourseSchedulerService } from "./course-sheduler.service";
 
 export class CourseService {
   static async create(data: CreateCourseRepositoryData) {
@@ -17,7 +17,17 @@ export class CourseService {
         message: "Course created successfully.",
       };
     } catch (error) {
-      console.error(error);
+      console.error("CourseService.create:", error);
+
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return {
+          success: false,
+          message: "A course with this code already exists.",
+        };
+      }
 
       return {
         success: false,
@@ -26,21 +36,33 @@ export class CourseService {
     }
   }
 
-static async getAll(
-  organizationId: string,
-  branchId?: string,
-  search?: string,
-  page = 1,
-  limit = 10,
-) {
-  return CourseRepository.findAll(
-    organizationId,
-    branchId,
-    search,
-    page,
-    limit,
-  );
-}
+  static async getAll(
+    organizationId: string,
+    branchId?: string,
+    search?: string,
+    page = 1,
+    limit = 10,
+  ) {
+    return CourseRepository.findAll(
+      organizationId,
+      branchId,
+      search,
+      page,
+      limit,
+    );
+  }
+
+  static async getAvailableForStudent(
+    studentId: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return CourseRepository.findAvailableForStudent(
+      studentId,
+      organizationId,
+      branchId,
+    );
+  }
 
   static async getById(
     id: string,
@@ -58,7 +80,7 @@ static async getAll(
     id: string,
     organizationId: string,
     branchId: string,
-    data: UpdateCourseData,
+    data: UpdateCourseRepositoryData,
   ) {
     try {
       const result = await CourseRepository.update(
@@ -80,7 +102,17 @@ static async getAll(
         message: "Course updated successfully.",
       };
     } catch (error) {
-      console.error(error);
+      console.error("CourseService.update:", error);
+
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return {
+          success: false,
+          message: "A course with this code already exists.",
+        };
+      }
 
       return {
         success: false,
@@ -92,13 +124,15 @@ static async getAll(
   static async softDelete(
     id: string,
     organizationId: string,
-    branchId?: string,
+    branchId: string,
+    updatedById: string,
   ) {
     try {
       const result = await CourseRepository.softDelete(
         id,
         organizationId,
         branchId,
+        updatedById,
       );
 
       if (result.count === 0) {
@@ -113,7 +147,7 @@ static async getAll(
         message: "Course deleted successfully.",
       };
     } catch (error) {
-      console.error(error);
+      console.error("CourseService.softDelete:", error);
 
       return {
         success: false,

@@ -80,3 +80,83 @@ export async function setBranchCreationPasswordAction(
     };
   }
 }
+
+
+export async function getOrganizationUsersAction() {
+  const session = await auth();
+
+  if (
+    !session?.user?.id ||
+    !session.user.organizationId
+  ) {
+    return {
+      success: false,
+      message: "Unauthorized.",
+      users: [],
+    };
+  }
+
+  try {
+    const users =
+      await BranchService.getOrganizationUsers(
+        session.user.organizationId,
+        session.user.id,
+      );
+
+    return {
+      success: true,
+      message: "Users loaded successfully.",
+      users,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to load organization users.",
+      users: [],
+    };
+  }
+}
+
+export async function assignBranchAdminAction(data: {
+  userId: string;
+  branchId: string;
+}) {
+  const session = await auth();
+
+  if (
+    !session?.user?.id ||
+    !session.user.organizationId
+  ) {
+    return {
+      success: false,
+      message: "Unauthorized.",
+    };
+  }
+
+  if (session.user.role !== "ORGANIZATION_ADMIN") {
+    return {
+      success: false,
+      message:
+        "Only organization admins can assign branch administrators.",
+    };
+  }
+
+  try {
+    return await BranchService.assignBranchAdmin(
+      session.user.organizationId,
+      session.user.id,
+      data,
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to assign branch administrator.",
+    };
+  }
+}

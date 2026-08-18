@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
+  CheckCircle2,
   ChevronDown,
   Clock3,
   Edit3,
@@ -14,6 +15,7 @@ import {
   Plus,
   RotateCcw,
   UserRound,
+  XCircle,
 } from "lucide-react";
 
 import DeleteClassSessionButton from "@/features/class-sessions/components/DeleteClassSessionButton";
@@ -74,7 +76,6 @@ function endOfWeek(date: Date) {
   const result = startOfWeek(date);
 
   result.setDate(result.getDate() + 6);
-
   result.setHours(23, 59, 59, 999);
 
   return result;
@@ -100,19 +101,70 @@ function formatTime(value: string) {
   }).format(new Date(value));
 }
 
+function formatWeekRange(start: Date, end: Date) {
+  const sameYear =
+    start.getFullYear() === end.getFullYear();
+
+  if (sameYear) {
+    return `${new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+    }).format(start)} – ${new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+    }).format(end)}, ${end.getFullYear()}`;
+  }
+
+  return `${formatDate(start)}, ${start.getFullYear()} – ${formatDate(
+    end,
+  )}, ${end.getFullYear()}`;
+}
+
+function statusLabel(status: ScheduleSession["status"]) {
+  switch (status) {
+    case "ONGOING":
+      return "Ongoing";
+
+    case "COMPLETED":
+      return "Completed";
+
+    case "CANCELLED":
+      return "Cancelled";
+
+    default:
+      return "Scheduled";
+  }
+}
+
 function statusStyles(status: ScheduleSession["status"]) {
   switch (status) {
     case "ONGOING":
-      return "border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40";
+      return "border-blue-200/80 bg-blue-50/80 dark:border-blue-900/70 dark:bg-blue-950/40";
 
     case "COMPLETED":
-      return "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40";
+      return "border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-900/70 dark:bg-emerald-950/40";
 
     case "CANCELLED":
-      return "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40";
+      return "border-red-200/80 bg-red-50/80 dark:border-red-900/70 dark:bg-red-950/40";
 
     default:
-      return "border-primary/20 bg-primary/[0.045]";
+      return "border-primary/15 bg-primary/[0.035]";
+  }
+}
+
+function statusBadgeStyles(status: ScheduleSession["status"]) {
+  switch (status) {
+    case "ONGOING":
+      return "bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300";
+
+    case "COMPLETED":
+      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300";
+
+    case "CANCELLED":
+      return "bg-red-100 text-red-700 dark:bg-red-950/70 dark:text-red-300";
+
+    default:
+      return "bg-primary/10 text-primary";
   }
 }
 
@@ -140,6 +192,31 @@ function sameDay(dateA: Date, dateB: Date) {
   );
 }
 
+function StatusIcon({
+  status,
+}: {
+  status: ScheduleSession["status"];
+}) {
+  switch (status) {
+    case "COMPLETED":
+      return (
+        <CheckCircle2 className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+
+    case "CANCELLED":
+      return (
+        <XCircle className="size-3.5 shrink-0 text-muted-foreground" />
+      );
+
+    default:
+      return (
+        <span
+          className={`size-1.5 shrink-0 rounded-full ${statusDot(status)}`}
+        />
+      );
+  }
+}
+
 export default function AdminScheduleBoard({
   sessions,
   courses,
@@ -159,10 +236,7 @@ export default function AdminScheduleBoard({
       .filter((session) => {
         const date = new Date(session.startTime);
 
-        return (
-          date >= currentWeek &&
-          date <= weekEnd
-        );
+        return date >= currentWeek && date <= weekEnd;
       })
       .filter((session) => {
         if (selectedCourse === "ALL") {
@@ -203,6 +277,26 @@ export default function AdminScheduleBoard({
 
   const today = new Date();
 
+  const scheduledCount = weekSessions.filter(
+    (item) => item.status === "SCHEDULED",
+  ).length;
+
+  const ongoingCount = weekSessions.filter(
+    (item) => item.status === "ONGOING",
+  ).length;
+
+  const completedCount = weekSessions.filter(
+    (item) => item.status === "COMPLETED",
+  ).length;
+
+  const cancelledCount = weekSessions.filter(
+    (item) => item.status === "CANCELLED",
+  ).length;
+
+  const courseCount = new Set(
+    weekSessions.map((item) => item.courseId),
+  ).size;
+
   function previousWeek() {
     const date = new Date(currentWeek);
 
@@ -228,29 +322,35 @@ export default function AdminScheduleBoard({
       {/* Header */}
       <section>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
-                <CalendarDays className="size-5 text-primary" />
-              </div>
+          <div className="flex items-start gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/10">
+              <CalendarDays className="size-5 text-primary" />
+            </div>
 
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                   Schedule
                 </h1>
 
-                <p className="text-sm text-muted-foreground">
-                  Manage classes, teachers, rooms, and weekly
-                  schedules.
-                </p>
+                {readOnly && (
+                  <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                    View only
+                  </span>
+                )}
               </div>
+
+              <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+                Manage classes, teachers, rooms, and weekly
+                schedules.
+              </p>
             </div>
           </div>
 
           {!readOnly && (
             <Link
               href="/schedule/create"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-auto"
             >
               <Plus className="size-4" />
               Schedule a Class
@@ -260,32 +360,33 @@ export default function AdminScheduleBoard({
       </section>
 
       {/* Controls */}
-      <section className="rounded-2xl border bg-card p-4 shadow-sm">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <section className="rounded-2xl border bg-card p-3 shadow-sm sm:p-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:flex">
             <button
               type="button"
               onClick={previousWeek}
-              className="inline-flex h-10 items-center justify-center rounded-lg border bg-background px-3 text-sm font-medium transition hover:bg-muted"
+              aria-label="Previous week"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ArrowLeft className="size-4" />
             </button>
 
-            <div className="min-w-[220px] text-center">
-              <p className="text-sm font-semibold">
-                {formatDate(currentWeek)} –{" "}
-                {formatDate(weekEnd)}
+            <div className="min-w-0 flex-1 text-center sm:min-w-[250px]">
+              <p className="truncate text-sm font-semibold">
+                {formatWeekRange(currentWeek, weekEnd)}
               </p>
 
-              <p className="text-xs text-muted-foreground">
-                {currentWeek.getFullYear()}
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Weekly timetable
               </p>
             </div>
 
             <button
               type="button"
               onClick={nextWeek}
-              className="inline-flex h-10 items-center justify-center rounded-lg border bg-background px-3 text-sm font-medium transition hover:bg-muted"
+              aria-label="Next week"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ArrowRight className="size-4" />
             </button>
@@ -293,20 +394,25 @@ export default function AdminScheduleBoard({
             <button
               type="button"
               onClick={goToToday}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition hover:bg-muted"
+              className="col-span-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border bg-background px-3 text-xs font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:ml-1 sm:h-10 sm:text-sm"
             >
-              <RotateCcw className="size-4" />
+              <RotateCcw className="size-3.5 sm:size-4" />
               Today
             </button>
           </div>
 
-          <div className="relative">
+          <div className="relative w-full xl:w-auto">
+            <label htmlFor="schedule-course-filter" className="sr-only">
+              Filter schedule by course
+            </label>
+
             <select
+              id="schedule-course-filter"
               value={selectedCourse}
               onChange={(event) =>
                 setSelectedCourse(event.target.value)
               }
-              className="h-10 min-w-[230px] appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="h-10 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring xl:min-w-[250px]"
             >
               <option value="ALL">
                 All courses
@@ -328,52 +434,46 @@ export default function AdminScheduleBoard({
       </section>
 
       {/* Summary */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border bg-card p-5 shadow-sm">
-          <p className="text-sm text-muted-foreground">
-            Classes this week
-          </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard
+          label="Classes this week"
+          value={weekSessions.length}
+          hint={`${courseCount} ${
+            courseCount === 1 ? "course" : "courses"
+          } involved`}
+        />
 
-          <p className="mt-2 text-2xl font-bold">
-            {weekSessions.length}
-          </p>
-        </div>
+        <SummaryCard
+          label="Scheduled"
+          value={scheduledCount}
+          hint="Upcoming classes"
+        />
 
-        <div className="rounded-2xl border bg-card p-5 shadow-sm">
-          <p className="text-sm text-muted-foreground">
-            Scheduled
-          </p>
+        <SummaryCard
+          label="Completed"
+          value={completedCount}
+          hint={
+            ongoingCount > 0
+              ? `${ongoingCount} ongoing now`
+              : "Completed classes"
+          }
+        />
 
-          <p className="mt-2 text-2xl font-bold">
-            {
-              weekSessions.filter(
-                (item) => item.status === "SCHEDULED",
-              ).length
-            }
-          </p>
-        </div>
-
-        <div className="rounded-2xl border bg-card p-5 shadow-sm">
-          <p className="text-sm text-muted-foreground">
-            Courses involved
-          </p>
-
-          <p className="mt-2 text-2xl font-bold">
-            {
-              new Set(
-                weekSessions.map(
-                  (item) => item.courseId,
-                ),
-              ).size
-            }
-          </p>
-        </div>
+        <SummaryCard
+          label="Cancelled"
+          value={cancelledCount}
+          hint={
+            cancelledCount > 0
+              ? "Cancelled this week"
+              : "No cancellations"
+          }
+        />
       </div>
 
       {/* Weekly board */}
       <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <div className="border-b p-5">
-          <div className="flex items-center justify-between">
+        <div className="border-b px-4 py-4 sm:px-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-semibold">
                 Weekly Timetable
@@ -382,32 +482,37 @@ export default function AdminScheduleBoard({
               <p className="mt-1 text-sm text-muted-foreground">
                 {readOnly
                   ? "Your weekly class timetable."
-                  : "Select a class to edit or remove it."}
+                  : "Manage your scheduled classes from one place."}
               </p>
             </div>
 
-            <div className="hidden items-center gap-4 text-xs text-muted-foreground sm:flex">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-primary" />
-                Scheduled
-              </span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+              <StatusLegend
+                status="SCHEDULED"
+                label="Scheduled"
+              />
 
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-blue-500" />
-                Ongoing
-              </span>
+              <StatusLegend
+                status="ONGOING"
+                label="Ongoing"
+              />
 
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-emerald-500" />
-                Completed
-              </span>
+              <StatusLegend
+                status="COMPLETED"
+                label="Completed"
+              />
+
+              <StatusLegend
+                status="CANCELLED"
+                label="Cancelled"
+              />
             </div>
           </div>
         </div>
 
         {/* Desktop timetable */}
         <div className="hidden overflow-x-auto lg:block">
-          <div className="grid min-w-[1100px] grid-cols-7 divide-x">
+          <div className="grid min-w-[1120px] grid-cols-7 divide-x">
             {days.map((day) => {
               const isToday = sameDay(
                 day.date,
@@ -417,17 +522,19 @@ export default function AdminScheduleBoard({
               return (
                 <div
                   key={day.name}
-                  className="min-h-[520px]"
+                  className={`min-h-[420px] ${
+                    isToday ? "bg-primary/[0.018]" : ""
+                  }`}
                 >
                   <div
-                    className={`border-b px-4 py-4 text-center ${
+                    className={`border-b px-3 py-4 text-center ${
                       isToday
                         ? "bg-primary/[0.06]"
                         : "bg-muted/20"
                     }`}
                   >
                     <p
-                      className={`text-xs font-semibold uppercase tracking-wide ${
+                      className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${
                         isToday
                           ? "text-primary"
                           : "text-muted-foreground"
@@ -436,29 +543,32 @@ export default function AdminScheduleBoard({
                       {formatDay(day.date)}
                     </p>
 
-                    <p
-                      className={`mt-1 text-lg font-bold ${
-                        isToday
-                          ? "text-primary"
-                          : ""
-                      }`}
-                    >
-                      {day.date.getDate()}
-                    </p>
+                    <div className="mt-1 flex items-center justify-center gap-2">
+                      <p
+                        className={`text-xl font-bold ${
+                          isToday ? "text-primary" : ""
+                        }`}
+                      >
+                        {day.date.getDate()}
+                      </p>
+
+                      {isToday && (
+                        <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                          Today
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3 p-3">
                     {day.sessions.length === 0 ? (
-                      <div className="flex min-h-28 items-center justify-center rounded-xl border border-dashed text-center">
-                        <p className="text-xs text-muted-foreground">
-                          No classes
-                        </p>
-                      </div>
+                      <EmptyDayState />
                     ) : (
                       day.sessions.map((item) => (
                         <ScheduleCard
                           key={item.id}
                           session={item}
+                          readOnly={readOnly}
                         />
                       ))
                     )}
@@ -478,37 +588,52 @@ export default function AdminScheduleBoard({
             );
 
             return (
-              <div key={day.name} className="p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p
-                      className={`text-xs font-semibold uppercase tracking-wide ${
+              <div
+                key={day.name}
+                className={`p-4 sm:p-5 ${
+                  isToday ? "bg-primary/[0.018]" : ""
+                }`}
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${
                         isToday
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                          ? "border-primary/20 bg-primary/10 text-primary"
+                          : "bg-muted/30 text-muted-foreground"
                       }`}
                     >
-                      {day.name}
-                    </p>
+                      <span className="text-sm font-bold">
+                        {day.date.getDate()}
+                      </span>
+                    </div>
 
-                    <p className="mt-1 font-bold">
-                      {formatDate(day.date)}
-                    </p>
+                    <div>
+                      <p
+                        className={`text-xs font-semibold uppercase tracking-[0.1em] ${
+                          isToday
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {day.name}
+                      </p>
+
+                      <p className="mt-0.5 text-sm font-semibold">
+                        {formatDate(day.date)}
+                      </p>
+                    </div>
                   </div>
 
                   {isToday && (
-                    <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
                       Today
                     </span>
                   )}
                 </div>
 
                 {day.sessions.length === 0 ? (
-                  <div className="rounded-xl border border-dashed p-5 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      No classes scheduled.
-                    </p>
-                  </div>
+                  <EmptyDayState mobile />
                 ) : (
                   <div className="space-y-3">
                     {day.sessions.map((item) => (
@@ -524,7 +649,85 @@ export default function AdminScheduleBoard({
             );
           })}
         </div>
+
+        {weekSessions.length === 0 && (
+          <div className="border-t bg-muted/[0.12] px-5 py-10 text-center">
+            <CalendarDays className="mx-auto size-8 text-muted-foreground/50" />
+
+            <p className="mt-3 text-sm font-medium">
+              No classes found
+            </p>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              Try another week or change the course filter.
+            </p>
+          </div>
+        )}
       </section>
+    </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-2xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+
+      <div className="mt-2 flex items-end justify-between gap-3">
+        <p className="text-2xl font-bold tracking-tight">
+          {value}
+        </p>
+
+        <span className="text-right text-[11px] text-muted-foreground">
+          {hint}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StatusLegend({
+  status,
+  label,
+}: {
+  status: ScheduleSession["status"];
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className={`size-2 rounded-full ${statusDot(status)}`}
+      />
+
+      {label}
+    </span>
+  );
+}
+
+function EmptyDayState({
+  mobile = false,
+}: {
+  mobile?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-center rounded-xl border border-dashed bg-muted/[0.08] text-center ${
+        mobile ? "min-h-20 px-4" : "min-h-24 px-3"
+      }`}
+    >
+      <p className="text-xs text-muted-foreground">
+        No classes scheduled
+      </p>
     </div>
   );
 }
@@ -537,28 +740,42 @@ function ScheduleCard({
   readOnly?: boolean;
 }) {
   return (
-    <div
-      className={`group rounded-xl border p-3 transition-all hover:-translate-y-0.5 hover:shadow-md ${statusStyles(
+    <article
+      className={`group rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-ring ${statusStyles(
         session.status,
       )}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="inline-flex max-w-[80%] items-center gap-1.5 truncate rounded-md bg-background/80 px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
+        <span className="inline-flex min-w-0 max-w-[68%] items-center gap-1.5 truncate rounded-md bg-background/80 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-foreground/80">
           <span
             className={`size-1.5 shrink-0 rounded-full ${statusDot(
               session.status,
             )}`}
           />
 
-          {session.courseCode}
+          <span className="truncate">
+            {session.courseCode}
+          </span>
         </span>
 
-        <span className="text-[10px] font-medium text-muted-foreground">
+        <span className="shrink-0 text-[10px] font-semibold text-muted-foreground">
           {formatTime(session.startTime)}
         </span>
       </div>
 
-      <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-5">
+      <div className="mt-2.5 flex items-center gap-1.5">
+        <StatusIcon status={session.status} />
+
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusBadgeStyles(
+            session.status,
+          )}`}
+        >
+          {statusLabel(session.status)}
+        </span>
+      </div>
+
+      <h3 className="mt-2.5 line-clamp-2 text-sm font-semibold leading-5">
         {session.title}
       </h3>
 
@@ -576,7 +793,7 @@ function ScheduleCard({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-1.5">
           <UserRound className="size-3.5 shrink-0" />
 
           <span className="truncate">
@@ -585,7 +802,7 @@ function ScheduleCard({
         </div>
 
         {session.room && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
             <MapPin className="size-3.5 shrink-0" />
 
             <span className="truncate">
@@ -596,10 +813,11 @@ function ScheduleCard({
       </div>
 
       {!readOnly && (
-        <div className="mt-3 flex items-center gap-2 border-t border-current/10 pt-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+        <div className="mt-3 flex items-center gap-2 border-t border-current/10 pt-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <Link
             href={`/courses/${session.courseId}/classes/${session.id}/edit`}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border bg-background/80 px-2 py-1.5 text-xs font-medium transition hover:bg-background"
+            aria-label={`Edit ${session.title}`}
+            className="inline-flex min-h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border bg-background/80 px-2 py-1.5 text-xs font-medium transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Edit3 className="size-3.5" />
             Edit
@@ -610,6 +828,6 @@ function ScheduleCard({
           />
         </div>
       )}
-    </div>
+    </article>
   );
 }

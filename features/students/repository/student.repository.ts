@@ -220,6 +220,119 @@ static async createWithGeneratedId(
   });
 }
 
+  static async updateOwnAvatar(
+    id: string,
+    userId: string,
+    organizationId: string,
+    branchId: string,
+    avatar: string,
+  ) {
+    return db.$transaction(async (tx) => {
+      const studentResult = await tx.student.updateMany({
+        where: {
+          id,
+          userId,
+          organizationId,
+          branchId,
+          deletedAt: null,
+        },
+        data: {
+          avatar,
+        },
+      });
+
+      if (studentResult.count === 0) {
+        return studentResult;
+      }
+
+      await tx.user.updateMany({
+        where: {
+          id: userId,
+          deletedAt: null,
+        },
+        data: {
+          avatar,
+        },
+      });
+
+      console.log(
+        "========== STUDENT + USER AVATAR UPDATE ==========",
+      );
+
+      console.log({
+        studentId: id,
+        userId,
+        organizationId,
+        branchId,
+        avatar,
+        updatedStudentCount: studentResult.count,
+      });
+
+      return studentResult;
+    });
+  }
+  static async removeOwnAvatar(
+    id: string,
+    userId: string,
+    organizationId: string,
+    branchId: string,
+  ) {
+    return db.student.updateMany({
+      where: {
+        id,
+        userId,
+        organizationId,
+        branchId,
+        deletedAt: null,
+      },
+      data: {
+        avatar: null,
+      },
+    });
+  }
+
+  static async updateOwnProfile(
+    id: string,
+    userId: string,
+    organizationId: string,
+    branchId: string,
+    data: {
+      firstName: string;
+      lastName?: string;
+      phone?: string;
+      gender?: "MALE" | "FEMALE" | "OTHER";
+      dateOfBirth?: string;
+      address?: string;
+      guardianName?: string;
+      guardianPhone?: string;
+      guardianEmail?: string;
+    },
+  ) {
+    return db.student.updateMany({
+      where: {
+        id,
+        userId,
+        organizationId,
+        branchId,
+        deletedAt: null,
+      },
+
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName || null,
+        phone: data.phone || null,
+        gender: data.gender ?? null,
+        dateOfBirth: data.dateOfBirth
+          ? new Date(data.dateOfBirth)
+          : null,
+        address: data.address || null,
+        guardianName: data.guardianName || null,
+        guardianPhone: data.guardianPhone || null,
+        guardianEmail: data.guardianEmail || null,
+      },
+    });
+  }
+
   static async update(
     id: string,
     organizationId: string,

@@ -1,15 +1,31 @@
 import {
   LayoutDashboard,
+  Building2,
   Users,
   GraduationCap,
   BookOpen,
   CalendarDays,
+  MessageCircle,
+  CreditCard,
   Bell,
   BarChart3,
   Settings,
 } from "lucide-react";
 
-export const items = [
+export const platformItems = [
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Organizations",
+    href: "/organizations",
+    icon: Building2,
+  },
+];
+
+export const organizationItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -36,6 +52,16 @@ export const items = [
     icon: CalendarDays,
   },
   {
+    title: "Communication",
+    href: "/communication",
+    icon: MessageCircle,
+  },
+  {
+    title: "Payments",
+    href: "/payments",
+    icon: CreditCard,
+  },
+  {
     title: "Announcements",
     href: "/announcements",
     icon: Bell,
@@ -51,3 +77,5 @@ export const items = [
     icon: Settings,
   },
 ];
+
+export const items = organizationItems;

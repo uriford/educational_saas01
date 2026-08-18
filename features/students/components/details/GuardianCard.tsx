@@ -1,4 +1,5 @@
 import {
+  Mail,
   Phone,
   ShieldCheck,
   UserRound,
@@ -42,6 +43,12 @@ export default function GuardianCard({
           icon={<UserRound size={18} />}
           label="Guardian Name"
           value={student.guardianName}
+        />
+
+        <DetailItem
+          icon={<Mail size={18} />}
+          label="Guardian Email"
+          value={student.guardianEmail}
         />
 
         <DetailItem

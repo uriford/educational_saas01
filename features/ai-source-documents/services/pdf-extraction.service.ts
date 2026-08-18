@@ -25,6 +25,15 @@ if (PDFParse.isNodeJS) {
   PDFParse.setWorker(PDF_WORKER_PATH);
 }
 
+function normalizeText(value: string): string {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export class PDFExtractionService {
   static async extract(
     buffer: Buffer,
@@ -40,12 +49,7 @@ export class PDFExtractionService {
     try {
       const result = await parser.getText();
 
-      const text = result.text
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .replace(/[ \t]+/g, " ")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
+      const text = normalizeText(result.text);
 
       if (!text) {
         throw new Error(
@@ -53,16 +57,11 @@ export class PDFExtractionService {
         );
       }
 
-      const pages =
-        result.pages?.map((page, index) => ({
-          pageNumber: index + 1,
-          text: page.text
-            .replace(/\r\n/g, "\n")
-            .replace(/\r/g, "\n")
-            .replace(/[ \t]+/g, " ")
-            .replace(/\n{3,}/g, "\n\n")
-            .trim(),
-        })) ?? [];
+      const pages: PDFExtractionPage[] =
+        result.pages.map((page) => ({
+          pageNumber: page.num,
+          text: normalizeText(page.text),
+        }));
 
       return {
         text,

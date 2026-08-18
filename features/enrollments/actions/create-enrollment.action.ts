@@ -42,6 +42,7 @@ export async function createEnrollmentAction(
       parsed.data,
       organizationId,
       branchId ?? undefined,
+      session.user.id,
     );
   } catch (error) {
     console.error(

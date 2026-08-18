@@ -1,9 +1,14 @@
 import { db } from "@/lib/db";
 
-import type { CreateCourseRepositoryData, UpdateCourseData } from "../types";
+import type {
+  CreateCourseRepositoryData,
+  UpdateCourseRepositoryData,
+} from "../types";
 
 export class CourseRepository {
-  static async create(data: CreateCourseRepositoryData) {
+  static async create(
+    data: CreateCourseRepositoryData,
+  ) {
     return db.course.create({
       data: {
         organizationId: data.organizationId,
@@ -17,9 +22,15 @@ export class CourseRepository {
         capacity: data.capacity,
         status: data.status ?? "INACTIVE",
 
-        startDate: data.startDate ? new Date(data.startDate) : null,
+        startDate: data.startDate
+          ? new Date(data.startDate)
+          : null,
 
-        endDate: data.endDate ? new Date(data.endDate) : null,
+        endDate: data.endDate
+          ? new Date(data.endDate)
+          : null,
+
+        createdById: data.createdById,
       },
     });
   }
@@ -91,7 +102,61 @@ export class CourseRepository {
     };
   }
 
-  static async findById(id: string, organizationId: string, branchId?: string) {
+  static async findAvailableForStudent(
+    studentId: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
+    return db.course.findMany({
+      where: {
+        organizationId,
+        ...(branchId && { branchId }),
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+
+      include: {
+        enrollments: {
+          where: {
+            studentId,
+          },
+          select: {
+            id: true,
+            status: true,
+            progress: true,
+            enrolledAt: true,
+          },
+        },
+
+        _count: {
+          select: {
+            enrollments: {
+              where: {
+                status: {
+                  in: ["ACTIVE", "SUSPENDED"],
+                },
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: [
+        {
+          startDate: "asc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
+    });
+  }
+
+  static async findById(
+    id: string,
+    organizationId: string,
+    branchId?: string,
+  ) {
     return db.course.findFirst({
       where: {
         id,
@@ -111,7 +176,48 @@ export class CourseRepository {
     id: string,
     organizationId: string,
     branchId: string,
-    data: UpdateCourseData,
+    data: UpdateCourseRepositoryData,
+  ) {
+    const {
+      updatedById,
+      startDate,
+      endDate,
+      ...courseData
+    } = data;
+
+    return db.course.updateMany({
+      where: {
+        id,
+        organizationId,
+        branchId,
+        deletedAt: null,
+      },
+
+      data: {
+        ...courseData,
+
+        startDate: startDate
+          ? new Date(startDate)
+          : startDate === ""
+            ? null
+            : undefined,
+
+        endDate: endDate
+          ? new Date(endDate)
+          : endDate === ""
+            ? null
+            : undefined,
+
+        updatedById,
+      },
+    });
+  }
+
+  static async softDelete(
+    id: string,
+    organizationId: string,
+    branchId: string,
+    updatedById: string,
   ) {
     return db.course.updateMany({
       where: {
@@ -122,43 +228,16 @@ export class CourseRepository {
       },
 
       data: {
-        ...data,
-
-        startDate: data.startDate
-          ? new Date(data.startDate)
-          : data.startDate === ""
-            ? null
-            : undefined,
-
-        endDate: data.endDate
-          ? new Date(data.endDate)
-          : data.endDate === ""
-            ? null
-            : undefined,
+        deletedAt: new Date(),
+        updatedById,
       },
     });
   }
 
-  static async softDelete(
-    id: string,
+  static async count(
     organizationId: string,
     branchId?: string,
   ) {
-    return db.course.updateMany({
-      where: {
-        id,
-        organizationId,
-        ...(branchId && { branchId }),
-        deletedAt: null,
-      },
-
-      data: {
-        deletedAt: new Date(),
-      },
-    });
-  }
-
-  static async count(organizationId: string, branchId?: string) {
     return db.course.count({
       where: {
         organizationId,

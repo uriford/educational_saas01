@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ export default function AnnouncementForm({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<
     AnnouncementFormInput,
@@ -53,7 +53,10 @@ export default function AnnouncementForm({
     },
   });
 
-  const status = watch("status");
+  const status = useWatch({
+    control,
+    name: "status",
+  });
 
   async function onSubmit(data: AnnouncementFormValues) {
     try {

@@ -1,5 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import {
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+
 import { StatsCardData } from "../types";
 
 export default function StatsCard({
@@ -9,36 +14,51 @@ export default function StatsCard({
   trend,
   icon: Icon,
 }: StatsCardData) {
+  const TrendIcon =
+    trend.direction === "up"
+      ? TrendingUp
+      : trend.direction === "down"
+        ? TrendingDown
+        : Minus;
+
+  const trendClass =
+    trend.direction === "up"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : trend.direction === "down"
+        ? "text-red-600 dark:text-red-400"
+        : "text-muted-foreground";
+
   return (
-    <Card className="transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-4">
-            <p className="text-sm font-medium text-muted-foreground">
+    <Card className="group overflow-hidden rounded-xl border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {title}
             </p>
 
-            <h3 className="text-3xl font-bold tracking-tight">
+            <p className="mt-3 truncate text-2xl font-bold tracking-tight sm:text-3xl">
               {value}
-            </h3>
+            </p>
           </div>
 
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Icon className="size-6 text-primary" />
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+            <Icon className="size-5" />
           </div>
         </div>
 
-        <div className="mt-6 flex items-center gap-2">
-          <TrendingUp className="size-4 text-green-600" />
-
-          <span className="text-sm font-medium text-green-600">
+        <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-semibold ${trendClass}`}
+          >
+            <TrendIcon className="size-3.5" />
             {trend.value}
           </span>
-        </div>
 
-        <p className="mt-2 text-sm text-muted-foreground">
-          {description}
-        </p>
+          <span className="text-xs text-muted-foreground">
+            {description}
+          </span>
+        </div>
       </CardContent>
     </Card>
   );

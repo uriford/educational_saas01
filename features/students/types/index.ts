@@ -19,5 +19,6 @@ export type StudentDetails = Prisma.StudentGetPayload<{
   include: {
     organization: true;
     branch: true;
+    user: true;
   };
 }>;

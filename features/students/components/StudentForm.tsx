@@ -47,6 +47,7 @@ const {
       address: "",
       guardianName: "",
       guardianPhone: "",
+      guardianEmail: "",
       ...defaultValues,
     },
   });
@@ -166,6 +167,24 @@ const {
     {errors.guardianName && (
       <p className="text-sm text-destructive">
         {errors.guardianName.message}
+      </p>
+    )}
+  </div>
+
+  {/* Guardian Email */}
+  <div className="space-y-2">
+    <Label htmlFor="guardianEmail">Guardian Email</Label>
+
+    <Input
+      id="guardianEmail"
+      type="email"
+      placeholder="guardian@example.com"
+      {...register("guardianEmail")}
+    />
+
+    {errors.guardianEmail && (
+      <p className="text-sm text-destructive">
+        {errors.guardianEmail.message}
       </p>
     )}
   </div>

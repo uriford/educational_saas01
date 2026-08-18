@@ -57,6 +57,7 @@ export default function OrganizationSettingsForm({
         timezone: form.timezone,
         language: form.language,
         currency: form.currency,
+        attendanceEnabled: form.attendanceEnabled,
       });
 
     setMessage(
@@ -74,7 +75,7 @@ export default function OrganizationSettingsForm({
 
   function updateField(
     field: keyof OrganizationSettingsFormValues,
-    value: string,
+    value: string | boolean,
   ) {
     setForm((current) => ({
       ...current,
@@ -96,6 +97,37 @@ export default function OrganizationSettingsForm({
           onSubmit={handleSubmit}
           className="flex flex-col gap-6"
         >
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <div className="flex items-start gap-3">
+              <input
+                id="attendanceEnabled"
+                type="checkbox"
+                checked={form.attendanceEnabled}
+                onChange={(event) =>
+                  updateField(
+                    "attendanceEnabled",
+                    event.target.checked,
+                  )
+                }
+                className="mt-1 size-4 rounded border-input accent-primary"
+              />
+
+              <div>
+                <label
+                  htmlFor="attendanceEnabled"
+                  className="text-sm font-medium"
+                >
+                  Attendance Tracking
+                </label>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Enable student attendance tracking for this organization.
+                  When disabled, attendance will not be required.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-5 md:grid-cols-2">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium">

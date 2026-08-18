@@ -16,6 +16,7 @@ export class NotificationRepository {
         title: data.title,
         message: data.message,
         href: data.href,
+        dedupeKey: data.dedupeKey,
       },
     });
   }

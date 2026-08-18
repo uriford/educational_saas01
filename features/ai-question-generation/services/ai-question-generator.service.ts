@@ -68,8 +68,6 @@ async function callGeminiWithRetry(data: {
 
   const maxAttempts = 3;
 
-  let lastError: unknown;
-
   for (
     let attempt = 1;
     attempt <= maxAttempts;
@@ -92,8 +90,6 @@ async function callGeminiWithRetry(data: {
       });
 
     } catch (error) {
-
-      lastError = error;
 
       console.error(
         `Gemini generation attempt ${attempt} failed`,

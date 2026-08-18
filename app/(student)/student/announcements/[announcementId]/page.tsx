@@ -60,7 +60,7 @@ export default async function StudentAnnouncementDetailsPage({
     await AnnouncementService.getPublishedByIdForStudent(
       announcementId,
       student.organizationId,
-      student.branchId,
+      session.user.branchId,
     );
 
   if (!announcement) {
