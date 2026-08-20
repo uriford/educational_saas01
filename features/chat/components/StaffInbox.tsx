@@ -716,7 +716,7 @@ export default function StaffInbox({
   }
 
   return (
-    <Card className="h-[calc(100vh-220px)] min-h-[620px] overflow-hidden shadow-sm">
+    <Card className="h-[calc(100dvh-180px)] min-h-[520px] overflow-hidden shadow-sm sm:h-[calc(100vh-220px)] sm:min-h-[620px]">
       <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_280px]">
         {/* Conversation sidebar */}
         <div className="hidden min-h-0 border-r lg:block">
@@ -815,12 +815,249 @@ export default function StaffInbox({
           )}
         </div>
 
-        {/* Details panel */}
+        {/* Mobile / tablet details drawer */}
+        {showDetails && selectedConversation && (
+          <div className="fixed inset-0 z-50 flex xl:hidden">
+            <button
+              type="button"
+              aria-label="Close conversation details"
+              className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+              onClick={() => setShowDetails(false)}
+            />
+
+            <aside className="relative ml-auto flex h-full w-full max-w-sm flex-col border-l bg-background shadow-2xl">
+              <div className="flex items-center justify-between border-b px-4 py-4">
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    Conversation details
+                  </h3>
+
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Student information
+                  </p>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Close conversation details"
+                  onClick={() => setShowDetails(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-5">
+                <div className="flex flex-col items-center text-center">
+                  <Avatar className="h-20 w-20">
+                    {selectedConversation.student?.avatar && (
+                      <AvatarImage
+                        src={selectedConversation.student.avatar}
+                        alt={studentName}
+                      />
+                    )}
+
+                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                      {getInitials(selectedConversation.student)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <h4 className="mt-3 font-semibold">
+                    {studentName}
+                  </h4>
+
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Student
+                  </div>
+                </div>
+
+                <div className="my-6 h-px bg-border" />
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Conversation
+                    </p>
+
+                    <div className="mt-2 rounded-xl border bg-background p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          Status
+                        </span>
+
+                        <span className="text-xs font-medium">
+                          {selectedConversation.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Assigned staff
+                    </p>
+
+                    <div className="mt-2 rounded-xl border bg-background p-3">
+                      {assignedStaff ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                              {assignedStaff.user.firstName?.[0] ?? "S"}
+                              {assignedStaff.user.lastName?.[0] ?? ""}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-xs font-semibold">
+                                {[
+                                  assignedStaff.user.firstName,
+                                  assignedStaff.user.lastName,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ")}
+                              </p>
+
+                              <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                <span
+                                  className={cn(
+                                    "h-1.5 w-1.5 rounded-full",
+                                    getStaffActivityState(assignedStaff) === "ACTIVE"
+                                      ? "bg-emerald-500"
+                                      : getStaffActivityState(assignedStaff) === "AWAY"
+                                        ? "bg-amber-500"
+                                        : "bg-muted-foreground",
+                                  )}
+                                />
+
+                                {getStaffActivityState(assignedStaff)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {sessionUserCanManageAssignments(currentUserRole) && (
+                            <div className="space-y-2">
+                              <select
+                                value={assignedStaff.id}
+                                disabled={assignmentLoading}
+                                onChange={(event) =>
+                                  void handleAssign(event.target.value)
+                                }
+                                className="h-9 w-full rounded-lg border bg-background px-2 text-xs outline-none"
+                              >
+                                {availableStaff.map((member) => (
+                                  <option key={member.id} value={member.id}>
+                                    {[
+                                      member.user.firstName,
+                                      member.user.lastName,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" ")}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                disabled={assignmentLoading}
+                                onClick={() => void handleUnassign()}
+                              >
+                                <X className="mr-2 h-3.5 w-3.5" />
+                                Unassign
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-xs text-muted-foreground">
+                            No staff member is assigned.
+                          </p>
+
+                          {currentStaff?.canReply &&
+                            getStaffActivityState(currentStaff) === "ACTIVE" && (
+                              <Button
+                                size="sm"
+                                className="w-full"
+                                disabled={assignmentLoading}
+                                onClick={() => void handleClaim()}
+                              >
+                                <UserPlus className="mr-2 h-3.5 w-3.5" />
+                                Claim conversation
+                              </Button>
+                            )}
+
+                          {sessionUserCanManageAssignments(currentUserRole) &&
+                            availableStaff.length > 0 && (
+                              <select
+                                disabled={assignmentLoading}
+                                defaultValue=""
+                                onChange={(event) => {
+                                  if (event.target.value) {
+                                    void handleAssign(event.target.value);
+                                  }
+                                }}
+                                className="h-9 w-full rounded-lg border bg-background px-2 text-xs outline-none"
+                              >
+                                <option value="">
+                                  Assign to staff...
+                                </option>
+
+                                {availableStaff.map((member) => (
+                                  <option key={member.id} value={member.id}>
+                                    {[
+                                      member.user.firstName,
+                                      member.user.lastName,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" ")}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                        </div>
+                      )}
+
+                      {assignmentMessage && (
+                        <div className="mt-3 flex items-center gap-1.5 border-t pt-2 text-[10px] text-muted-foreground">
+                          <Check className="h-3 w-3" />
+                          {assignmentMessage}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Student
+                    </p>
+
+                    <div className="mt-2 space-y-2 rounded-xl border bg-background p-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <UserRound className="h-3.5 w-3.5 text-muted-foreground" />
+
+                        <span className="truncate">
+                          {studentName}
+                        </span>
+                      </div>
+
+                      <p className="break-all text-[11px] text-muted-foreground">
+                        ID: {selectedConversation.student?.id}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {/* Desktop details panel */}
         <aside
           className={cn(
             "hidden min-h-0 border-l bg-muted/[0.18] xl:block",
-            !showDetails &&
-              "xl:hidden",
+            !showDetails && "xl:hidden",
           )}
         >
           {selectedConversation ? (

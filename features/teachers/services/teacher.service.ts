@@ -67,8 +67,8 @@ export class TeacherService {
   static async update(
     id: string,
     organizationId: string,
-    branchId: string,
-    data: Partial<CreateTeacherData>,
+    branchId?: string,
+    data: Partial<CreateTeacherData> = {},
   ) {
     try {
       const result =

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createTeacherSchema = z.object({
   organizationId: z.string().uuid(),
 
-  branchId: z.string().uuid(),
+  branchId: z.string().uuid().optional().nullable(),
 
   firstName: z.string().min(2, "First name is required"),
 

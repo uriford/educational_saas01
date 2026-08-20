@@ -164,12 +164,15 @@ export async function getGuardianById(
   });
 }
 
-export async function findUserByEmail(
-  email: string,
-) {
+export async function findUserByEmail(email: string, organizationId: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
   return db.user.findUnique({
     where: {
-      email,
+      organizationId_email: {
+        organizationId,
+        email: normalizedEmail,
+      },
     },
     select: {
       id: true,
@@ -181,10 +184,7 @@ export async function findUserByEmail(
   });
 }
 
-export async function findBranch(
-  organizationId: string,
-  branchId: string,
-) {
+export async function findBranch(organizationId: string, branchId: string) {
   return db.branch.findFirst({
     where: {
       id: branchId,

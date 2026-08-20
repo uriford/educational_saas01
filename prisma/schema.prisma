@@ -113,7 +113,7 @@ model User {
   code                    String                   @unique
   firstName               String
   lastName                String?
-  email                   String                   @unique
+  email                   String
   phone                   String?
   password                String
   role                    Role
@@ -140,6 +140,9 @@ model User {
   guardianProfile         GuardianProfile?
   branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  chatMessageReactions    ChatMessageReaction[]
+
+  @@unique([organizationId, email])
 }
 
 model PasswordResetToken {
@@ -207,7 +210,7 @@ model Student {
   studentId             String
   firstName             String
   lastName              String?
-  email                 String?                @unique
+  email                 String?
   phone                 String?
   gender                Gender?
   dateOfBirth           DateTime?
@@ -234,6 +237,8 @@ model Student {
   user                  User?                  @relation(fields: [userId], references: [id])
   guardianStudents      GuardianStudent[]
   chatConversations     ChatConversation[]     @relation("StudentChatConversations")
+
+  @@unique([organizationId, email])
 }
 
 model GuardianProfile {
@@ -269,11 +274,11 @@ model Teacher {
   id             String         @id @default(uuid())
   userId         String?        @unique
   organizationId String
-  branchId       String
-  teacherId      String         @unique
+  branchId       String?
+  teacherId      String
   firstName      String
   lastName       String?
-  email          String?        @unique
+  email          String?
   phone          String?
   gender         Gender?
   dateOfBirth    DateTime?
@@ -290,15 +295,18 @@ model Teacher {
   createdById    String?
   updatedById    String?
   classSessions  ClassSession[]
-  branch         Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch         Branch?        @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User?          @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, email])
+  @@unique([organizationId, teacherId])
 }
 
 model Course {
   id                 String              @id @default(uuid())
   organizationId     String
-  branchId           String
+  branchId           String?
   code               String
   name               String
   description        String?
@@ -313,11 +321,10 @@ model Course {
   updatedById        String?
   endDate            DateTime?
   startDate          DateTime?
-  price              Decimal?            @db.Decimal(10, 2)
   aiPersonalizations AIPersonalization[]
   assessments        Assessment[]
   classSessions      ClassSession[]
-  branch             Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch             Branch?             @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   enrollments        CourseEnrollment[]
   lessons            Lesson[]
@@ -861,21 +868,63 @@ model ChatConversation {
 }
 
 model ChatMessage {
-  id             String            @id @default(uuid())
+  id             String                @id @default(uuid())
   conversationId String
   senderId       String?
   content        String
-  isAIResponse   Boolean           @default(false)
-  createdAt      DateTime          @default(now())
+  isAIResponse   Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  editedAt       DateTime?
+  deletedAt      DateTime?
   deliveredAt    DateTime?
   seenAt         DateTime?
-  status         ChatMessageStatus @default(SENT)
-  conversation   ChatConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User?             @relation("ChatMessageSender", fields: [senderId], references: [id])
+  status         ChatMessageStatus     @default(SENT)
+  conversation   ChatConversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User?                 @relation("ChatMessageSender", fields: [senderId], references: [id])
+  attachments    ChatAttachment[]
+  reactions      ChatMessageReaction[]
 
   @@index([conversationId])
   @@index([senderId])
   @@index([status])
+  @@index([deletedAt])
+}
+
+model ChatMessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+  @@index([emoji])
+}
+
+model ChatAttachment {
+  id          String   @id @default(uuid())
+  messageId   String
+  fileName    String
+  storagePath String
+  publicUrl   String
+  mimeType    String
+  fileSize    Int
+  width       Int?
+  height      Int?
+  duration    Float?
+  createdAt   DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([mimeType])
 }
 
 model AIPersonalization {

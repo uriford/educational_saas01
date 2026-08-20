@@ -51,8 +51,8 @@ export async function updateOwnStudentProfileAction(
       student.id,
       session.user.id,
       session.user.organizationId,
-      session.user.branchId,
       parsed.data,
+      session.user.branchId ?? undefined,
     );
   } catch (error) {
     console.error(

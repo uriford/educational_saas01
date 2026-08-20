@@ -15,7 +15,7 @@ async function main() {
 
   await prisma.user.upsert({
     where: {
-      email: "superadmin@americancouncil.com",
+      code: "SUPER-001",
     },
     update: {},
     create: {
@@ -83,7 +83,10 @@ async function main() {
 
   await prisma.user.upsert({
     where: {
-      email: "admin@americancouncil.com",
+      organizationId_email: {
+        organizationId: organization.id,
+        email: "admin@americancouncil.com",
+      },
     },
     update: {},
     create: {

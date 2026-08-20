@@ -331,6 +331,8 @@ export async function generateAIChatReply(data: {
   const response = await generateChatAIResponse({
     message: data.message,
     history,
+    organizationId: data.organizationId,
+    studentId: conversation.studentId ?? undefined,
   });
 
   return sendAIChatMessage({

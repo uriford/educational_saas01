@@ -1,6 +1,7 @@
 import { StudentRepository } from "../repository/student.repository";
 import type { CreateStudentData } from "../types";
 import bcrypt from "bcrypt";
+import { db } from "@/lib/db";
 
 type CreateStudentResponse =
   | {
@@ -18,9 +19,12 @@ type CreateStudentResponse =
 export class StudentService {
   static async create(data: CreateStudentData): Promise<CreateStudentResponse> {
     try {
-      if (data.email?.trim()) {
+      const normalizedEmail = data.email?.trim().toLowerCase();
+
+      if (normalizedEmail) {
+        // Student.email is unique for the organization.
         const existingStudent = await StudentRepository.findByEmail(
-          data.email,
+          normalizedEmail,
           data.organizationId,
         );
 
@@ -31,28 +35,29 @@ export class StudentService {
           };
         }
 
-        const temporaryPassword = `Student@${Math.random()
-          .toString(36)
-          .slice(-8)}`;
-
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
-
-        const student = await StudentRepository.createWithGeneratedId(
-          {
-            ...data,
-            email: data.email.trim(),
+        // User email uniqueness is scoped to the organization.
+        // The same email may exist in different organizations.
+        const existingUser = await db.user.findFirst({
+          where: {
+            email: normalizedEmail,
+            organizationId: data.organizationId,
           },
-          {
-            code: `STU-${Date.now()}`,
-            password: hashedPassword,
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            organizationId: true,
+            deletedAt: true,
           },
-        );
+        });
 
-        return {
-          success: true,
-          message: `Student created successfully. Temporary password: ${temporaryPassword}`,
-          student,
-        };
+        if (existingUser) {
+          return {
+            success: false,
+            message:
+              "This email address is already associated with another account in this organization.",
+          };
+        }
       }
 
       const student = await StudentRepository.createWithGeneratedId(data);
@@ -111,8 +116,8 @@ export class StudentService {
     id: string,
     userId: string,
     organizationId: string,
-    branchId: string,
-    avatar: string,
+    branchId?: string,
+    avatar: string = "",
   ) {
     try {
       const result = await StudentRepository.updateOwnAvatar(
@@ -158,7 +163,7 @@ export class StudentService {
     id: string,
     userId: string,
     organizationId: string,
-    branchId: string,
+    branchId?: string,
   ) {
     try {
       const result = await StudentRepository.removeOwnAvatar(
@@ -193,7 +198,6 @@ export class StudentService {
     id: string,
     userId: string,
     organizationId: string,
-    branchId: string,
     data: {
       firstName: string;
       lastName?: string;
@@ -205,16 +209,16 @@ export class StudentService {
       guardianPhone?: string;
       guardianEmail?: string;
     },
+    branchId?: string,
   ) {
     try {
-      const result =
-        await StudentRepository.updateOwnProfile(
-          id,
-          userId,
-          organizationId,
-          branchId,
-          data,
-        );
+      const result = await StudentRepository.updateOwnProfile(
+        id,
+        userId,
+        organizationId,
+        data,
+        branchId,
+      );
 
       if (result.count === 0) {
         return {
@@ -228,10 +232,7 @@ export class StudentService {
         message: "Profile updated successfully.",
       };
     } catch (error) {
-      console.error(
-        "UPDATE OWN STUDENT PROFILE ERROR:",
-        error,
-      );
+      console.error("UPDATE OWN STUDENT PROFILE ERROR:", error);
 
       return {
         success: false,

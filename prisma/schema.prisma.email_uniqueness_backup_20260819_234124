@@ -1,0 +1,1206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id                       String                    @id @default(uuid())
+  code                     String                    @unique
+  name                     String
+  slug                     String                    @unique
+  email                    String?
+  phone                    String?
+  domain                   String?
+  logo                     String?
+  status                   OrganizationStatus        @default(ACTIVE)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  deletedAt                DateTime?
+  createdById              String?
+  updatedById              String?
+  hasBranches              Boolean                   @default(false)
+  aiquestionGenerations    AIQuestionGeneration[]
+  aisourceDocuments        AISourceDocument[]
+  announcements            Announcement[]
+  assessments              Assessment[]
+  attendances              Attendance[]
+  attendanceAudits         AttendanceAudit[]
+  auditLogs                AuditLog[]
+  branches                 Branch[]
+  branchCreationCredential BranchCreationCredential?
+  chatConversations        ChatConversation[]
+  chatStaff                ChatStaff[]
+  classSessions            ClassSession[]
+  courses                  Course[]
+  lessons                  Lesson[]
+  notifications            Notification[]
+  settings                 OrganizationSettings?
+  paymentPlans             PaymentPlan[]
+  students                 Student[]
+  studentIdCounter         StudentIdCounter?
+  subscriptions            Subscription[]
+  teachers                 Teacher[]
+  teacherIdCounter         TeacherIdCounter?
+  users                    User[]
+  guardianProfiles         GuardianProfile[]
+}
+
+model OrganizationSettings {
+  id                String       @id @default(uuid())
+  organizationId    String       @unique
+  timezone          String       @default("Asia/Dhaka")
+  language          String       @default("en")
+  currency          String       @default("BDT")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  attendanceEnabled Boolean      @default(false)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Branch {
+  id                    String                 @id @default(uuid())
+  code                  String                 @unique
+  organizationId        String
+  name                  String
+  slug                  String                 @unique
+  email                 String?
+  phone                 String?
+  address               String?
+  logo                  String?
+  isHeadquarters        Boolean                @default(false)
+  status                BranchStatus           @default(ACTIVE)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  createdById           String?
+  updatedById           String?
+  aiQuestionGenerations AIQuestionGeneration[]
+  aiSourceDocuments     AISourceDocument[]
+  announcements         Announcement[]
+  assessments           Assessment[]
+  attendances           Attendance[]
+  attendanceAudits      AttendanceAudit[]
+  auditLogs             AuditLog[]
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSessions         ClassSession[]
+  courses               Course[]
+  lessons               Lesson[]
+  paymentPlans          PaymentPlan[]
+  students              Student[]
+  teachers              Teacher[]
+  users                 User[]
+}
+
+model BranchCreationCredential {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  passwordHash   String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model User {
+  id                      String                   @id @default(uuid())
+  organizationId          String?
+  branchId                String?
+  code                    String                   @unique
+  firstName               String
+  lastName                String?
+  email                   String                   @unique
+  phone                   String?
+  password                String
+  role                    Role
+  status                  UserStatus               @default(ACTIVE)
+  avatar                  String?
+  emailVerified           Boolean                  @default(false)
+  lastLoginAt             DateTime?
+  isBranchManager         Boolean                  @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  deletedAt               DateTime?
+  createdById             String?
+  updatedById             String?
+  themePreference         ThemePreference          @default(SYSTEM)
+  auditLogs               AuditLog[]
+  chatMessages            ChatMessage[]            @relation("ChatMessageSender")
+  chatStaff               ChatStaff[]
+  emailVerificationTokens EmailVerificationToken[]
+  notifications           Notification[]
+  passwordResetTokens     PasswordResetToken[]
+  pushSubscriptions       PushSubscription[]
+  students                Student?
+  teachers                Teacher?
+  guardianProfile         GuardianProfile?
+  branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  chatMessageReactions    ChatMessageReaction[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id             String        @id @default(uuid())
+  organizationId String?
+  branchId       String?
+  userId         String?
+  action         AuditAction
+  entityType     String
+  entityId       String
+  description    String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime      @default(now())
+  branch         Branch?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?         @relation(fields: [userId], references: [id])
+}
+
+model Subscription {
+  id             String             @id @default(uuid())
+  organizationId String
+  planName       String
+  status         SubscriptionStatus @default(TRIAL)
+  startDate      DateTime
+  endDate        DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Student {
+  id                    String                 @id @default(uuid())
+  userId                String?                @unique
+  organizationId        String
+  branchId              String?
+  studentId             String
+  firstName             String
+  lastName              String?
+  email                 String?                @unique
+  phone                 String?
+  gender                Gender?
+  dateOfBirth           DateTime?
+  guardianName          String?
+  guardianPhone         String?
+  address               String?
+  admissionDate         DateTime               @default(now())
+  status                StudentStatus          @default(ACTIVE)
+  avatar                String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  createdById           String?
+  updatedById           String?
+  guardianEmail         String?
+  aiEarlyInterventions  AIEarlyIntervention?
+  aiPersonalizations    AIPersonalization[]
+  assessmentSubmissions AssessmentSubmission[]
+  attendances           Attendance[]
+  attendanceAudits      AttendanceAudit[]
+  courseEnrollments     CourseEnrollment[]
+  branch                Branch?                @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                  User?                  @relation(fields: [userId], references: [id])
+  guardianStudents      GuardianStudent[]
+  chatConversations     ChatConversation[]     @relation("StudentChatConversations")
+}
+
+model GuardianProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  students     GuardianStudent[]
+
+  @@index([organizationId])
+}
+
+model GuardianStudent {
+  id           String   @id @default(uuid())
+  guardianId   String
+  studentId    String
+  relationship String?
+  createdAt    DateTime @default(now())
+
+  guardian GuardianProfile @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student  Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([guardianId, studentId])
+  @@index([guardianId])
+  @@index([studentId])
+}
+
+model Teacher {
+  id             String         @id @default(uuid())
+  userId         String?        @unique
+  organizationId String
+  branchId       String?
+  teacherId      String         @unique
+  firstName      String
+  lastName       String?
+  email          String?        @unique
+  phone          String?
+  gender         Gender?
+  dateOfBirth    DateTime?
+  qualification  String?
+  designation    String?
+  joiningDate    DateTime       @default(now())
+  salary         Decimal?       @db.Decimal(10, 2)
+  address        String?
+  status         TeacherStatus  @default(ACTIVE)
+  avatar         String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+  createdById    String?
+  updatedById    String?
+  classSessions  ClassSession[]
+  branch         Branch?        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?          @relation(fields: [userId], references: [id])
+}
+
+model Course {
+  id                 String              @id @default(uuid())
+  organizationId     String
+  branchId           String?
+  code               String
+  name               String
+  description        String?
+  duration           Int?
+  fee                Decimal?            @db.Decimal(10, 2)
+  capacity           Int?
+  status             CourseStatus        @default(INACTIVE)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  deletedAt          DateTime?
+  createdById        String?
+  updatedById        String?
+  endDate            DateTime?
+  startDate          DateTime?
+  aiPersonalizations AIPersonalization[]
+  assessments        Assessment[]
+  classSessions      ClassSession[]
+  branch             Branch?             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enrollments        CourseEnrollment[]
+  lessons            Lesson[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model Lesson {
+  id             String           @id @default(uuid())
+  organizationId String
+  branchId       String
+  courseId       String
+  title          String
+  description    String?
+  content        String?
+  type           LessonType       @default(TEXT)
+  status         LessonStatus     @default(DRAFT)
+  videoUrl       String?
+  documentUrl    String?
+  externalUrl    String?
+  duration       Int?
+  order          Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+  createdById    String?
+  updatedById    String?
+  branch         Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+  resources      LessonResource[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([courseId])
+  @@index([courseId, order])
+  @@index([status])
+  @@index([type])
+  @@index([deletedAt])
+}
+
+model LessonProgress {
+  id           String           @id @default(uuid())
+  enrollmentId String
+  lessonId     String
+  completed    Boolean          @default(false)
+  lastViewedAt DateTime?
+  completedAt  DateTime?
+  enrollment   CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson       Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+  @@index([lessonId])
+}
+
+model LessonResource {
+  id        String   @id @default(uuid())
+  lessonId  String
+  title     String
+  url       String
+  type      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@index([lessonId, order])
+}
+
+model CourseEnrollment {
+  id             String           @id @default(uuid())
+  studentId      String
+  courseId       String
+  enrolledAt     DateTime         @default(now())
+  status         EnrollmentStatus @default(ACTIVE)
+  completedAt    DateTime?
+  progress       Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+  paymentPlan    PaymentPlan?
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model PaymentPlan {
+  id             String               @id @default(uuid())
+  organizationId String
+  branchId       String?
+  enrollmentId   String               @unique
+  totalAmount    Decimal              @db.Decimal(10, 2)
+  status         PaymentPlanStatus    @default(ACTIVE)
+  finalizedAt    DateTime?
+  finalizedById  String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  installments   PaymentInstallment[]
+  branch         Branch?              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  enrollment     CourseEnrollment     @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([finalizedAt])
+}
+
+model PaymentInstallment {
+  id                String                   @id @default(uuid())
+  paymentPlanId     String
+  installmentNumber Int
+  amount            Decimal                  @db.Decimal(10, 2)
+  dueDate           DateTime
+  status            PaymentInstallmentStatus @default(UPCOMING)
+  paidAmount        Decimal                  @default(0) @db.Decimal(10, 2)
+  paidAt            DateTime?
+  notes             String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  paymentPlan       PaymentPlan              @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+  transactions      PaymentTransaction[]
+
+  @@unique([paymentPlanId, installmentNumber])
+  @@index([paymentPlanId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model PaymentTransaction {
+  id            String             @id @default(uuid())
+  installmentId String
+  amount        Decimal            @db.Decimal(10, 2)
+  paymentDate   DateTime           @default(now())
+  method        PaymentMethod      @default(CASH)
+  reference     String?
+  notes         String?
+  recordedById  String?
+  createdAt     DateTime           @default(now())
+  installment   PaymentInstallment @relation(fields: [installmentId], references: [id])
+
+  @@index([installmentId])
+  @@index([paymentDate])
+  @@index([recordedById])
+}
+
+model ClassSession {
+  id               String             @id @default(uuid())
+  organizationId   String
+  branchId         String
+  courseId         String
+  teacherId        String
+  title            String
+  description      String?
+  startTime        DateTime
+  endTime          DateTime
+  room             String?
+  status           ClassSessionStatus @default(SCHEDULED)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?
+  createdById      String?
+  updatedById      String?
+  attendances      Attendance[]
+  attendanceAudits AttendanceAudit[]
+  branch           Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  course           Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teacher          Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([courseId])
+  @@index([teacherId])
+  @@index([startTime])
+  @@index([status])
+}
+
+model Assessment {
+  id                    String                 @id @default(uuid())
+  organizationId        String
+  branchId              String
+  courseId              String
+  title                 String
+  description           String?
+  duration              Int?
+  totalMarks            Decimal                @db.Decimal(10, 2)
+  passingMarks          Decimal                @db.Decimal(10, 2)
+  status                AssessmentStatus       @default(DRAFT)
+  startDate             DateTime?
+  endDate               DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  createdById           String?
+  updatedById           String?
+  instantFeedback       Boolean                @default(false)
+  maxAttempts           Int                    @default(1)
+  mode                  AssessmentMode         @default(EXAM)
+  randomizeOptions      Boolean                @default(false)
+  randomizeQuestions    Boolean                @default(false)
+  aiQuestionGenerations AIQuestionGeneration[]
+  branch                Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  course                Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  questions             AssessmentQuestion[]
+  submissions           AssessmentSubmission[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([courseId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model AssessmentQuestion {
+  id                   String                 @id @default(uuid())
+  assessmentId         String
+  question             String
+  type                 AssessmentQuestionType
+  marks                Decimal                @db.Decimal(10, 2)
+  options              Json?
+  correctAnswer        String?
+  order                Int                    @default(0)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  aiGeneratedQuestions AIGeneratedQuestion[]
+  answers              AssessmentAnswer[]
+  assessment           Assessment             @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@index([order])
+}
+
+model AssessmentSubmission {
+  id           String                     @id @default(uuid())
+  assessmentId String
+  studentId    String
+  status       AssessmentSubmissionStatus @default(IN_PROGRESS)
+  startedAt    DateTime                   @default(now())
+  submittedAt  DateTime?
+  score        Decimal?                   @db.Decimal(10, 2)
+  percentage   Decimal?                   @db.Decimal(5, 2)
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+  answers      AssessmentAnswer[]
+  assessment   Assessment                 @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student      Student                    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId, studentId])
+  @@index([assessmentId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model AssessmentAnswer {
+  id           String               @id @default(uuid())
+  submissionId String
+  questionId   String
+  answer       String?
+  marksAwarded Decimal?             @db.Decimal(10, 2)
+  isCorrect    Boolean?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  question     AssessmentQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submission   AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, questionId])
+  @@index([submissionId])
+  @@index([questionId])
+}
+
+model Attendance {
+  id               String            @id @default(uuid())
+  organizationId   String
+  branchId         String
+  classSessionId   String
+  studentId        String
+  status           AttendanceStatus  @default(PRESENT)
+  markedAt         DateTime          @default(now())
+  markedById       String?
+  notes            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  branch           Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  classSession     ClassSession      @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student          Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attendanceAudits AttendanceAudit[]
+
+  @@unique([classSessionId, studentId])
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([classSessionId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model AttendanceAudit {
+  id             String            @id @default(uuid())
+  organizationId String
+  branchId       String
+  attendanceId   String
+  classSessionId String
+  studentId      String
+  oldStatus      AttendanceStatus?
+  newStatus      AttendanceStatus
+  oldNotes       String?
+  newNotes       String?
+  changedById    String
+  changedAt      DateTime          @default(now())
+  attendance     Attendance        @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  branch         Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  classSession   ClassSession      @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student        Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([attendanceId])
+  @@index([classSessionId])
+  @@index([studentId])
+  @@index([changedAt])
+  @@index([changedById])
+}
+
+model AISourceDocument {
+  id                  String                 @id @default(uuid())
+  organizationId      String
+  branchId            String
+  name                String
+  description         String?
+  fileName            String
+  fileUrl             String
+  fileType            String
+  fileSize            Int?
+  status              AISourceDocumentStatus @default(PROCESSING)
+  extractedText       String?
+  selectedSections    Json?
+  pageCount           Int?
+  processingError     String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  deletedAt           DateTime?
+  createdById         String?
+  updatedById         String?
+  branch              Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization        Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  pages               AISourceDocumentPage[]
+  questionGenerations AIQuestionGeneration[] @relation("AIQuestionGenerationToAISourceDocument")
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AIQuestionGeneration {
+  id                       String                     @id @default(uuid())
+  organizationId           String
+  branchId                 String
+  assessmentId             String?
+  title                    String?
+  description              String?
+  status                   AIQuestionGenerationStatus @default(PENDING)
+  questionCount            Int                        @default(0)
+  questionTypes            Json?
+  difficulty               String?
+  instructions             String?
+  generatedQuestions       Json?
+  model                    String?
+  promptVersion            String?
+  errorMessage             String?
+  startedAt                DateTime?
+  completedAt              DateTime?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  createdById              String?
+  generatedQuestionsReview AIGeneratedQuestion[]
+  assessment               Assessment?                @relation(fields: [assessmentId], references: [id])
+  branch                   Branch                     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization             Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sourceDocuments          AISourceDocument[]         @relation("AIQuestionGenerationToAISourceDocument")
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([assessmentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AIGeneratedQuestion {
+  id                   String                 @id @default(uuid())
+  generationId         String
+  question             String
+  type                 AssessmentQuestionType
+  marks                Decimal                @db.Decimal(10, 2)
+  options              Json?
+  correctAnswer        String?
+  status               AIQuestionReviewStatus @default(PENDING_REVIEW)
+  reviewNote           String?
+  reviewedAt           DateTime?
+  reviewedById         String?
+  assessmentQuestionId String?
+  order                Int                    @default(0)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  assessmentQuestion   AssessmentQuestion?    @relation(fields: [assessmentQuestionId], references: [id])
+  generation           AIQuestionGeneration   @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId])
+  @@index([status])
+  @@index([assessmentQuestionId])
+  @@index([reviewedById])
+  @@index([createdAt])
+}
+
+model StudentIdCounter {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  nextNumber     Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model TeacherIdCounter {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  nextNumber     Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id             String             @id @default(uuid())
+  organizationId String
+  branchId       String?
+  title          String
+  content        String
+  status         AnnouncementStatus @default(DRAFT)
+  publishAt      DateTime?
+  expiresAt      DateTime?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+  branch         Branch?            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([publishAt])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  organizationId String
+  userId         String
+  type           NotificationType @default(INFO)
+  title          String
+  message        String
+  href           String?
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  readAt         DateTime?
+  dedupeKey      String?          @unique
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([organizationId, createdAt])
+}
+
+model AISourceDocumentPage {
+  id               String           @id @default(uuid())
+  sourceDocumentId String
+  pageNumber       Int
+  content          String
+  createdAt        DateTime         @default(now())
+  sourceDocument   AISourceDocument @relation(fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceDocumentId, pageNumber])
+  @@index([sourceDocumentId])
+}
+
+model ChatStaff {
+  id              String             @id @default(uuid())
+  organizationId  String
+  userId          String
+  position        String?
+  status          ChatStaffStatus    @default(OFFLINE)
+  canReply        Boolean            @default(true)
+  canViewAllChats Boolean            @default(false)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  lastActiveAt    DateTime?
+  lastSeenAt      DateTime?
+  conversations   ChatConversation[]
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+}
+
+model ChatConversation {
+  id              String             @id @default(uuid())
+  organizationId  String
+  studentId       String?
+  assignedStaffId String?
+  status          ConversationStatus @default(OPEN)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  assignedStaff   ChatStaff?         @relation(fields: [assignedStaffId], references: [id])
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student         Student?           @relation("StudentChatConversations", fields: [studentId], references: [id], onDelete: Cascade)
+  messages        ChatMessage[]
+
+  @@index([organizationId])
+  @@index([studentId])
+}
+
+model ChatMessage {
+  id             String                @id @default(uuid())
+  conversationId String
+  senderId       String?
+  content        String
+  isAIResponse   Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  deliveredAt    DateTime?
+  seenAt         DateTime?
+  status         ChatMessageStatus     @default(SENT)
+  conversation   ChatConversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User?                 @relation("ChatMessageSender", fields: [senderId], references: [id])
+  attachments    ChatAttachment[]
+  reactions      ChatMessageReaction[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model ChatMessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+  @@index([emoji])
+}
+
+model ChatAttachment {
+  id          String   @id @default(uuid())
+  messageId   String
+  fileName    String
+  storagePath String
+  publicUrl   String
+  mimeType    String
+  fileSize    Int
+  width       Int?
+  height      Int?
+  duration    Float?
+  createdAt   DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([mimeType])
+}
+
+model AIPersonalization {
+  id              String   @id @default(uuid())
+  studentId       String
+  courseId        String
+  learningLevel   String?
+  strengths       Json?
+  knowledgeGaps   Json?
+  recommendations Json?
+  summary         String?
+  nextAction      String?
+  generatedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([generatedAt])
+}
+
+model AIEarlyIntervention {
+  id                 String              @id @default(uuid())
+  studentId          String              @unique
+  organizationId     String
+  branchId           String
+  riskScore          Int
+  riskLevel          String
+  reasons            Json?
+  recommendedActions Json?
+  summary            String?
+  nextAction         String?
+  lastAnalyzedAt     DateTime            @default(now())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lastNotificationAt DateTime?
+  notificationCount  Int                 @default(0)
+  student            Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  interventionLogs   AIInterventionLog[]
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([riskScore])
+  @@index([lastAnalyzedAt])
+}
+
+model AIInterventionLog {
+  id               String              @id @default(uuid())
+  riskAssessmentId String
+  action           String
+  notes            String?
+  createdById      String?
+  createdAt        DateTime            @default(now())
+  riskAssessment   AIEarlyIntervention @relation(fields: [riskAssessmentId], references: [id], onDelete: Cascade)
+
+  @@index([riskAssessmentId])
+  @@index([createdAt])
+  @@index([createdById])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ORGANIZATION_ADMIN
+  BRANCH_ADMIN
+  STUDENT
+  GUARDIAN
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SUSPEND
+  RESTORE
+  LOGIN
+  LOGOUT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  TRIAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  GRADUATED
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  RESIGNED
+}
+
+enum CourseStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum LessonStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonType {
+  TEXT
+  VIDEO
+  DOCUMENT
+  LINK
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  SUSPENDED
+}
+
+enum PaymentPlanStatus {
+  ACTIVE
+  PAID
+  FINALIZED
+}
+
+enum PaymentInstallmentStatus {
+  UPCOMING
+  DUE
+  OVERDUE
+  PARTIALLY_PAID
+  PAID
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE_BANKING
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum ClassSessionStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum AssessmentMode {
+  EXAM
+  PRACTICE
+}
+
+enum AssessmentQuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+}
+
+enum AssessmentSubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+enum AISourceDocumentStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum AIQuestionGenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AIQuestionReviewStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  ANNOUNCEMENT
+  COURSE
+  STUDENT
+  TEACHER
+  SYSTEM
+}
+
+enum ChatStaffStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+}
+
+enum ChatMessageStatus {
+  SENT
+  DELIVERED
+  SEEN
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  WAITING
+}

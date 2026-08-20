@@ -63,7 +63,7 @@ export const createStudentSchema = z.object({
 
   organizationId: z.string().uuid(),
 
-  branchId: z.string().uuid(),
+  branchId: z.string().uuid().optional().nullable(),
 });
 
 export type CreateStudentSchema = z.infer<

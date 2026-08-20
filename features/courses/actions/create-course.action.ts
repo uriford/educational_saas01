@@ -10,13 +10,10 @@ export async function createCourseAction(
 ) {
   const session = await requireAdmin();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
+  if (!session.user.organizationId) {
     return {
       success: false,
-      message: "Organization or Branch not found.",
+      message: "Organization not found.",
     };
   }
 
@@ -33,9 +30,8 @@ export async function createCourseAction(
 
   return CourseService.create({
     ...parsed.data,
-    organizationId:
-      session.user.organizationId,
-    branchId: session.user.branchId,
+    organizationId: session.user.organizationId,
+    branchId: session.user.branchId ?? null,
     createdById: session.user.id,
   });
 }

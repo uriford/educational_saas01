@@ -171,7 +171,7 @@ export default async function TeacherDetailsPage({
                 Branch
               </p>
               <p className="font-medium">
-                {teacher.branch.name}
+                {teacher.branch?.name ?? "Organization-level"}
               </p>
             </div>
           </div>

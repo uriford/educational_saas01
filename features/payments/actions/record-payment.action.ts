@@ -50,16 +50,14 @@ export async function recordPaymentAction(
       const plan =
         installment.paymentPlan;
 
-      if (!plan.branchId) {
-        throw new Error(
-          "A branch is required to record a payment.",
+      if (plan.branchId) {
+        await requireBranchAccess(
+          plan.organizationId,
+          plan.branchId,
         );
+      } else {
+        await requireAdmin();
       }
-
-      await requireBranchAccess(
-        plan.organizationId,
-        plan.branchId,
-      );
 
       if (
         plan.status === "FINALIZED"

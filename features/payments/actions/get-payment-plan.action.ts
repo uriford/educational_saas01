@@ -39,16 +39,14 @@ export async function getPaymentPlanAction(
     return null;
   }
 
-  if (!plan.branchId) {
-    throw new Error(
-      "A branch is required to access this payment plan.",
+  if (plan.branchId) {
+    await requireBranchAccess(
+      plan.organizationId,
+      plan.branchId,
     );
+  } else {
+    await requireAdmin();
   }
-
-  await requireBranchAccess(
-    plan.organizationId,
-    plan.branchId,
-  );
 
   return plan;
 }

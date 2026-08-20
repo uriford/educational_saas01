@@ -37,16 +37,14 @@ export async function finalizePaymentPlanAction(
         );
       }
 
-      if (!plan.branchId) {
-        throw new Error(
-          "A branch is required to manage this payment plan.",
+      if (plan.branchId) {
+        await requireBranchAccess(
+          plan.organizationId,
+          plan.branchId,
         );
+      } else {
+        await requireAdmin();
       }
-
-      await requireBranchAccess(
-        plan.organizationId,
-        plan.branchId,
-      );
 
       if (plan.status === "FINALIZED") {
         throw new Error(

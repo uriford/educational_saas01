@@ -1032,7 +1032,7 @@ export default function MessageBubble({
   return (
     <div
       className={cn(
-        "group mb-5 flex gap-3",
+        "group mb-4 flex gap-2.5 sm:mb-5 sm:gap-3",
         isOwn && "justify-end",
       )}
     >
@@ -1058,7 +1058,7 @@ export default function MessageBubble({
 
       <div
         className={cn(
-          "min-w-0 max-w-[78%]",
+          "min-w-0 max-w-[calc(100%-2.75rem)] sm:max-w-[78%]",
           isOwn &&
             "flex flex-col items-end",
         )}
@@ -1097,7 +1097,7 @@ export default function MessageBubble({
         <div className="relative">
           <div
             className={cn(
-              "overflow-hidden shadow-sm transition-shadow",
+              "overflow-hidden shadow-sm transition-all duration-150",
               "rounded-2xl",
               isOwn
                 ? "rounded-br-md bg-primary text-primary-foreground shadow-primary/10"
@@ -1116,7 +1116,7 @@ export default function MessageBubble({
                 This message was deleted
               </div>
             ) : isEditing ? (
-              <div className="min-w-[240px] p-2">
+              <div className="min-w-0 max-w-full p-2">
                 <textarea
                   value={editContent}
                   onChange={(event) =>
@@ -1184,8 +1184,11 @@ export default function MessageBubble({
           {canModify && !isEditing && (
             <div
               className={cn(
-                "absolute top-1 z-20 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100",
-                isOwn ? "-left-9" : "-right-9",
+                "absolute top-1 z-20 opacity-0 transition-all duration-150 group-hover:opacity-100 focus-within:opacity-100",
+                "max-sm:opacity-100",
+                isOwn
+                  ? "-left-9 max-sm:-left-8"
+                  : "-right-9 max-sm:-right-8",
               )}
             >
               <div className="relative">
@@ -1197,10 +1200,10 @@ export default function MessageBubble({
                     )
                   }
                   className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full border",
+                    "flex h-7 w-7 items-center justify-center rounded-full border sm:h-7 sm:w-7",
                     "bg-background/95 text-muted-foreground shadow-md backdrop-blur-sm",
                     "transition-all duration-150",
-                    "hover:scale-105 hover:bg-background hover:text-foreground",
+                    "hover:scale-105 hover:bg-background hover:text-foreground active:scale-95",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   )}
                   aria-label="Message actions"
@@ -1212,14 +1215,16 @@ export default function MessageBubble({
                 {showMessageMenu && (
                   <div
                     className={cn(
-                      "absolute top-8 z-50 w-32 rounded-xl border bg-popover p-1 shadow-xl",
-                      isOwn ? "right-0" : "left-0",
+                      "absolute top-8 z-50 w-36 max-w-[calc(100vw-1rem)] rounded-xl border bg-popover/95 p-1 shadow-xl backdrop-blur-md",
+                      isOwn
+                        ? "left-0 max-sm:left-0 max-sm:right-auto"
+                        : "right-0 max-sm:right-0 max-sm:left-auto",
                     )}
                   >
                     <button
                       type="button"
                       onClick={handleStartEdit}
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs transition hover:bg-muted"
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-xs transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                       Edit
@@ -1228,7 +1233,7 @@ export default function MessageBubble({
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-destructive transition hover:bg-destructive/10"
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 text-xs text-destructive transition-colors hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:outline-none"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Delete
@@ -1242,7 +1247,7 @@ export default function MessageBubble({
 
         <div
           className={cn(
-            "relative mt-1 flex items-center gap-1",
+            "relative mt-1.5 flex min-w-0 items-center gap-1.5",
             isOwn && "justify-end",
           )}
         >
@@ -1260,9 +1265,9 @@ export default function MessageBubble({
                       )
                     }
                     className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
+                      "inline-flex min-h-6 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none",
                       "bg-background/95 shadow-sm backdrop-blur-sm transition-all duration-150",
-                      "hover:-translate-y-0.5 hover:bg-muted",
+                      "hover:-translate-y-0.5 hover:bg-muted active:scale-95",
                       reaction.reactedByMe &&
                         "border-primary/50 bg-primary/10",
                     )}
@@ -1290,10 +1295,10 @@ export default function MessageBubble({
                 )
               }
               className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full border",
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
                 "bg-background/95 text-muted-foreground shadow-sm backdrop-blur-sm",
-                "transition-all duration-150 hover:scale-105 hover:bg-muted hover:text-foreground",
-                "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+                "transition-all duration-150 hover:scale-105 hover:bg-muted hover:text-foreground active:scale-95",
+                "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-100",
                 showReactionPicker &&
                   "opacity-100",
               )}
@@ -1306,11 +1311,10 @@ export default function MessageBubble({
             {showReactionPicker && (
               <div
                 className={cn(
-                  "absolute bottom-9 z-40 flex items-center gap-0.5 rounded-2xl border",
-                  "bg-popover/95 p-1.5 shadow-xl backdrop-blur-md",
-                  isOwn
+                  "absolute bottom-9 z-40 grid grid-cols-4 gap-0.5 rounded-2xl border", "w-max max-w-[calc(100vw-1rem)] bg-popover/95 p-1.5 shadow-xl backdrop-blur-md sm:flex sm:w-max sm:max-w-none", isOwn
                     ? "right-0"
-                    : "left-0",
+                    : "left-0", "max-sm:left-1/2 max-sm:right-auto max-sm:-translate-x-1/2",
+                  "sm:flex sm:max-w-none",
                 )}
               >
                 {REACTION_EMOJIS.map(
@@ -1327,7 +1331,7 @@ export default function MessageBubble({
                           false,
                         );
                       }}
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-base transition hover:bg-muted hover:scale-110"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base transition hover:scale-110 hover:bg-muted active:scale-95 focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label={`React with ${emoji}`}
                     >
                       {emoji}
@@ -1342,7 +1346,7 @@ export default function MessageBubble({
 
         <div
           className={cn(
-            "mt-1 flex min-h-4 items-center gap-1.5 px-1 text-[10px] font-medium tracking-[0.01em] text-muted-foreground",
+            "mt-1.5 flex min-h-4 items-center gap-1.5 px-1 text-[10px] font-medium tracking-[0.01em] text-muted-foreground/80",
             isOwn && "text-muted-foreground/80",
           )}
         >

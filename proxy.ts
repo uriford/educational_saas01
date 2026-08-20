@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 
-export default auth((req) => {
+export default auth(() => {
   // You can add authorization logic here later.
 });
 

@@ -13,7 +13,7 @@ import { createAssessmentAction } from "../actions/create-assessment.action";
 type Props = {
   courseId: string;
   organizationId: string;
-  branchId: string;
+  branchId: string | null;
 };
 
 export default function CreateAssessmentForm({

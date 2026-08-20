@@ -24,10 +24,7 @@ export default async function SchedulePage() {
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
+  if (!session.user.organizationId) {
     redirect("/login");
   }
 

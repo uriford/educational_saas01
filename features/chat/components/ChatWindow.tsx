@@ -5,6 +5,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -34,7 +35,6 @@ import {
 } from "../actions/chat.actions";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 
 interface ChatAttachment {
@@ -371,19 +371,38 @@ export default function ChatWindow({
   const [selectedFiles, setSelectedFiles] =
     useState<File[]>([]);
 
-  const attachmentPreviewUrls =
-    Object.fromEntries(
-      selectedFiles.map((file) => [
-        `${file.name}-${file.size}-${file.lastModified}`,
+  const attachmentPreviewUrls = useMemo(() => {
+    const urls = new Map<string, string>();
+
+    for (const file of selectedFiles) {
+      if (
         file.type.startsWith("image/") ||
         file.type.startsWith("video/")
-          ? URL.createObjectURL(file)
-          : null,
-      ]),
-    );
+      ) {
+        const key = `${file.name}-${file.size}-${file.lastModified}`;
+        urls.set(key, URL.createObjectURL(file));
+      }
+    }
+
+    return urls;
+  }, [selectedFiles]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of attachmentPreviewUrls.values()) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [attachmentPreviewUrls]);
 
   const fileInputRef =
     useRef<HTMLInputElement>(null);
+
+  const textareaRef =
+    useRef<HTMLTextAreaElement>(null);
+
+  const emojiPickerRef =
+    useRef<HTMLDivElement>(null);
 
   type TypingUser = {
     id: string;
@@ -431,7 +450,7 @@ const typingTimeoutRef =
 
   const insertEmoji = useCallback((emoji: string) => {
     setInput((previous) => `${previous}${emoji}`);
-    setShowEmojiPicker(true);
+    setShowEmojiPicker(false);
   }, []);
 
   useEffect(() => {
@@ -439,6 +458,92 @@ const typingTimeoutRef =
       scrollToBottom();
     }
   }, [messages.length, scrollToBottom]);
+
+  useEffect(() => {
+    if (!showEmojiPicker) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (
+        target instanceof Node &&
+        emojiPickerRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setShowEmojiPicker(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowEmojiPicker(false);
+        textareaRef.current?.focus();
+      }
+    };
+
+    document.addEventListener(
+      "pointerdown",
+      handlePointerDown,
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handlePointerDown,
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+    };
+  }, [showEmojiPicker]);
+
+  const resizeTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+
+    const computedStyle =
+      window.getComputedStyle(textarea);
+
+    const lineHeight =
+      Number.parseFloat(
+        computedStyle.lineHeight,
+      ) || 20;
+
+    const minHeight =
+      lineHeight + 16;
+
+    const maxHeight = 128;
+
+    const nextHeight = Math.min(
+      Math.max(textarea.scrollHeight, minHeight),
+      maxHeight,
+    );
+
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > maxHeight
+        ? "auto"
+        : "hidden";
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [input, resizeTextarea]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1733,7 +1838,7 @@ const typingTimeoutRef =
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden border shadow-sm">
-      <div className="flex items-center justify-between border-b px-5 py-4">
+      <div className="flex items-center justify-between border-b px-3 py-3 sm:px-5 sm:py-4">
         <div>
           <h2 className="font-semibold">
             American Council Support
@@ -1759,7 +1864,7 @@ const typingTimeoutRef =
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="min-w-0 flex-1 overflow-y-auto px-3 py-4 sm:p-5">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             Start a conversation
@@ -1817,7 +1922,7 @@ const typingTimeoutRef =
         )}
 
         {typingUsers.length > 0 && (
-          <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="mb-3 flex items-center gap-2 px-1 text-xs text-muted-foreground sm:mb-4 sm:px-0">
             <div className="flex gap-1 rounded-2xl bg-muted px-3 py-2">
               <span className="animate-bounce">
                 •
@@ -1843,10 +1948,13 @@ const typingTimeoutRef =
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t bg-background/95 px-3 py-3 backdrop-blur md:px-5">
+      <div className="shrink-0 border-t bg-background/95 px-2.5 py-2.5 backdrop-blur sm:px-3 sm:py-3 md:px-5">
         <div className="relative">
             {showEmojiPicker && (
-              <div className="absolute bottom-14 left-0 z-20 w-64 rounded-2xl border bg-popover p-3 shadow-xl">
+              <div
+                ref={emojiPickerRef}
+                className="absolute bottom-14 left-0 z-20 w-64 rounded-2xl border bg-popover p-3 shadow-xl"
+              >
                 <div className="grid grid-cols-8 gap-1">
                   {[
                     "😀","😂","😊","😍","🥰","😎","🤔","😢",
@@ -1883,7 +1991,7 @@ const typingTimeoutRef =
                       `${file.name}-${file.size}-${file.lastModified}`;
 
                     const previewUrl =
-                      attachmentPreviewUrls[fileKey];
+                      attachmentPreviewUrls.get(fileKey);
 
                     const isImage =
                       file.type.startsWith("image/");
@@ -1957,7 +2065,7 @@ const typingTimeoutRef =
 
                 void sendMessage();
               }}
-              className="flex items-end gap-2 rounded-2xl border bg-muted/30 p-2 shadow-sm"
+              className="flex min-w-0 items-end gap-1.5 rounded-2xl border bg-muted/30 p-1.5 shadow-sm sm:gap-2 sm:p-2"
             >
               <div className="flex items-center gap-1 pb-0.5">
                 <Button
@@ -2005,7 +2113,8 @@ const typingTimeoutRef =
                 </Button>
               </div>
 
-              <Input
+              <textarea
+                ref={textareaRef}
                 value={input}
                 onChange={(event) => {
                   setInput(event.target.value);
@@ -2015,14 +2124,21 @@ const typingTimeoutRef =
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
 
-                    if (!input.trim() || loading) return;
+                    if (
+                      (!input.trim() && selectedFiles.length === 0) ||
+                      loading
+                    ) {
+                      return;
+                    }
 
                     void sendMessage();
                   }
                 }}
                 placeholder="Type a message..."
                 disabled={loading}
-                className="h-10 flex-1 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+                rows={1}
+                aria-label="Message"
+                className="min-h-10 max-h-32 min-w-0 flex-1 resize-none overflow-y-hidden border-0 bg-transparent px-2 py-2 text-sm leading-5 outline-none placeholder:text-muted-foreground focus-visible:ring-0"
               />
 
               <Button

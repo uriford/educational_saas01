@@ -7,13 +7,10 @@ export async function deleteStudentAction(id: string) {
   try {
     const session = await requireAdmin();
 
-    if (
-      !session.user.organizationId ||
-      !session.user.branchId
-    ) {
+    if (!session.user.organizationId) {
       return {
         success: false,
-        message: "Organization or Branch not found.",
+        message: "Organization not found.",
       };
     }
 

@@ -79,7 +79,7 @@ export class CourseService {
   static async update(
     id: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
     data: UpdateCourseRepositoryData,
   ) {
     try {
@@ -124,7 +124,7 @@ export class CourseService {
   static async softDelete(
     id: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
     updatedById: string,
   ) {
     try {

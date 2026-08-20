@@ -175,7 +175,7 @@ export class CourseRepository {
   static async update(
     id: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
     data: UpdateCourseRepositoryData,
   ) {
     const {
@@ -189,7 +189,7 @@ export class CourseRepository {
       where: {
         id,
         organizationId,
-        branchId,
+        ...(branchId ? { branchId } : { branchId: null }),
         deletedAt: null,
       },
 
@@ -216,14 +216,14 @@ export class CourseRepository {
   static async softDelete(
     id: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
     updatedById: string,
   ) {
     return db.course.updateMany({
       where: {
         id,
         organizationId,
-        branchId,
+        ...(branchId ? { branchId } : { branchId: null }),
         deletedAt: null,
       },
 

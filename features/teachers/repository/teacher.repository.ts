@@ -260,14 +260,14 @@ export class TeacherRepository {
   static async update(
     id: string,
     organizationId: string,
-    branchId: string,
-    data: Partial<CreateTeacherData>,
+    branchId?: string,
+    data: Partial<CreateTeacherData> = {},
   ) {
     return db.teacher.updateMany({
       where: {
         id,
         organizationId,
-        branchId,
+        ...(branchId && { branchId }),
         deletedAt: null,
       },
 

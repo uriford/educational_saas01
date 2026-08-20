@@ -12,20 +12,17 @@ export async function updateTeacherAction(
   try {
     const session = await requireAdmin();
 
-    if (
-      !session.user.organizationId ||
-      !session.user.branchId
-    ) {
+    if (!session.user.organizationId) {
       return {
         success: false,
-        message: "Organization or Branch not found.",
+        message: "Organization not found.",
       };
     }
 
     return TeacherService.update(
       id,
       session.user.organizationId,
-      session.user.branchId,
+      session.user.branchId ?? undefined,
       data,
     );
   } catch (error) {

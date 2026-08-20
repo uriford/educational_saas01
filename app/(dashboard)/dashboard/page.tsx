@@ -57,33 +57,51 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  if (!session.user.branchId) {
-    redirect("/login");
-  }
+  let overview;
+  let recentActivities;
+  let upcomingClasses;
+  let recentAnnouncements;
 
-  const [
-    overview,
-    recentActivities,
-    upcomingClasses,
-    recentAnnouncements,
-  ] = await Promise.all([
-    AnalyticsService.getOverview(
+  try {
+    console.log("========== DASHBOARD: ANALYTICS ==========");
+    overview = await AnalyticsService.getOverview(
       session.user.organizationId,
       session.user.branchId,
-    ),
-    DashboardService.getRecentActivity(
-      session.user.organizationId,
-      session.user.branchId,
-    ),
-    DashboardService.getUpcomingClasses(
-      session.user.organizationId,
-      session.user.branchId,
-    ),
-    DashboardService.getRecentAnnouncements(
-      session.user.organizationId,
-      session.user.branchId,
-    ),
-  ]);
+    );
+    console.log("========== DASHBOARD: ANALYTICS OK ==========");
+
+    console.log("========== DASHBOARD: RECENT ACTIVITY ==========");
+    recentActivities =
+      await DashboardService.getRecentActivity(
+        session.user.organizationId,
+        session.user.branchId,
+      );
+    console.log("========== DASHBOARD: RECENT ACTIVITY OK ==========");
+
+    console.log("========== DASHBOARD: UPCOMING CLASSES ==========");
+    upcomingClasses =
+      await DashboardService.getUpcomingClasses(
+        session.user.organizationId,
+        session.user.branchId,
+      );
+    console.log("========== DASHBOARD: UPCOMING CLASSES OK ==========");
+
+    console.log("========== DASHBOARD: ANNOUNCEMENTS ==========");
+    recentAnnouncements =
+      await DashboardService.getRecentAnnouncements(
+        session.user.organizationId,
+        session.user.branchId,
+      );
+    console.log("========== DASHBOARD: ANNOUNCEMENTS OK ==========");
+  } catch (error) {
+    console.error("========== DASHBOARD LOAD ERROR ==========");
+    console.error(error);
+    if (error instanceof Error) {
+      console.error("MESSAGE:", error.message);
+      console.error("STACK:", error.stack);
+    }
+    throw error;
+  }
 
   const userName =
     session.user.name?.split(" ")[0] ??

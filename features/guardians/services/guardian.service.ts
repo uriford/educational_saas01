@@ -22,16 +22,11 @@ import type {
 } from "../schemas/guardian.schema";
 
 function generateGuardianCode() {
-  return `GRD-${crypto
-    .randomBytes(5)
-    .toString("hex")
-    .toUpperCase()}`;
+  return `GRD-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
 }
 
 function generateTemporaryPassword() {
-  return `Guardian@${crypto
-    .randomBytes(8)
-    .toString("base64url")}`;
+  return `Guardian@${crypto.randomBytes(8).toString("base64url")}`;
 }
 
 function normalizeEmail(email: string) {
@@ -44,9 +39,7 @@ function normalizeOptional(value?: string) {
   return normalized ? normalized : null;
 }
 
-function normalizeStudents(
-  students: CreateGuardianInput["students"],
-) {
+function normalizeStudents(students: CreateGuardianInput["students"]) {
   const unique = new Map<
     string,
     {
@@ -58,21 +51,15 @@ function normalizeStudents(
   for (const student of students) {
     unique.set(student.studentId, {
       studentId: student.studentId,
-      relationship:
-        normalizeOptional(student.relationship),
+      relationship: normalizeOptional(student.relationship),
     });
   }
 
   return Array.from(unique.values());
 }
 
-function assertCanManageGuardians(
-  actorRole: string,
-) {
-  if (
-    actorRole !== "ORGANIZATION_ADMIN" &&
-    actorRole !== "BRANCH_ADMIN"
-  ) {
+function assertCanManageGuardians(actorRole: string) {
+  if (actorRole !== "ORGANIZATION_ADMIN" && actorRole !== "BRANCH_ADMIN") {
     throw new Error(
       "Only organization and branch administrators can manage guardians.",
     );
@@ -84,20 +71,12 @@ function assertBranchAccess(
   actorBranchId: string | null,
   targetBranchId: string,
 ) {
-  if (
-    actorRole === "BRANCH_ADMIN" &&
-    actorBranchId !== targetBranchId
-  ) {
-    throw new Error(
-      "You can only manage guardians in your own branch.",
-    );
+  if (actorRole === "BRANCH_ADMIN" && actorBranchId !== targetBranchId) {
+    throw new Error("You can only manage guardians in your own branch.");
   }
 }
 
-function assertNotSelf(
-  actorUserId: string,
-  targetUserId: string,
-) {
+function assertNotSelf(actorUserId: string, targetUserId: string) {
   if (actorUserId === targetUserId) {
     throw new Error(
       "You cannot perform this administrative action on your own account.",
@@ -105,19 +84,11 @@ function assertNotSelf(
   }
 }
 
-async function validateBranch(
-  organizationId: string,
-  branchId: string,
-) {
-  const branch = await findBranch(
-    organizationId,
-    branchId,
-  );
+async function validateBranch(organizationId: string, branchId: string) {
+  const branch = await findBranch(organizationId, branchId);
 
   if (!branch) {
-    throw new Error(
-      "The selected branch does not exist or is inactive.",
-    );
+    throw new Error("The selected branch does not exist or is inactive.");
   }
 
   return branch;
@@ -128,27 +99,19 @@ async function validateStudents(
   branchId: string,
   students: CreateGuardianInput["students"],
 ) {
-  const normalizedStudents =
-    normalizeStudents(students);
+  const normalizedStudents = normalizeStudents(students);
 
   if (normalizedStudents.length === 0) {
-    throw new Error(
-      "At least one student must be linked to the guardian.",
-    );
+    throw new Error("At least one student must be linked to the guardian.");
   }
 
   const studentRecords = await findStudents(
     organizationId,
     branchId,
-    normalizedStudents.map(
-      (student) => student.studentId,
-    ),
+    normalizedStudents.map((student) => student.studentId),
   );
 
-  if (
-    studentRecords.length !==
-    normalizedStudents.length
-  ) {
+  if (studentRecords.length !== normalizedStudents.length) {
     throw new Error(
       "One or more selected students are invalid, inactive, deleted, or belong to another branch.",
     );
@@ -167,12 +130,9 @@ export class GuardianService {
 
     return getGuardianManagementStudents(
       organizationId,
-      actorRole === "BRANCH_ADMIN"
-        ? actorBranchId ?? undefined
-        : undefined,
+      actorRole === "BRANCH_ADMIN" ? (actorBranchId ?? undefined) : undefined,
     );
   }
-
 
   static async getAll(
     organizationId: string,
@@ -184,9 +144,7 @@ export class GuardianService {
 
     return getGuardians(
       organizationId,
-      actorRole === "BRANCH_ADMIN"
-        ? actorBranchId ?? undefined
-        : undefined,
+      actorRole === "BRANCH_ADMIN" ? (actorBranchId ?? undefined) : undefined,
       search,
     );
   }
@@ -199,22 +157,14 @@ export class GuardianService {
   ) {
     assertCanManageGuardians(actorRole);
 
-    const guardian = await getGuardianById(
-      organizationId,
-      guardianId,
-    );
+    const guardian = await getGuardianById(organizationId, guardianId);
 
     if (!guardian) {
       return null;
     }
 
-    if (
-      actorRole === "BRANCH_ADMIN" &&
-      guardian.branchId !== actorBranchId
-    ) {
-      throw new Error(
-        "You do not have access to this guardian.",
-      );
+    if (actorRole === "BRANCH_ADMIN" && guardian.branchId !== actorBranchId) {
+      throw new Error("You do not have access to this guardian.");
     }
 
     return guardian;
@@ -229,22 +179,13 @@ export class GuardianService {
   ) {
     assertCanManageGuardians(actorRole);
 
-    assertBranchAccess(
-      actorRole,
-      actorBranchId,
-      data.branchId,
-    );
+    assertBranchAccess(actorRole, actorBranchId, data.branchId);
 
-    const branch = await validateBranch(
-      organizationId,
-      data.branchId,
-    );
+    const branch = await validateBranch(organizationId, data.branchId);
 
     const email = normalizeEmail(data.email);
 
-    const existingUser = await findUserByEmail(
-      email,
-    );
+    const existingUser = await findUserByEmail(email, organizationId);
 
     if (existingUser) {
       throw new Error(
@@ -258,11 +199,9 @@ export class GuardianService {
       data.students,
     );
 
-    const temporaryPassword =
-      generateTemporaryPassword();
+    const temporaryPassword = generateTemporaryPassword();
 
-    const passwordHash =
-      await bcrypt.hash(temporaryPassword, 12);
+    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 
     const guardian = await createGuardian({
       organizationId,
@@ -293,22 +232,11 @@ export class GuardianService {
   ) {
     assertCanManageGuardians(actorRole);
 
-    assertNotSelf(
-      actorUserId,
-      guardianId,
-    );
+    assertNotSelf(actorUserId, guardianId);
 
-    assertBranchAccess(
-      actorRole,
-      actorBranchId,
-      data.branchId,
-    );
+    assertBranchAccess(actorRole, actorBranchId, data.branchId);
 
-    const existingGuardian =
-      await getGuardianById(
-        organizationId,
-        guardianId,
-      );
+    const existingGuardian = await getGuardianById(organizationId, guardianId);
 
     if (!existingGuardian) {
       throw new Error("Guardian not found.");
@@ -318,15 +246,10 @@ export class GuardianService {
       actorRole === "BRANCH_ADMIN" &&
       existingGuardian.branchId !== actorBranchId
     ) {
-      throw new Error(
-        "You do not have access to this guardian.",
-      );
+      throw new Error("You do not have access to this guardian.");
     }
 
-    const branch = await validateBranch(
-      organizationId,
-      data.branchId,
-    );
+    const branch = await validateBranch(organizationId, data.branchId);
 
     const students = await validateStudents(
       organizationId,
@@ -334,18 +257,14 @@ export class GuardianService {
       data.students,
     );
 
-    return updateGuardian(
-      organizationId,
-      guardianId,
-      {
-        branchId: branch.id,
-        firstName: data.firstName.trim(),
-        lastName: normalizeOptional(data.lastName),
-        phone: normalizeOptional(data.phone),
-        updatedById: actorUserId,
-        students,
-      },
-    );
+    return updateGuardian(organizationId, guardianId, {
+      branchId: branch.id,
+      firstName: data.firstName.trim(),
+      lastName: normalizeOptional(data.lastName),
+      phone: normalizeOptional(data.phone),
+      updatedById: actorUserId,
+      students,
+    });
   }
 
   static async updateStatus(
@@ -358,32 +277,19 @@ export class GuardianService {
   ) {
     assertCanManageGuardians(actorRole);
 
-    assertNotSelf(
-      actorUserId,
-      guardianId,
-    );
+    assertNotSelf(actorUserId, guardianId);
 
-    const guardian =
-      await getGuardianById(
-        organizationId,
-        guardianId,
-      );
+    const guardian = await getGuardianById(organizationId, guardianId);
 
     if (!guardian) {
       throw new Error("Guardian not found.");
     }
 
     if (!guardian.branchId) {
-      throw new Error(
-        "This guardian is not assigned to a branch.",
-      );
+      throw new Error("This guardian is not assigned to a branch.");
     }
 
-    assertBranchAccess(
-      actorRole,
-      actorBranchId,
-      guardian.branchId,
-    );
+    assertBranchAccess(actorRole, actorBranchId, guardian.branchId);
 
     return updateGuardianStatus(
       organizationId,
@@ -402,37 +308,20 @@ export class GuardianService {
   ) {
     assertCanManageGuardians(actorRole);
 
-    assertNotSelf(
-      actorUserId,
-      guardianId,
-    );
+    assertNotSelf(actorUserId, guardianId);
 
-    const guardian =
-      await getGuardianById(
-        organizationId,
-        guardianId,
-      );
+    const guardian = await getGuardianById(organizationId, guardianId);
 
     if (!guardian) {
       throw new Error("Guardian not found.");
     }
 
     if (!guardian.branchId) {
-      throw new Error(
-        "This guardian is not assigned to a branch.",
-      );
+      throw new Error("This guardian is not assigned to a branch.");
     }
 
-    assertBranchAccess(
-      actorRole,
-      actorBranchId,
-      guardian.branchId,
-    );
+    assertBranchAccess(actorRole, actorBranchId, guardian.branchId);
 
-    return softDeleteGuardian(
-      organizationId,
-      guardianId,
-      actorUserId,
-    );
+    return softDeleteGuardian(organizationId, guardianId, actorUserId);
   }
 }

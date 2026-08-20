@@ -17,7 +17,7 @@ export type CreateCourseData = {
 
 export type CreateCourseRepositoryData = CreateCourseData & {
   organizationId: string;
-  branchId: string;
+  branchId: string | null;
   createdById: string;
 };
 

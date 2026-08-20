@@ -11,20 +11,17 @@ export async function createTeacherAction(
   try {
     const session = await requireAdmin();
 
-    if (
-      !session.user.organizationId ||
-      !session.user.branchId
-    ) {
+    if (!session.user.organizationId) {
       return {
         success: false,
-        message: "Organization or Branch not found.",
+        message: "Organization not found.",
       };
     }
 
     return TeacherService.create({
       ...data,
       organizationId: session.user.organizationId,
-      branchId: session.user.branchId,
+      branchId: session.user.branchId ?? null,
     });
   } catch (error) {
     console.error(error);

@@ -55,3 +55,17 @@ output.txt
 
 # Local chat snapshots
 .chat-*/
+
+# Temporary development backups
+.fix-backups/
+*.bak
+*.bak-*
+*.backup
+*-backup
+
+# Development backup directories
+.repair-backups/
+
+# Timestamped development backup files
+*.backup_*
+*.before_*

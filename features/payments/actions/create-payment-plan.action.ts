@@ -63,16 +63,14 @@ export async function createPaymentPlanAction(
   const branchId =
     enrollment.student.branchId;
 
-  if (!branchId) {
-    throw new Error(
-      "A branch is required to create a payment plan for this student.",
+  if (branchId) {
+    await requireBranchAccess(
+      organizationId,
+      branchId,
     );
+  } else {
+    await requireAdmin();
   }
-
-  await requireBranchAccess(
-    organizationId,
-    branchId,
-  );
 
   const plan = await db.$transaction(async (tx) => {
     const plan = await tx.paymentPlan.create({

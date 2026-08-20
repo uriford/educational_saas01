@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { LessonRepository } from "../repository/lesson.repository";
 
 import type {
@@ -10,6 +11,34 @@ export class LessonService {
     data: CreateLessonRepositoryData,
   ) {
     try {
+      /*
+       * TENANCY BOUNDARY:
+       * A lesson must only be created for a course that belongs
+       * to the same organization and branch as the authenticated actor.
+       *
+       * Without this check, a caller who knows another course ID
+       * could potentially create a lesson against a foreign course
+       * while supplying their own tenant identifiers.
+       */
+      const course = await db.course.findFirst({
+        where: {
+          id: data.courseId,
+          organizationId: data.organizationId,
+          branchId: data.branchId,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!course) {
+        return {
+          success: false,
+          message: "Course not found.",
+        };
+      }
+
       await LessonRepository.create(data);
 
       return {

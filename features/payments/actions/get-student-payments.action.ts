@@ -29,16 +29,14 @@ export async function getStudentPaymentsAction(
     );
   }
 
-  if (!student.branchId) {
-    throw new Error(
-      "This student is not assigned to a branch.",
+  if (student.branchId) {
+    await requireBranchAccess(
+      student.organizationId,
+      student.branchId,
     );
+  } else {
+    await requireAdmin();
   }
-
-  await requireBranchAccess(
-    student.organizationId,
-    student.branchId,
-  );
 
   return db.paymentPlan.findMany({
     where: {
