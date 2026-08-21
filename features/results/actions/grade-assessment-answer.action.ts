@@ -10,19 +10,7 @@ export async function gradeAssessmentAnswerAction(data: {
   marksAwarded: number;
 }) {
   const session = await requireAdmin();
-
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message:
-        "Organization or branch information is missing.",
-    };
-  }
-
-  return ResultService.gradeAnswer({
+return ResultService.gradeAnswer({
     ...data,
     organizationId: session.user.organizationId,
     branchId: session.user.branchId,

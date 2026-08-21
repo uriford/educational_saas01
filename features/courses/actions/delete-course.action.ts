@@ -9,16 +9,7 @@ export async function deleteCourseAction(
 ) {
   const session = await requireAdmin();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
+  
   if (!id) {
     return {
       success: false,

@@ -8,8 +8,7 @@ import { PasswordResetRepository } from "../repository/password-reset.repository
 import type { ForgotPasswordFormData } from "../schemas/forgot-password.schema";
 import type { ResetPasswordFormData } from "../schemas/reset-password.schema";
 import { AuthRepository } from "../repository/auth.repository";
-
-const RESET_TOKEN_EXPIRY_MS = 30 * 60 * 1000;
+import { AUTH_CONSTANTS } from "../constants/auth.constants";
 
 const GENERIC_FORGOT_PASSWORD_MESSAGE =
   "If an account with that email exists, a password reset link has been sent.";
@@ -44,7 +43,8 @@ export class PasswordResetService {
       PasswordResetRepository.hashToken(rawToken);
 
     const expiresAt = new Date(
-      Date.now() + RESET_TOKEN_EXPIRY_MS,
+      Date.now() +
+        AUTH_CONSTANTS.PASSWORD_RESET_TOKEN_EXPIRY_MS,
     );
 
     await PasswordResetRepository.createToken(

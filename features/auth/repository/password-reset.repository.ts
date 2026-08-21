@@ -76,20 +76,6 @@ export class PasswordResetRepository {
     });
   }
 
-  static async updatePassword(
-    userId: string,
-    password: string,
-  ) {
-    return db.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        password,
-      },
-    });
-  }
-
   static generateRawToken() {
     return crypto.randomBytes(32).toString("hex");
   }

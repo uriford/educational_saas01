@@ -34,9 +34,6 @@ import {
 } from "lucide-react";
 
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
 } from "@/components/ui/avatar";
 
 import { Badge } from "@/components/ui/badge";
@@ -1039,6 +1036,9 @@ export default function MessageBubble({
       {!isOwn && (
         <div className="h-9 w-9 shrink-0">
           {senderImage && !isAI ? (
+            // Dynamic user avatar URL; intentionally use native img to avoid
+            // requiring next/image remote-host configuration for chat avatars.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={senderImage}
               alt={senderName ?? "User"}
@@ -1367,6 +1367,9 @@ export default function MessageBubble({
       {isOwn && (
         <div className="h-9 w-9 shrink-0 self-end pb-0.5">
           {senderImage && !isAI ? (
+            // Dynamic user avatar URL; intentionally use native img to avoid
+            // requiring next/image remote-host configuration for chat avatars.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={senderImage}
               alt={senderName ?? "User"}

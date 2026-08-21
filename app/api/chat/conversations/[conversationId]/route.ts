@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 
 import {
   getChatConversation,
@@ -12,8 +13,12 @@ import {
   getStaffChatConversation,
 } from "@/features/chat/repository/chat.repository";
 
+import {
+  SubscriptionService,
+} from "@/features/subscriptions/services/subscription.service";
+
 export async function GET(
-  request: Request,
+  _request: Request,
   {
     params,
   }: {
@@ -22,49 +27,193 @@ export async function GET(
     }>;
   },
 ) {
-  const session = await auth();
+  try {
+    const session = await auth();
 
-  if (
-    !session?.user?.id ||
-    !session.user.organizationId
-  ) {
-    return NextResponse.json(
-      {
-        message: "Unauthorized",
-      },
-      {
-        status: 401,
-      },
-    );
-  }
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        {
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
 
-  const { conversationId } = await params;
+    const { conversationId } = await params;
 
-  const organizationId =
-    session.user.organizationId;
+    const role = session.user.role;
+    const organizationId =
+      session.user.organizationId;
 
-  /*
-   * Organization admins and super admins can
-   * access every conversation in their organization.
-   */
-  const isOrganizationAdmin =
-    session.user.role === "ORGANIZATION_ADMIN";
+    /*
+     * SUPER_ADMIN may not have a tenant organization.
+     *
+     * Chat conversations are tenant-scoped, therefore a
+     * SUPER_ADMIN must explicitly operate inside an organization
+     * context before accessing a tenant conversation.
+     */
+    if (!organizationId) {
+      return NextResponse.json(
+        {
+          message: "Organization context required",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
 
-  const isSuperAdmin =
-    session.user.role === "SUPER_ADMIN";
+    /*
+     * Subscription enforcement.
+     *
+     * SUPER_ADMIN is exempt inside SubscriptionService.
+     */
+    const hasAccess =
+      await SubscriptionService.hasAccess(
+        organizationId,
+      );
 
-  /*
-   * Students can only access their own conversation.
-   */
-  if (session.user.role === "STUDENT") {
-    const conversation =
-      await getStudentConversation(
-        conversationId,
+    if (
+      role !== "SUPER_ADMIN" &&
+      !hasAccess
+    ) {
+      return NextResponse.json(
+        {
+          message: "Subscription inactive",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    /*
+     * ========================================================
+     * STUDENT
+     * ========================================================
+     *
+     * IMPORTANT:
+     *
+     * session.user.id = User.id
+     * ChatConversation.studentId = Student.id
+     *
+     * Never pass User.id directly as studentId.
+     */
+    if (role === "STUDENT") {
+      const student =
+        await db.student.findFirst({
+          where: {
+            userId: session.user.id,
+            organizationId,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      if (!student) {
+        return NextResponse.json(
+          {
+            message: "Student profile not found",
+          },
+          {
+            status: 403,
+          },
+        );
+      }
+
+      const conversation =
+        await getStudentConversation(
+          conversationId,
+          organizationId,
+          student.id,
+        );
+
+      if (!conversation) {
+        return NextResponse.json(
+          {
+            message: "Conversation not found",
+          },
+          {
+            status: 404,
+          },
+        );
+      }
+
+      return NextResponse.json(conversation);
+    }
+
+    /*
+     * ========================================================
+     * ORGANIZATION ADMIN / SUPER ADMIN
+     * ========================================================
+     */
+    if (
+      role === "ORGANIZATION_ADMIN" ||
+      role === "SUPER_ADMIN"
+    ) {
+      const conversation =
+        await getChatConversation(
+          conversationId,
+          organizationId,
+        );
+
+      if (!conversation) {
+        return NextResponse.json(
+          {
+            message: "Conversation not found",
+          },
+          {
+            status: 404,
+          },
+        );
+      }
+
+      return NextResponse.json(conversation);
+    }
+
+    /*
+     * ========================================================
+     * STAFF / BRANCH ADMIN
+     * ========================================================
+     *
+     * Access is controlled by ChatStaff:
+     *
+     * canViewAllChats = true
+     *     -> all organization conversations
+     *
+     * canViewAllChats = false
+     *     -> assigned conversations only
+     */
+    const staff =
+      await getChatStaffByUserId(
         organizationId,
         session.user.id,
       );
 
-    if (!conversation) {
+    if (!staff) {
+      return NextResponse.json(
+        {
+          message: "Forbidden",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    const authorizedConversation =
+      await getStaffChatConversation(
+        conversationId,
+        organizationId,
+        staff.id,
+        staff.canViewAllChats,
+      );
+
+    if (!authorizedConversation) {
       return NextResponse.json(
         {
           message: "Conversation not found",
@@ -75,14 +224,6 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(conversation);
-  }
-
-  /*
-   * Admins can access every conversation
-   * belonging to their organization.
-   */
-  if (isOrganizationAdmin || isSuperAdmin) {
     const conversation =
       await getChatConversation(
         conversationId,
@@ -101,69 +242,20 @@ export async function GET(
     }
 
     return NextResponse.json(conversation);
-  }
-
-  /*
-   * Staff access is scoped by the ChatStaff record.
-   *
-   * canViewAllChats = true:
-   *   all organization conversations.
-   *
-   * canViewAllChats = false:
-   *   only assigned conversations.
-   */
-  const staff =
-    await getChatStaffByUserId(
-      organizationId,
-      session.user.id,
+  } catch (error) {
+    console.error(
+      "CHAT CONVERSATION GET ERROR:",
+      error,
     );
 
-  if (!staff) {
     return NextResponse.json(
       {
-        message: "Forbidden",
+        message:
+          "Failed to load conversation",
       },
       {
-        status: 403,
+        status: 500,
       },
     );
   }
-
-  const authorizedConversation =
-    await getStaffChatConversation(
-      conversationId,
-      organizationId,
-      staff.id,
-      staff.canViewAllChats,
-    );
-
-  if (!authorizedConversation) {
-    return NextResponse.json(
-      {
-        message: "Conversation not found",
-      },
-      {
-        status: 404,
-      },
-    );
-  }
-
-  const conversation =
-    await getChatConversation(
-      conversationId,
-      organizationId,
-    );
-
-  if (!conversation) {
-    return NextResponse.json(
-      {
-        message: "Conversation not found",
-      },
-      {
-        status: 404,
-      },
-    );
-  }
-
-  return NextResponse.json(conversation);
 }

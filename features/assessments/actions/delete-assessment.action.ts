@@ -39,14 +39,6 @@ export async function deleteAssessmentAction(data: {
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false,
-      message:
-        "Branch information is missing.",
-    };
-  }
-
   if (!data.id) {
     return {
       success: false,

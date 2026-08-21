@@ -2,14 +2,14 @@ import { LessonProgressRepository } from "../repository/lesson-progress.reposito
 
 export class LessonProgressService {
   static async getCourseLessons(
-    userId: string,
+    studentId: string,
     courseId: string,
     organizationId: string,
     branchId?: string,
   ) {
     const enrollment =
       await LessonProgressRepository.findEnrollmentForStudent(
-        userId,
+        studentId,
         courseId,
         organizationId,
         branchId,
@@ -53,7 +53,7 @@ export class LessonProgressService {
   }
 
   static async getLesson(
-    userId: string,
+    studentId: string,
     courseId: string,
     lessonId: string,
     organizationId: string,
@@ -61,7 +61,7 @@ export class LessonProgressService {
   ) {
     const enrollment =
       await LessonProgressRepository.findEnrollmentForStudent(
-        userId,
+        studentId,
         courseId,
         organizationId,
         branchId,
@@ -122,7 +122,7 @@ export class LessonProgressService {
   }
 
   static async markComplete(
-    userId: string,
+    studentId: string,
     courseId: string,
     lessonId: string,
     organizationId: string,
@@ -130,7 +130,7 @@ export class LessonProgressService {
   ) {
     const enrollment =
       await LessonProgressRepository.findEnrollmentForStudent(
-        userId,
+        studentId,
         courseId,
         organizationId,
         branchId,

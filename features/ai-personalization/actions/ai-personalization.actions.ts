@@ -13,13 +13,7 @@ export async function generateAIPersonalizationAction(
   try {
     const session = await requireStudent();
 
-    if (
-      !session.user.organizationId ||
-      !session.user.branchId
-    ) {
-      throw new Error("Organization and branch access required.");
-    }
-
+    
     const student =
       await StudentService.getByUserId(
         session.user.id,
@@ -59,13 +53,7 @@ export async function getAIPersonalizationAction(
   try {
     const session = await requireStudent();
 
-    if (
-      !session.user.organizationId ||
-      !session.user.branchId
-    ) {
-      throw new Error("Organization and branch access required.");
-    }
-
+    
     const student =
       await StudentService.getByUserId(
         session.user.id,

@@ -29,7 +29,7 @@ export async function POST(
   if (
     typeof endpoint !== "string" ||
     typeof p256dh !== "string" ||
-    typeof auth !== "string"
+    typeof authKey !== "string"
   ) {
     return NextResponse.json(
       {

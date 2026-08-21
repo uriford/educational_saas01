@@ -1,13 +1,26 @@
 "use server";
 
 import { PasswordResetService } from "../services/password-reset.service";
-import type { ForgotPasswordFormData } from "../schemas/forgot-password.schema";
+import { forgotPasswordSchema } from "../schemas/forgot-password.schema";
 
 export async function forgotPasswordAction(
-  data: ForgotPasswordFormData,
+  data: unknown,
 ) {
+  const parsed = forgotPasswordSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      success: false as const,
+      message:
+        parsed.error.issues[0]?.message ??
+        "Invalid email address.",
+    };
+  }
+
   try {
-    return await PasswordResetService.requestReset(data);
+    return await PasswordResetService.requestReset(
+      parsed.data,
+    );
   } catch (error) {
     console.error(
       "FORGOT PASSWORD ACTION ERROR:",

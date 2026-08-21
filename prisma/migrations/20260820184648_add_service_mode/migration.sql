@@ -1,0 +1,8 @@
+-- Recovered migration placeholder.
+--
+-- This migration is already recorded as successfully applied in the
+-- development database. The original migration file is unavailable from
+-- the current Git history, remote branches, and unreachable Git objects.
+--
+-- Database inspection confirmed that the applied migration introduced
+-- no surviving service-mode tables, columns, or enums.

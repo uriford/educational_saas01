@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { requireActiveOrganizationAccess } from "@/features/auth/authorization";
 import { db } from "@/lib/db";
 import {
   publishStaffPresence,
@@ -21,6 +22,16 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
+
+    /*
+     * Tenant authorization + subscription enforcement.
+     *
+     * The organization comes exclusively from the authenticated
+     * session. No request body value can select another tenant.
+     */
+    await requireActiveOrganizationAccess(
+      session.user.organizationId,
+    );
 
     const body = await request.json().catch(() => ({}));
 

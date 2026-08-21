@@ -42,13 +42,6 @@ export async function createClassSessionAction(data: {
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false,
-      message: "Branch information is missing.",
-    };
-  }
-
   if (!data.title.trim()) {
     return {
       success: false,

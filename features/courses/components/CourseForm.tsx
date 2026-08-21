@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BookOpen,
@@ -77,7 +77,7 @@ export default function CourseForm({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CourseFormValues>({
@@ -97,7 +97,15 @@ export default function CourseForm({
     },
   });
 
-  const selectedStatus = watch("status");
+  const selectedStatus = useWatch({
+    control,
+    name: "status",
+  });
+
+  const selectedStartDate = useWatch({
+    control,
+    name: "startDate",
+  });
 
   async function onSubmit(data: CourseFormValues) {
     try {
@@ -263,7 +271,7 @@ export default function CourseForm({
             <Input
               id="endDate"
               type="date"
-              min={watch("startDate") || undefined}
+              min={selectedStartDate || undefined}
               aria-invalid={!!errors.endDate}
               {...register("endDate")}
             />

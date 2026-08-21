@@ -1,6 +1,5 @@
 import { StudentRepository } from "../repository/student.repository";
 import type { CreateStudentData } from "../types";
-import bcrypt from "bcrypt";
 import { db } from "@/lib/db";
 
 type CreateStudentResponse =

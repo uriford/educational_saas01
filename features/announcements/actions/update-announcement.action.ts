@@ -11,16 +11,7 @@ export async function updateAnnouncementAction(
 ) {
   const session = await requireAdmin();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
+  
   return AnnouncementService.update(
     id,
     session.user.organizationId,

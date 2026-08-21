@@ -2,8 +2,7 @@ import "server-only";
 
 import { EmailService } from "@/features/notifications/services/email.service";
 import { EmailVerificationRepository } from "../repository/email-verification.repository";
-
-const VERIFICATION_EXPIRY_MS = 30 * 60 * 1000;
+import { AUTH_CONSTANTS } from "../constants/auth.constants";
 
 export class EmailVerificationService {
   static async createAndSend(
@@ -24,7 +23,8 @@ export class EmailVerificationService {
       EmailVerificationRepository.hashToken(rawToken);
 
     const expiresAt = new Date(
-      Date.now() + VERIFICATION_EXPIRY_MS,
+      Date.now() +
+        AUTH_CONSTANTS.VERIFICATION_TOKEN_EXPIRY_MS,
     );
 
     await EmailVerificationRepository.createToken(

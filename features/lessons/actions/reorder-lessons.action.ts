@@ -15,16 +15,7 @@ export async function reorderLessonsAction(
 ) {
   const session = await requireAdmin();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
+  
   try {
     for (const item of items) {
       const result = await LessonService.reorder(

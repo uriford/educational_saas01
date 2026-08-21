@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { publishChatMessageStatus } from "@/features/chat/realtime/pusher.server";
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+
+import {
+  publishChatMessageStatus,
+} from "@/features/chat/realtime/pusher.server";
 
 import {
   getChatStaffByUserId,
@@ -11,7 +13,13 @@ import {
   getStudentConversation,
 } from "@/features/chat/repository/chat.repository";
 
-type MessageStatus = "DELIVERED" | "SEEN";
+import {
+  SubscriptionService,
+} from "@/features/subscriptions/services/subscription.service";
+
+type MessageStatus =
+  | "DELIVERED"
+  | "SEEN";
 
 export async function POST(
   request: Request,
@@ -27,88 +35,118 @@ export async function POST(
   try {
     const session = await auth();
 
-    let currentStudentId: string | null = null;
-
-    if (session?.user?.id) {
-      const student = await db.student.findUnique({
-        where: {
-          userId: session.user.id,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      currentStudentId = student?.id ?? null;
-    }
-
-    if (
-      !session?.user?.id ||
-      !session.user.organizationId
-    ) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        },
       );
     }
-
-    const { conversationId, messageId } =
-      await params;
 
     const organizationId =
       session.user.organizationId;
 
+    if (!organizationId) {
+      return NextResponse.json(
+        {
+          error: "Organization context required",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    const {
+      conversationId,
+      messageId,
+    } = await params;
+
+    /*
+     * Subscription enforcement.
+     */
+    const hasAccess =
+      await SubscriptionService.hasAccess(
+        organizationId,
+      );
+
+    if (
+      session.user.role !== "SUPER_ADMIN" &&
+      !hasAccess
+    ) {
+      return NextResponse.json(
+        {
+          error: "Subscription inactive",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
     /*
      * ========================================================
-     * CONVERSATION ACCESS CONTROL
+     * CONVERSATION AUTHORIZATION
      * ========================================================
-     *
-     * A user may update message status only if they are
-     * actually allowed to access the conversation.
      */
 
-    const isOrganizationAdmin =
-      session.user.role === "ORGANIZATION_ADMIN";
-
-    const isSuperAdmin =
-      session.user.role === "SUPER_ADMIN";
+    let currentStudentId:
+      | string
+      | null = null;
 
     if (session.user.role === "STUDENT") {
-      /*
-       * IMPORTANT:
-       *
-       * session.user.id is User.id.
-       * ChatConversation.studentId stores Student.id.
-       *
-       * currentStudentId was resolved above from:
-       * Student.userId = session.user.id
-       *
-       * Therefore the student-scoped repository lookup MUST
-       * use currentStudentId, never session.user.id.
-       */
-      if (!currentStudentId) {
+      const student =
+        await db.student.findFirst({
+          where: {
+            userId: session.user.id,
+            organizationId,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      if (!student) {
         return NextResponse.json(
-          { error: "Student profile not found" },
-          { status: 403 },
+          {
+            error:
+              "Student profile not found",
+          },
+          {
+            status: 403,
+          },
         );
       }
 
-      const studentConversation =
+      currentStudentId = student.id;
+
+      const authorized =
         await getStudentConversation(
           conversationId,
           organizationId,
           currentStudentId,
         );
 
-      if (!studentConversation) {
+      if (!authorized) {
         return NextResponse.json(
-          { error: "Conversation not found" },
-          { status: 404 },
+          {
+            error:
+              "Conversation not found",
+          },
+          {
+            status: 404,
+          },
         );
       }
     } else if (
-      !isOrganizationAdmin &&
-      !isSuperAdmin
+      session.user.role !==
+        "ORGANIZATION_ADMIN" &&
+      session.user.role !==
+        "SUPER_ADMIN"
     ) {
       const staff =
         await getChatStaffByUserId(
@@ -118,12 +156,16 @@ export async function POST(
 
       if (!staff) {
         return NextResponse.json(
-          { error: "Forbidden" },
-          { status: 403 },
+          {
+            error: "Forbidden",
+          },
+          {
+            status: 403,
+          },
         );
       }
 
-      const staffConversation =
+      const authorized =
         await getStaffChatConversation(
           conversationId,
           organizationId,
@@ -131,33 +173,23 @@ export async function POST(
           staff.canViewAllChats,
         );
 
-      if (!staffConversation) {
+      if (!authorized) {
         return NextResponse.json(
-          { error: "Conversation not found" },
-          { status: 404 },
+          {
+            error:
+              "Conversation not found",
+          },
+          {
+            status: 404,
+          },
         );
       }
     }
 
-    const body =
-      await request.json().catch(() => null);
-
-    const status =
-      body?.status as MessageStatus | undefined;
-
-    if (
-      status !== "DELIVERED" &&
-      status !== "SEEN"
-    ) {
-      return NextResponse.json(
-        { error: "Invalid message status" },
-        { status: 400 },
-      );
-    }
-
     /*
-     * Re-check conversation ownership directly against
-     * the organization before touching the message.
+     * ========================================================
+     * LOAD CONVERSATION
+     * ========================================================
      */
     const conversation =
       await db.chatConversation.findFirst({
@@ -168,16 +200,55 @@ export async function POST(
         select: {
           id: true,
           organizationId: true,
+          studentId: true,
+          assignedStaffId: true,
         },
       });
 
     if (!conversation) {
       return NextResponse.json(
-        { error: "Conversation not found" },
-        { status: 404 },
+        {
+          error: "Conversation not found",
+        },
+        {
+          status: 404,
+        },
       );
     }
 
+    /*
+     * ========================================================
+     * PARSE STATUS
+     * ========================================================
+     */
+    const body =
+      await request.json().catch(() => null);
+
+    const status =
+      body?.status as
+        | MessageStatus
+        | undefined;
+
+    if (
+      status !== "DELIVERED" &&
+      status !== "SEEN"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid message status",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    /*
+     * ========================================================
+     * LOAD MESSAGE
+     * ========================================================
+     */
     const message =
       await db.chatMessage.findFirst({
         where: {
@@ -193,27 +264,41 @@ export async function POST(
 
     if (!message) {
       return NextResponse.json(
-        { error: "Message not found" },
-        { status: 404 },
+        {
+          error: "Message not found",
+        },
+        {
+          status: 404,
+        },
       );
     }
 
     /*
-     * Never allow a sender to mark their own message
+     * A sender cannot mark their own message
      * as delivered/seen.
      */
     if (
-      message.senderId === session.user.id
+      message.senderId ===
+      session.user.id
     ) {
       return NextResponse.json(
         {
           error:
             "Cannot update your own message status",
         },
-        { status: 403 },
+        {
+          status: 403,
+        },
       );
     }
 
+    /*
+     * ========================================================
+     * MONOTONIC STATUS
+     *
+     * SENT -> DELIVERED -> SEEN
+     * ========================================================
+     */
     const currentRank =
       message.status === "SEEN"
         ? 2
@@ -222,14 +307,13 @@ export async function POST(
           : 0;
 
     const requestedRank =
-      status === "SEEN" ? 2 : 1;
+      status === "SEEN"
+        ? 2
+        : 1;
 
-    /*
-     * Status is monotonic:
-     *
-     * SENT -> DELIVERED -> SEEN
-     */
-    if (requestedRank <= currentRank) {
+    if (
+      requestedRank <= currentRank
+    ) {
       return NextResponse.json({
         success: true,
         status: message.status,
@@ -247,12 +331,15 @@ export async function POST(
           status === "SEEN"
             ? {
                 status: "SEEN",
-                deliveredAt: now,
+                deliveredAt:
+                  now,
                 seenAt: now,
               }
             : {
-                status: "DELIVERED",
-                deliveredAt: now,
+                status:
+                  "DELIVERED",
+                deliveredAt:
+                  now,
               },
         select: {
           id: true,
@@ -262,6 +349,10 @@ export async function POST(
         },
       });
 
+    /*
+     * Realtime broadcasting must never make
+     * the database operation fail.
+     */
     try {
       await publishChatMessageStatus(
         conversation.organizationId,
@@ -269,9 +360,11 @@ export async function POST(
         {
           messageId: updated.id,
           status,
-          deliveredAt: updated.deliveredAt,
+          deliveredAt:
+            updated.deliveredAt,
           seenAt: updated.seenAt,
-          updatedBy: session.user.id,
+          updatedBy:
+            session.user.id,
         },
       );
     } catch (realtimeError) {
@@ -287,7 +380,7 @@ export async function POST(
     });
   } catch (error) {
     console.error(
-      "Chat message status error:",
+      "CHAT MESSAGE STATUS ERROR:",
       error,
     );
 
@@ -296,7 +389,9 @@ export async function POST(
         error:
           "Failed to update message status",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

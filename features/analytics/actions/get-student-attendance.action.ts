@@ -1,17 +1,22 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireActiveSubscription } from "@/features/auth/authorization";
 import { AttendanceReportsService } from "../services/attendance-reports.service";
 
 export async function getStudentAttendanceAction(
   studentId: string,
 ) {
-  const session = await auth();
+  let session;
 
-  if (!session?.user?.organizationId) {
+  try {
+    session = await requireActiveSubscription();
+  } catch (error) {
     return {
       success: false,
-      message: "Unauthorized.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unauthorized.",
       report: null,
     };
   }

@@ -13,16 +13,7 @@ export async function updateOwnStudentProfileAction(
   try {
     const session = await requireStudent();
 
-    if (
-      !session.user.organizationId ||
-      !session.user.branchId
-    ) {
-      return {
-        success: false,
-        message: "Organization or Branch not found.",
-      };
-    }
-
+    
     const parsed =
       updateOwnStudentProfileSchema.safeParse(data);
 

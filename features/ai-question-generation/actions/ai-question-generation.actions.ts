@@ -35,13 +35,6 @@ function getAuthenticatedContext() {
       };
     }
 
-    if (!session.user.branchId) {
-      return {
-        success: false as const,
-        message: "Branch information is missing.",
-      };
-    }
-
     return {
       success: true as const,
       userId: session.user.id,

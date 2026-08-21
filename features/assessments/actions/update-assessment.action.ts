@@ -40,10 +40,10 @@ export async function updateAssessmentAction(data: {
     };
   }
 
-  if (!session.user.organizationId || !session.user.branchId) {
+  if (!session.user.organizationId) {
     return {
       success: false,
-      message: "Organization or branch information is missing.",
+      message: "Organization information is missing.",
     };
   }
 

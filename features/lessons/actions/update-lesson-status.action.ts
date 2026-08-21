@@ -12,16 +12,7 @@ export async function updateLessonStatusAction(
 ) {
   const session = await requireAdmin();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
+  
   return LessonService.updateStatus(
     id,
     courseId,

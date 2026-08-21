@@ -100,7 +100,7 @@ export interface AIStaffContext {
     courseName: string;
     courseCode: string;
     teacherName: string;
-    branchId: string;
+    branchId: string | null;
     branchName: string;
   }>;
 }
@@ -459,7 +459,7 @@ export async function getAIStaffContext(
           branchId:
             session.branchId,
           branchName:
-            session.branch.name,
+            session.branch?.name ?? "Unassigned",
         }),
       ),
   };

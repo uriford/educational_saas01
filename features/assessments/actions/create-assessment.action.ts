@@ -52,14 +52,6 @@ export async function createAssessmentAction(data: {
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false,
-      message:
-        "Branch information is missing.",
-    };
-  }
-
   if (!data.courseId) {
     return {
       success: false,

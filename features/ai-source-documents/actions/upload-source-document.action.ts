@@ -41,13 +41,6 @@ export async function uploadAISourceDocumentAction(input: {
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false as const,
-      message: "Branch information is missing.",
-    };
-  }
-
   if (!input.name?.trim()) {
     return {
       success: false as const,

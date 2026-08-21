@@ -1,7 +1,16 @@
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+
+import authConfig from "./auth.config";
+
+const proxyConfig = {
+  ...authConfig,
+  providers: [],
+};
+
+const { auth } = NextAuth(proxyConfig);
 
 export default auth(() => {
-  // You can add authorization logic here later.
+  // Proxy-level authentication checks can be added here later.
 });
 
 export const config = {

@@ -1,11 +1,22 @@
 "use server";
 
 import { AuthService } from "../services/auth.service";
-import type { LoginFormData } from "../types";
+import { loginSchema } from "../schemas/login.schema";
 
-export async function loginAction(data: LoginFormData) {
+export async function loginAction(data: unknown) {
+  const parsed = loginSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      success: false as const,
+      message:
+        parsed.error.issues[0]?.message ??
+        "Invalid login credentials.",
+    };
+  }
+
   try {
-    const response = await AuthService.login(data);
+    const response = await AuthService.login(parsed.data);
 
     return response;
   } catch (error) {

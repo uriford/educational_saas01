@@ -32,13 +32,6 @@ export async function startAssessmentAction(
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false,
-      message: "Branch information is missing.",
-    };
-  }
-
   if (!assessmentId) {
     return {
       success: false,

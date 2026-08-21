@@ -1,6 +1,7 @@
 "use server";
 
 import { requireStudent } from "@/features/auth/authorization";
+import { StudentService } from "@/features/students/services/student.service";
 
 import { LessonProgressService } from "../services/lesson-progress.service";
 
@@ -10,18 +11,22 @@ export async function markLessonCompleteAction(
 ) {
   const session = await requireStudent();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
+  
+  const student = await StudentService.getByUserId(
+    session.user.id,
+    session.user.organizationId,
+    session.user.branchId,
+  );
+
+  if (!student) {
     return {
       success: false,
-      message: "Organization or Branch not found.",
+      message: "Student profile not found.",
     };
   }
 
   return LessonProgressService.markComplete(
-    session.user.id,
+    student.id,
     courseId,
     lessonId,
     session.user.organizationId,

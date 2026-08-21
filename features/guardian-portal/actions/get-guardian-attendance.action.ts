@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireActiveSubscription } from "@/features/auth/authorization";
 import { ROLES } from "@/features/auth/roles";
 import { GuardianService } from "@/features/guardian-portal/services/guardian.service";
 import { StudentAttendanceService } from "@/features/attendance/services/student-attendance.service";
@@ -8,15 +8,17 @@ import { StudentAttendanceService } from "@/features/attendance/services/student
 export async function getGuardianAttendanceAction(
   studentId: string,
 ) {
-  const session = await auth();
+  let session;
 
-  if (
-    !session?.user?.id ||
-    !session.user.organizationId
-  ) {
+  try {
+    session = await requireActiveSubscription();
+  } catch (error) {
     return {
       success: false,
-      message: "Unauthorized.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unauthorized.",
       report: null,
     };
   }

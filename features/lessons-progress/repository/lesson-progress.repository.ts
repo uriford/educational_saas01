@@ -2,16 +2,16 @@ import { db } from "@/lib/db";
 
 export class LessonProgressRepository {
   static async findEnrollmentForStudent(
-    userId: string,
+    studentId: string,
     courseId: string,
     organizationId: string,
     branchId?: string,
   ) {
     return db.courseEnrollment.findFirst({
       where: {
+        studentId,
         courseId,
         student: {
-          userId,
           organizationId,
           ...(branchId && { branchId }),
           deletedAt: null,

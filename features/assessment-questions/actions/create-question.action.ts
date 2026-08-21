@@ -43,13 +43,6 @@ export async function createQuestionAction(data: {
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false,
-      message: "Branch information is missing.",
-    };
-  }
-
   if (!data.assessmentId) {
     return {
       success: false,

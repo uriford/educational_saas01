@@ -2006,6 +2006,9 @@ const typingTimeoutRef =
                       >
                         <div className="relative flex h-20 items-center justify-center overflow-hidden bg-muted">
                           {isImage && previewUrl ? (
+                            // Local blob preview: next/image is not appropriate for
+                            // browser-generated object URLs.
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={previewUrl}
                               alt={file.name}

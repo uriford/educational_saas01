@@ -25,16 +25,7 @@ export async function submitAssessmentAction(
     };
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Student organization information is missing.",
-    };
-  }
-
+  
   if (!submissionId) {
     return {
       success: false,

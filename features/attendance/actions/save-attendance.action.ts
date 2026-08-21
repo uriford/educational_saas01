@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireActiveSubscription } from "@/features/auth/authorization";
 import { ROLES } from "@/features/auth/roles";
 import { AttendanceService } from "../services/attendance.service";
 
@@ -18,18 +18,7 @@ export async function saveAttendanceAction(data: {
   classSessionId: string;
   records: AttendanceRecord[];
 }) {
-  const session = await auth();
-
-  if (
-    !session?.user?.id ||
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Unauthorized.",
-    };
-  }
+  const session = await requireActiveSubscription();
 
   const allowedRoles = [
     ROLES.SUPER_ADMIN,

@@ -27,16 +27,7 @@ export async function saveAssessmentAnswerAction(data: {
     };
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Student organization information is missing.",
-    };
-  }
-
+  
   const student = await StudentService.getByUserId(
     session.user.id,
     session.user.organizationId,

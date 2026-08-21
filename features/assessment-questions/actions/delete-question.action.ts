@@ -35,13 +35,6 @@ export async function deleteQuestionAction(data: { id: string }) {
     };
   }
 
-  if (!session.user.branchId) {
-    return {
-      success: false,
-      message: "Branch information is missing.",
-    };
-  }
-
   if (!data.id) {
     return {
       success: false,

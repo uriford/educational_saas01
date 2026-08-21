@@ -1,3 +1,5 @@
+import "server-only";
+
 import { auth } from "@/auth";
 import { ROLES } from "./roles";
 import { SubscriptionService } from "@/features/subscriptions/services/subscription.service";

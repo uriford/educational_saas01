@@ -10,16 +10,7 @@ export async function createLessonAction(
 ) {
   const session = await requireAdmin();
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    return {
-      success: false,
-      message: "Organization or Branch not found.",
-    };
-  }
-
+  
   return LessonService.create({
     ...data,
     organizationId: session.user.organizationId,

@@ -1,8 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
+
+import {
+  SubscriptionService,
+} from "@/features/subscriptions/services/subscription.service";
 import { ROLES } from "@/features/auth/roles";
 import { GuardianService } from "@/features/guardian-portal/services/guardian.service";
+import { StudentService } from "@/features/students/services/student.service";
 import { db } from "@/lib/db";
 
 
@@ -110,10 +115,7 @@ export async function startConversationAction(data: {
       };
     }
 
-    if (
-      session.user.role !== "STUDENT" ||
-      session.user.id !== data.studentId
-    ) {
+    if (session.user.role !== "STUDENT") {
       return {
         success: false,
         error: "Unauthorized",
@@ -124,6 +126,7 @@ export async function startConversationAction(data: {
       where: {
         userId: session.user.id,
         organizationId: data.organizationId,
+        deletedAt: null,
       },
       select: {
         id: true,
@@ -134,6 +137,13 @@ export async function startConversationAction(data: {
       return {
         success: false,
         error: "Student profile not found",
+      };
+    }
+
+    if (student.id !== data.studentId) {
+      return {
+        success: false,
+        error: "Unauthorized",
       };
     }
 
@@ -172,13 +182,6 @@ export async function sendMessageAction(data: {
       !session?.user?.id ||
       !session.user.organizationId
     ) {
-      return {
-        success: false,
-        error: "Unauthorized",
-      };
-    }
-
-    if (session.user.id !== data.senderId) {
       return {
         success: false,
         error: "Unauthorized",
@@ -453,7 +456,21 @@ export async function getChatInboxAction(
       };
     }
 
-    const conversations =
+    
+    
+    const hasAccess =
+      await SubscriptionService.hasAccess(
+        session.user.organizationId,
+      );
+
+    if (!hasAccess) {
+      return {
+        success: false,
+        error: "Subscription inactive",
+      };
+    }
+
+const conversations =
       await getChatInbox(organizationId);
 
     return {
