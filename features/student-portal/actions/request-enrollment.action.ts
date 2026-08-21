@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-export async function enrollInCourseAction(courseId: string) {
+export async function requestEnrollmentAction(courseId: string) {
   try {
     const session = await auth();
 
@@ -60,24 +60,7 @@ export async function enrollInCourseAction(courseId: string) {
     if (!course) {
       return {
         success: false,
-        message: "This course is no longer available.",
-      };
-    }
-
-    const existingEnrollment =
-      await db.courseEnrollment.findUnique({
-        where: {
-          studentId_courseId: {
-            studentId: student.id,
-            courseId: course.id,
-          },
-        },
-      });
-
-    if (existingEnrollment) {
-      return {
-        success: false,
-        message: "You are already enrolled in this course.",
+        message: "Course unavailable.",
       };
     }
 
@@ -93,8 +76,7 @@ export async function enrollInCourseAction(courseId: string) {
     if (existingRequest) {
       return {
         success: false,
-        message:
-          "Your enrollment request is already pending approval.",
+        message: "Enrollment request already submitted.",
       };
     }
 
@@ -102,18 +84,11 @@ export async function enrollInCourseAction(courseId: string) {
       data: {
         studentId: student.id,
         courseId: course.id,
-
         organizationId: course.organizationId,
         branchId: course.branchId,
 
-        studentName:
-          `${student.firstName} ${student.lastName ?? ""}`.trim(),
-
-        email:
-          student.email ??
-          session.user.email ??
-          "",
-
+        studentName: `${student.firstName} ${student.lastName ?? ""}`.trim(),
+        email: student.email ?? "",
         phone: student.phone,
 
         status: "PENDING",
@@ -123,12 +98,12 @@ export async function enrollInCourseAction(courseId: string) {
     return {
       success: true,
       message:
-        "Enrollment request submitted. Waiting for approval.",
+        "Enrollment request submitted successfully.",
     };
 
   } catch (error) {
     console.error(
-      "STUDENT ENROLLMENT REQUEST ERROR:",
+      "REQUEST ENROLLMENT ERROR:",
       error,
     );
 
@@ -137,7 +112,7 @@ export async function enrollInCourseAction(courseId: string) {
       message:
         error instanceof Error
           ? error.message
-          : "Failed to submit enrollment request.",
+          : "Failed to submit request.",
     };
   }
 }

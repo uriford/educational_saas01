@@ -434,6 +434,7 @@ export class GuardianService {
 
     const resultData = await ResultService.getStudentResults({
       studentId: child.id,
+      organizationId,
     });
 
     const results = resultData.success

@@ -5,7 +5,7 @@ export class AssessmentSubmissionService {
     assessmentId: string;
     studentId: string;
     organizationId: string;
-    branchId: string;
+    branchId?: string;
   }) {
     try {
       const assessment =
@@ -64,6 +64,8 @@ export class AssessmentSubmissionService {
         await AssessmentSubmissionRepository.findByAssessmentAndStudent(
           data.assessmentId,
           data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       if (
@@ -114,6 +116,7 @@ export class AssessmentSubmissionService {
         const expiredSubmission =
           await AssessmentSubmissionRepository.submit(
             latestSubmission.id,
+            data.studentId,
             score,
             percentage,
           );
@@ -130,6 +133,8 @@ export class AssessmentSubmissionService {
         await AssessmentSubmissionRepository.countAttempts(
           data.assessmentId,
           data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       if (attempts >= assessment.maxAttempts) {
@@ -144,6 +149,8 @@ export class AssessmentSubmissionService {
         await AssessmentSubmissionRepository.create(
           data.assessmentId,
           data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       return {
@@ -171,6 +178,8 @@ export class AssessmentSubmissionService {
   static async saveAnswer(data: {
     submissionId: string;
     studentId: string;
+    organizationId: string;
+    branchId?: string;
     questionId: string;
     answer: string | null;
   }) {
@@ -178,6 +187,9 @@ export class AssessmentSubmissionService {
       const submission =
         await AssessmentSubmissionRepository.findById(
           data.submissionId,
+          data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       if (!submission) {
@@ -276,6 +288,9 @@ export class AssessmentSubmissionService {
       const savedAnswer =
         await AssessmentSubmissionRepository.saveAnswer({
           submissionId: data.submissionId,
+          studentId: data.studentId,
+          organizationId: data.organizationId,
+          branchId: data.branchId,
           questionId: data.questionId,
           answer,
           marksAwarded,
@@ -308,11 +323,16 @@ export class AssessmentSubmissionService {
   static async submit(data: {
     submissionId: string;
     studentId: string;
+    organizationId: string;
+    branchId?: string;
   }) {
     try {
       const submission =
         await AssessmentSubmissionRepository.findById(
           data.submissionId,
+          data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       if (!submission) {
@@ -384,6 +404,7 @@ export class AssessmentSubmissionService {
       const updatedSubmission =
         await AssessmentSubmissionRepository.submit(
           data.submissionId,
+          data.studentId,
           score,
           percentage,
         );

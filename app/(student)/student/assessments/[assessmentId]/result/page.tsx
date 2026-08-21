@@ -56,10 +56,14 @@ export default async function StudentAssessmentResultPage({
     ? await ResultService.getStudentResult({
         submissionId: submission,
         studentId: student.id,
+        organizationId: session.user.organizationId,
+        branchId: session.user.branchId,
       })
     : await ResultService.getLatestStudentResult({
         assessmentId,
         studentId: student.id,
+        organizationId: session.user.organizationId,
+        branchId: session.user.branchId,
       });
 
   if (!result.success || !result.result) {

@@ -152,6 +152,66 @@ export class CourseRepository {
     });
   }
 
+
+  static async findPublicCourses(
+    organizationId: string,
+  ) {
+    return db.course.findMany({
+      where: {
+        organizationId,
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+
+      include: {
+        branch: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            slug: true,
+            isHeadquarters: true,
+          },
+        },
+
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        _count: {
+          select: {
+            enrollments: {
+              where: {
+                status: {
+                  in: [
+                    "ACTIVE",
+                    "SUSPENDED",
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: [
+        {
+          branchId: "asc",
+        },
+        {
+          startDate: "asc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
+    });
+  }
+
+
   static async findById(
     id: string,
     organizationId: string,

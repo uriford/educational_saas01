@@ -19,7 +19,7 @@ type SignupResponse =
     };
 
 function generateStudentCode() {
-  return `STU-${crypto
+  return `STD-${crypto
     .randomBytes(5)
     .toString("hex")
     .toUpperCase()}`;

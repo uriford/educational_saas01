@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ROLES } from "@/features/auth/roles";
 import { StudentService } from "@/features/students/services/student.service";
-import { EnrollmentService } from "@/features/enrollments/services/enrollment.service";
-import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
+import { StudentDashboardService } from "@/features/student-portal/services/student-dashboard.service";
 import StudentWelcome from "@/features/student-portal/components/StudentWelcome";
 import StudentOverview from "@/features/student-portal/components/StudentOverview";
 
@@ -13,11 +12,13 @@ export default async function StudentPage() {
 
   if (
     !session?.user?.id ||
-    session.user.role !== ROLES.STUDENT ||
-    !session.user.organizationId ||
-    !session.user.branchId
+    session.user.role !== ROLES.STUDENT
   ) {
     redirect("/login");
+  }
+
+  if (!session.user.organizationId) {
+    redirect("/student/explore-courses");
   }
 
   const student = await StudentService.getByUserId(
@@ -43,26 +44,12 @@ export default async function StudentPage() {
     );
   }
 
-  const [enrollments, sessions] = await Promise.all([
-    EnrollmentService.getStudentEnrollments(
-      student.id,
-      session.user.organizationId,
-      session.user.branchId,
-    ),
-    ClassSessionService.getStudentSessions(
-      student.id,
-      session.user.organizationId,
-      session.user.branchId,
-    ),
-  ]);
-
-  const now = new Date();
-
-  const upcomingClasses = sessions.filter(
-    (classSession) =>
-      classSession.startTime >= now &&
-      classSession.status !== "CANCELLED",
-  );
+  const dashboard =
+    await StudentDashboardService.getOverview({
+      studentId: student.id,
+      organizationId: session.user.organizationId,
+      branchId: session.user.branchId,
+    });
 
   return (
     <div className="space-y-6">
@@ -75,9 +62,11 @@ export default async function StudentPage() {
 
       <StudentOverview
         student={student}
-        courseCount={enrollments.length}
-        upcomingClassCount={upcomingClasses.length}
-        upcomingClasses={upcomingClasses.slice(0, 3)}
+        courseCount={dashboard.totalCourses}
+        upcomingClassCount={dashboard.upcomingClasses.length}
+        upcomingClasses={dashboard.upcomingClasses.slice(0, 3)}
+        pendingPayments={dashboard.pendingPayments}
+        enrollmentRequests={dashboard.enrollmentRequests}
       />
     </div>
   );

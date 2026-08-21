@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ type Props = {
 export default function EnrollCourseButton({
   courseId,
 }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleEnroll() {
@@ -30,14 +28,16 @@ export default function EnrollCourseButton({
       }
 
       toast.success(
-        result.message ?? "You have been enrolled successfully.",
+        result.message ??
+          "Enrollment request submitted successfully.",
       );
 
-      router.push(`/student/courses/${courseId}`);
-      router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong while enrolling.");
+
+      toast.error(
+        "Something went wrong while submitting request.",
+      );
     } finally {
       setLoading(false);
     }
@@ -52,12 +52,12 @@ export default function EnrollCourseButton({
       {loading ? (
         <>
           <Loader2 className="mr-2 size-5 animate-spin" />
-          Enrolling...
+          Submitting...
         </>
       ) : (
         <>
-          <CheckCircle2 className="mr-2 size-5" />
-          Enroll Now
+          <Send className="mr-2 size-5" />
+          Request Enrollment
         </>
       )}
     </Button>

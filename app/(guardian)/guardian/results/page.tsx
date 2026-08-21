@@ -81,6 +81,8 @@ export default async function GuardianResultsPage({
 
   const resultData = await ResultService.getStudentResults({
     studentId: selectedChild.id,
+    organizationId: session.user.organizationId,
+    branchId: session.user.branchId,
   });
 
   const resultSummary = resultData.success

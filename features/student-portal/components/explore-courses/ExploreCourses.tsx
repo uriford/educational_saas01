@@ -24,21 +24,15 @@ type ExploreCourse = {
   capacity: number | null;
   enrolledCount: number;
   status: string;
-  enrollmentStatus:
-    | "ACTIVE"
-    | "COMPLETED"
-    | "DROPPED"
-    | "SUSPENDED"
-    | null;
-  enrolled: boolean;
-  enrollment: {
-    id: string;
-    status: string;
-    progress: number;
-    enrolledAt: Date | string;
-  } | null;
   startDate: string | null;
   endDate: string | null;
+  branch: {
+    id: string;
+    name: string;
+    address: string | null;
+    slug: string;
+    isHeadquarters: boolean;
+  } | null;
 };
 
 type ExploreCoursesProps = {
@@ -74,6 +68,9 @@ export default function ExploreCourses({
 }: ExploreCoursesProps) {
   const [search, setSearch] = useState("");
 
+  const [selectedLocation, setSelectedLocation] =
+    useState<string>("ALL");
+
   const filteredCourses = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -89,6 +86,43 @@ export default function ExploreCourses({
       );
     });
   }, [courses, search]);
+
+  const groupedCourses = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        title: string;
+        address: string | null;
+        courses: ExploreCourse[];
+      }
+    >();
+
+    filteredCourses.forEach((course) => {
+      const key = course.branch?.id ?? "ONLINE";
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          title: course.branch
+            ? course.branch.isHeadquarters
+              ? "Headquarters"
+              : course.branch.name
+            : "Online / Organization Courses",
+          address: course.branch?.address ?? null,
+          courses: [],
+        });
+      }
+
+      groups.get(key)!.courses.push(course);
+    });
+
+    return Array.from(groups.entries()).map(
+      ([id, value]) => ({
+        id,
+        ...value,
+      }),
+    );
+  }, [filteredCourses]);
+
 
   return (
     <div className="space-y-8">
@@ -179,12 +213,27 @@ export default function ExploreCourses({
           </div>
         </section>
       ) : (
-        <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredCourses.map((course) => {
+        <div className="space-y-10">
+          {groupedCourses.map((group) => (
+            <section key={group.id} className="space-y-5">
+              <div>
+                <h3 className="flex items-center gap-2 text-xl font-bold">
+                  {group.id === "ONLINE" ? "🌐" : "📍"}
+                  {group.title}
+                </h3>
+
+                {group.address && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {group.address}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {group.courses.map((course) => {
             const isFull =
               course.capacity !== null &&
-              course.enrolledCount >= course.capacity &&
-              !course.enrolled;
+              course.enrolledCount >= course.capacity;
 
             const startDate = formatDate(course.startDate);
             const endDate = formatDate(course.endDate);
@@ -207,16 +256,7 @@ export default function ExploreCourses({
                       {course.code}
                     </span>
 
-                    {course.enrolled && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1.5 text-xs font-semibold text-green-700 backdrop-blur dark:text-green-400">
-                        <CheckCircle2 className="size-3.5" />
-                        {course.enrollmentStatus === "COMPLETED"
-                          ? "Completed"
-                          : "Enrolled"}
-                      </span>
-                    )}
-
-                    {!course.enrolled && isFull && (
+                    {isFull && (
                       <span className="rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive backdrop-blur">
                         Full
                       </span>
@@ -304,11 +344,9 @@ export default function ExploreCourses({
                       }`}
                       aria-disabled={isFull}
                     >
-                      {course.enrolled
-                        ? "View Course"
-                        : isFull
-                          ? "Full"
-                          : "Explore"}
+                      {isFull
+                        ? "Full"
+                        : "Explore"}
 
                       {!isFull && (
                         <ArrowRight className="ml-1 size-4" />
@@ -318,8 +356,11 @@ export default function ExploreCourses({
                 </div>
               </article>
             );
-          })}
-        </section>
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );

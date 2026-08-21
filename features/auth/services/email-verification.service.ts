@@ -109,10 +109,24 @@ This verification link will expire in 30 minutes.`,
     const tokenHash =
       EmailVerificationRepository.hashToken(token);
 
+    console.log("========== EMAIL VERIFY DEBUG ==========");
+    console.log({
+      rawTokenLength: token.length,
+      tokenHash,
+    });
+
     const verificationToken =
       await EmailVerificationRepository.findValidToken(
         tokenHash,
       );
+
+    console.log("FOUND VERIFICATION TOKEN:", {
+      found: !!verificationToken,
+      id: verificationToken?.id,
+      userId: verificationToken?.userId,
+      expiresAt: verificationToken?.expiresAt,
+      usedAt: verificationToken?.usedAt,
+    });
 
     if (!verificationToken) {
       return {
@@ -122,13 +136,23 @@ This verification link will expire in 30 minutes.`,
       };
     }
 
-    await EmailVerificationRepository.markUserVerified(
-      verificationToken.userId,
-    );
+    console.log("MARKING USER VERIFIED:", verificationToken.userId);
+
+    const verifiedUser =
+      await EmailVerificationRepository.markUserVerified(
+        verificationToken.userId,
+      );
+
+    console.log("USER VERIFIED RESULT:", {
+      id: verifiedUser.id,
+      emailVerified: verifiedUser.emailVerified,
+    });
 
     await EmailVerificationRepository.markUsed(
       verificationToken.id,
     );
+
+    console.log("TOKEN MARKED USED");
 
     return {
       success: true,

@@ -26,40 +26,14 @@ export default async function StudentLayout({
     redirect("/dashboard");
   }
 
-  const student = session.user.organizationId
-    ? await StudentService.getByUserId(
-        session.user.id,
-        session.user.organizationId,
-        session.user.branchId ?? undefined,
-      )
-    : null;
+  const student = await StudentService.getByUserId(
+    session.user.id,
+    session.user.organizationId,
+    session.user.branchId ?? undefined,
+  );
 
   if (!student) {
-    const userSettings = await db.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
-      select: {
-        themePreference: true,
-      },
-    });
-
-    const initialTheme =
-      (userSettings?.themePreference?.toLowerCase() as
-        | "light"
-        | "dark"
-        | "system") ?? "system";
-
-    return (
-      <ThemeProvider
-        initialTheme={initialTheme}
-        storageKey={`theme-${session.user.id}`}
-      >
-        <main className="min-h-screen bg-muted/30 p-6">
-          {children}
-        </main>
-      </ThemeProvider>
-    );
+    redirect("/student/explore-courses");
   }
 
   const userSettings = await db.user.findUnique({

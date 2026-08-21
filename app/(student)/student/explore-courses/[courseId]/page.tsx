@@ -102,6 +102,18 @@ export default async function ExploreCourseDetailsPage({
   const enrollment = course.enrollments[0] ?? null;
   const enrolled = Boolean(enrollment);
 
+  const pendingRequest =
+    await db.enrollmentRequest.findFirst({
+      where: {
+        studentId: student.id,
+        courseId: course.id,
+        status: "PENDING",
+      },
+      select: {
+        id: true,
+      },
+    });
+
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <Link href="/student/explore-courses">
@@ -182,6 +194,18 @@ export default async function ExploreCourseDetailsPage({
                     Progress: {enrollment?.progress ?? 0}%
                   </p>
                 </>
+              ) : pendingRequest ? (
+                <>
+                  <p className="mt-1 flex items-center gap-2 text-lg font-bold text-amber-600">
+                    <CheckCircle2 className="size-5" />
+                    Approval Pending
+                  </p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your enrollment request has been submitted.
+                    Waiting for administrator approval.
+                  </p>
+                </>
               ) : (
                 <>
                   <p className="mt-1 text-3xl font-bold">
@@ -202,6 +226,10 @@ export default async function ExploreCourseDetailsPage({
                   Go to My Course
                 </Button>
               </Link>
+            ) : pendingRequest ? (
+              <Button size="lg" disabled>
+                Request Submitted
+              </Button>
             ) : (
               <EnrollCourseButton courseId={course.id} />
             )}

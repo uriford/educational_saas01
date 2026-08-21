@@ -37,6 +37,8 @@ export default async function StudentResultsPage() {
   const result =
     await ResultService.getStudentResults({
       studentId: student.id,
+      organizationId: session.user.organizationId,
+      branchId: session.user.branchId,
     });
 
   if (!result.success) {

@@ -325,6 +325,8 @@ export class ResultService {
           submissionId: data.submissionId,
           questionId: data.questionId,
           marksAwarded: data.marksAwarded,
+          organizationId: data.organizationId,
+          branchId: data.branchId,
         });
 
       return {
@@ -351,6 +353,8 @@ export class ResultService {
 
   static async getStudentResults(data: {
     studentId: string;
+    organizationId: string;
+    branchId?: string;
   }) {
     try {
       if (!data.studentId) {
@@ -360,9 +364,18 @@ export class ResultService {
         };
       }
 
+      if (!data.organizationId) {
+        return {
+          success: false,
+          message: "Organization ID is required.",
+        };
+      }
+
       const submissions =
         await ResultRepository.findStudentResults(
           data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       /*
@@ -517,6 +530,8 @@ export class ResultService {
   static async getStudentResult(data: {
     submissionId: string;
     studentId: string;
+    organizationId: string;
+    branchId?: string;
   }) {
     try {
       if (!data.submissionId) {
@@ -530,6 +545,8 @@ export class ResultService {
         await ResultRepository.findSubmissionForStudent(
           data.submissionId,
           data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       if (!submission) {
@@ -650,6 +667,8 @@ export class ResultService {
               submission.assessment.id,
               data.studentId,
               submission.createdAt,
+              data.organizationId,
+              data.branchId,
             ),
           questionCount: questions.length,
           answeredCount,
@@ -673,12 +692,16 @@ export class ResultService {
   static async getLatestStudentResult(data: {
     assessmentId: string;
     studentId: string;
+    organizationId: string;
+    branchId?: string;
   }) {
     try {
       const submission =
         await ResultRepository.findLatestSubmissionForStudent(
           data.assessmentId,
           data.studentId,
+          data.organizationId,
+          data.branchId,
         );
 
       if (!submission) {
@@ -691,6 +714,8 @@ export class ResultService {
       return this.getStudentResult({
         submissionId: submission.id,
         studentId: data.studentId,
+        organizationId: data.organizationId,
+        branchId: data.branchId,
       });
     } catch (error) {
       console.error(

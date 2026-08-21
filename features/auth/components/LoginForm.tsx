@@ -56,7 +56,11 @@ export default function LoginForm() {
         break;
 
       case "STUDENT":
-        router.push("/student");
+        if (session?.user?.organizationId) {
+          router.push("/student");
+        } else {
+          router.push("/courses");
+        }
         break;
 
       case "SUPER_ADMIN":

@@ -8,6 +8,7 @@ import {
   MapPin,
   ClipboardCheck,
   UserRound,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,6 +20,7 @@ import { ClassSessionService } from "@/features/class-sessions/services/class-se
 import { AssessmentRepository } from "@/features/assessments/repository/assessment.repository";
 import { LessonProgressService } from "@/features/lessons-progress/services/lesson-progress.service";
 import { getAIPersonalizationAction } from "@/features/ai-personalization/actions/ai-personalization.actions";
+import { getMyPaymentHistoryAction } from "@/features/payments/actions/get-my-payment-history.action";
 import AIPersonalizationCard from "@/features/ai-personalization/components/AIPersonalizationCard";
 
 type Props = {
@@ -56,6 +58,19 @@ function formatTime(date: Date | string) {
 
 function statusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
+}
+
+function lessonTypeLabel(type: string) {
+  switch (type) {
+    case "VIDEO":
+      return "Video";
+    case "DOCUMENT":
+      return "Document";
+    case "LINK":
+      return "External Resource";
+    default:
+      return "Reading";
+  }
 }
 
 export default async function StudentCoursePage({
@@ -129,6 +144,7 @@ export default async function StudentCoursePage({
     assessments,
     lessonResult,
     aiPersonalizationResult,
+    paymentHistory,
   ] = await Promise.all([
     ClassSessionService.getCourseSessions(
       course.id,
@@ -141,12 +157,13 @@ export default async function StudentCoursePage({
       session.user.branchId,
     ),
     LessonProgressService.getCourseLessons(
-      session.user.id,
+      student.id,
       course.id,
       session.user.organizationId,
       session.user.branchId,
     ),
     getAIPersonalizationAction(course.id),
+    getMyPaymentHistoryAction(),
   ]);
 
   const courseLessons =
@@ -159,6 +176,30 @@ export default async function StudentCoursePage({
     "personalization" in aiPersonalizationResult
       ? aiPersonalizationResult.personalization
       : null;
+
+  const coursePayments = paymentHistory.filter(
+    (transaction) =>
+      transaction.installment.paymentPlan.enrollment.course.id ===
+      course.id,
+  );
+
+  const courseFee =
+    coursePayments[0]?.installment.paymentPlan.totalAmount
+      ? Number(
+          coursePayments[0].installment.paymentPlan.totalAmount,
+        )
+      : 0;
+
+  const paidAmount = coursePayments.reduce(
+    (sum, transaction) =>
+      sum + Number(transaction.amount),
+    0,
+  );
+
+  const remainingAmount = Math.max(
+    courseFee - paidAmount,
+    0,
+  );
 
   const now = new Date();
 
@@ -476,6 +517,65 @@ export default async function StudentCoursePage({
         </section>
       </div>
 
+      {/* Payment Status */}
+      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <CreditCard className="size-5 text-primary" />
+
+          <h2 className="text-lg font-semibold">
+            Payment Status
+          </h2>
+        </div>
+
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your payment summary for this course.
+        </p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border p-4">
+            <p className="text-xs text-muted-foreground">
+              Course Fee
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ৳
+              {courseFee.toLocaleString("en-BD", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+          </div>
+
+          <div className="rounded-xl border p-4">
+            <p className="text-xs text-muted-foreground">
+              Paid
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ৳
+              {paidAmount.toLocaleString("en-BD", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+          </div>
+
+          <div className="rounded-xl border p-4">
+            <p className="text-xs text-muted-foreground">
+              Remaining
+            </p>
+
+            <p className="mt-1 text-lg font-bold">
+              ৳
+              {remainingAmount.toLocaleString("en-BD", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* AI Personalization */}
       <AIPersonalizationCard
         courseId={course.id}
@@ -526,6 +626,13 @@ export default async function StudentCoursePage({
               const completed =
                 lesson.progress?.completed ?? false;
 
+              const isCurrent =
+                !completed &&
+                courseLessons.find(
+                  (item) =>
+                    !item.progress?.completed,
+                )?.id === lesson.id;
+
               return (
                 <Link
                   key={lesson.id}
@@ -560,6 +667,12 @@ export default async function StudentCoursePage({
                             Completed
                           </span>
                         )}
+
+                        {isCurrent && (
+                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                            Continue
+                          </span>
+                        )}
                       </div>
 
                       {lesson.description && (
@@ -570,7 +683,7 @@ export default async function StudentCoursePage({
 
                       <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
                         <span>
-                          {lesson.type}
+                          {lessonTypeLabel(lesson.type)}
                         </span>
 
                         {lesson.duration && (
@@ -578,6 +691,13 @@ export default async function StudentCoursePage({
                             {lesson.duration} min
                           </span>
                         )}
+
+                        {lesson.progress?.lastViewedAt &&
+                          !completed && (
+                            <span>
+                              Recently viewed
+                            </span>
+                          )}
                       </div>
                     </div>
 

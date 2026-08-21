@@ -7,6 +7,7 @@ import {
   CalendarDays,
   MessageCircle,
   CreditCard,
+  ClipboardCheck,
   Bell,
   BarChart3,
   Settings,
@@ -35,6 +36,11 @@ export const organizationItems = [
     title: "Students",
     href: "/students",
     icon: Users,
+  },
+  {
+    title: "Enrollment Requests",
+    href: "/enrollment-requests",
+    icon: ClipboardCheck,
   },
   {
     title: "Teachers",

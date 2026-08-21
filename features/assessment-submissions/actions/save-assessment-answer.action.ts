@@ -51,6 +51,8 @@ export async function saveAssessmentAnswerAction(data: {
   return AssessmentSubmissionService.saveAnswer({
     submissionId: data.submissionId,
     studentId: student.id,
+    organizationId: session.user.organizationId,
+    branchId: session.user.branchId,
     questionId: data.questionId,
     answer: data.answer,
   });

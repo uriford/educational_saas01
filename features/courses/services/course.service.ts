@@ -64,6 +64,16 @@ export class CourseService {
     );
   }
 
+
+  static async getPublicCourses(
+    organizationId: string,
+  ) {
+    return CourseRepository.findPublicCourses(
+      organizationId,
+    );
+  }
+
+
   static async getById(
     id: string,
     organizationId: string,

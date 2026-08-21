@@ -49,5 +49,7 @@ export async function submitAssessmentAction(
   return AssessmentSubmissionService.submit({
     submissionId,
     studentId: student.id,
+    organizationId: session.user.organizationId,
+    branchId: session.user.branchId,
   });
 }

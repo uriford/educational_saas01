@@ -7,12 +7,36 @@ import StudentProfile from "@/features/student-portal/components/StudentProfile"
 export default async function StudentProfilePage() {
   const session = await auth();
 
+  console.log(
+    "[PROFILE AUTH DEBUG]",
+    JSON.stringify(
+      {
+        sessionUser: session?.user,
+      },
+      null,
+      2
+    )
+  );
+
   if (
     !session?.user?.id ||
-    session.user.role !== "STUDENT" ||
-    !session.user.organizationId
+    session.user.role !== "STUDENT"
   ) {
+    console.log(
+      "[PROFILE AUTH FAILED]",
+      {
+        id: session?.user?.id,
+        role: session?.user?.role,
+        organizationId:
+          session?.user?.organizationId,
+      }
+    );
+
     redirect("/login");
+  }
+
+  if (!session.user.organizationId) {
+    redirect("/student-pending");
   }
 
   const student =

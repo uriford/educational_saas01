@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 export class EnrollmentRepository {
   static async findById(
@@ -117,6 +118,29 @@ export class EnrollmentRepository {
           organizationId,
           ...(branchId && { branchId }),
         },
+      },
+    });
+  }
+
+  static async createWithTx(
+    tx: Prisma.TransactionClient,
+    data: {
+      studentId: string;
+      courseId: string;
+      status?: "ACTIVE" | "COMPLETED" | "DROPPED" | "SUSPENDED";
+      progress?: number;
+    },
+  ) {
+    return tx.courseEnrollment.create({
+      data: {
+        studentId: data.studentId,
+        courseId: data.courseId,
+        status: data.status ?? "ACTIVE",
+        progress: data.progress ?? 0,
+      },
+      include: {
+        student: true,
+        course: true,
       },
     });
   }

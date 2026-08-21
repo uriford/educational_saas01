@@ -4,14 +4,16 @@ export class ResultRepository {
   static async findAssessmentHistory(
     assessmentId: string,
     organizationId: string,
-    branchId: string,
+    branchId?: string,
   ) {
     return db.assessmentSubmission.findMany({
       where: {
         assessmentId,
         assessment: {
           organizationId,
-          branchId,
+          ...(branchId
+            ? { branchId }
+            : {}),
           deletedAt: null,
         },
       },
@@ -53,14 +55,16 @@ export class ResultRepository {
   static async findSubmissionForTeacher(
     submissionId: string,
     organizationId: string,
-    branchId: string,
+    branchId?: string,
   ) {
     return db.assessmentSubmission.findFirst({
       where: {
         id: submissionId,
         assessment: {
           organizationId,
-          branchId,
+          ...(branchId
+            ? { branchId }
+            : {}),
           deletedAt: null,
         },
       },
@@ -107,6 +111,8 @@ export class ResultRepository {
 
   static async findStudentResults(
     studentId: string,
+    organizationId: string,
+    branchId?: string,
   ) {
     return db.assessmentSubmission.findMany({
       where: {
@@ -115,7 +121,11 @@ export class ResultRepository {
           in: ["SUBMITTED", "GRADED"],
         },
         assessment: {
+          organizationId,
           deletedAt: null,
+          ...(branchId
+            ? { branchId }
+            : {}),
         },
       },
       include: {
@@ -156,11 +166,20 @@ export class ResultRepository {
   static async findSubmissionForStudent(
     submissionId: string,
     studentId: string,
+    organizationId: string,
+    branchId?: string,
   ) {
     return db.assessmentSubmission.findFirst({
       where: {
         id: submissionId,
         studentId,
+        assessment: {
+          organizationId,
+          ...(branchId
+            ? { branchId }
+            : {}),
+          deletedAt: null,
+        },
       },
       include: {
         assessment: {
@@ -197,11 +216,20 @@ export class ResultRepository {
   static async findLatestSubmissionForStudent(
     assessmentId: string,
     studentId: string,
+    organizationId: string,
+    branchId?: string,
   ) {
     return db.assessmentSubmission.findFirst({
       where: {
         assessmentId,
         studentId,
+        assessment: {
+          organizationId,
+          ...(branchId
+            ? { branchId }
+            : {}),
+          deletedAt: null,
+        },
         status: {
           in: ["SUBMITTED", "GRADED"],
         },
@@ -245,11 +273,20 @@ export class ResultRepository {
     assessmentId: string,
     studentId: string,
     submissionCreatedAt: Date,
+    organizationId: string,
+    branchId?: string,
   ) {
     return db.assessmentSubmission.count({
       where: {
         assessmentId,
         studentId,
+        assessment: {
+          organizationId,
+          ...(branchId
+            ? { branchId }
+            : {}),
+          deletedAt: null,
+        },
         createdAt: {
           lte: submissionCreatedAt,
         },
@@ -261,11 +298,18 @@ export class ResultRepository {
     submissionId: string;
     questionId: string;
     marksAwarded: number;
+    organizationId: string;
+    branchId: string;
   }) {
     return db.$transaction(async (tx) => {
-      const submission = await tx.assessmentSubmission.findUnique({
+      const submission = await tx.assessmentSubmission.findFirst({
         where: {
           id: data.submissionId,
+          assessment: {
+            organizationId: data.organizationId,
+            branchId: data.branchId,
+            deletedAt: null,
+          },
         },
         include: {
           assessment: {

@@ -36,17 +36,18 @@ model Organization {
   chatStaff                ChatStaff[]
   classSessions            ClassSession[]
   courses                  Course[]
+  guardianProfiles         GuardianProfile[]
   lessons                  Lesson[]
   notifications            Notification[]
   settings                 OrganizationSettings?
   paymentPlans             PaymentPlan[]
   students                 Student[]
+  enrollmentRequests       EnrollmentRequest[]
   studentIdCounter         StudentIdCounter?
   subscriptions            Subscription[]
   teachers                 Teacher[]
   teacherIdCounter         TeacherIdCounter?
   users                    User[]
-  guardianProfiles         GuardianProfile[]
 }
 
 model OrganizationSettings {
@@ -91,6 +92,7 @@ model Branch {
   lessons               Lesson[]
   paymentPlans          PaymentPlan[]
   students              Student[]
+  enrollmentRequests    EnrollmentRequest[]
   teachers              Teacher[]
   users                 User[]
 }
@@ -130,17 +132,17 @@ model User {
   themePreference         ThemePreference          @default(SYSTEM)
   auditLogs               AuditLog[]
   chatMessages            ChatMessage[]            @relation("ChatMessageSender")
+  chatMessageReactions    ChatMessageReaction[]
   chatStaff               ChatStaff[]
   emailVerificationTokens EmailVerificationToken[]
+  guardianProfile         GuardianProfile?
   notifications           Notification[]
   passwordResetTokens     PasswordResetToken[]
   pushSubscriptions       PushSubscription[]
   students                Student?
   teachers                Teacher?
-  guardianProfile         GuardianProfile?
   branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  chatMessageReactions    ChatMessageReaction[]
 
   @@unique([organizationId, email])
 }
@@ -242,39 +244,38 @@ model Student {
   assessmentSubmissions AssessmentSubmission[]
   attendances           Attendance[]
   attendanceAudits      AttendanceAudit[]
+  chatConversations     ChatConversation[]     @relation("StudentChatConversations")
   courseEnrollments     CourseEnrollment[]
+  enrollmentRequests    EnrollmentRequest[]
+  guardianStudents      GuardianStudent[]
   branch                Branch?                @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user                  User?                  @relation(fields: [userId], references: [id])
-  guardianStudents      GuardianStudent[]
-  chatConversations     ChatConversation[]     @relation("StudentChatConversations")
 
   @@unique([organizationId, email])
 }
 
 model GuardianProfile {
-  id             String   @id @default(uuid())
-  userId         String   @unique
+  id             String            @id @default(uuid())
+  userId         String            @unique
   organizationId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  students     GuardianStudent[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students       GuardianStudent[]
 
   @@index([organizationId])
 }
 
 model GuardianStudent {
-  id           String   @id @default(uuid())
+  id           String          @id @default(uuid())
   guardianId   String
   studentId    String
+  createdAt    DateTime        @default(now())
   relationship String?
-  createdAt    DateTime @default(now())
-
-  guardian GuardianProfile @relation(fields: [guardianId], references: [id], onDelete: Cascade)
-  student  Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian     GuardianProfile @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student      Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([guardianId, studentId])
   @@index([guardianId])
@@ -338,6 +339,7 @@ model Course {
   branch             Branch?             @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   enrollments        CourseEnrollment[]
+  enrollmentRequests EnrollmentRequest[]
   lessons            Lesson[]
 
   @@unique([organizationId, code])
@@ -351,7 +353,7 @@ model Course {
 model Lesson {
   id             String           @id @default(uuid())
   organizationId String
-  branchId       String?
+  branchId       String
   courseId       String
   title          String
   description    String?
@@ -368,7 +370,7 @@ model Lesson {
   deletedAt      DateTime?
   createdById    String?
   updatedById    String?
-  branch         Branch?          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch         Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
   course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
@@ -434,6 +436,45 @@ model CourseEnrollment {
   @@index([status])
 }
 
+model EnrollmentRequest {
+  id String @id @default(uuid())
+
+  studentId String
+  courseId  String
+
+  organizationId String
+  branchId       String?
+
+  studentName String
+  email       String
+  phone       String?
+
+  paymentMethod PaymentMethod?
+  transactionId String?
+  paymentPhone  String?
+
+  status EnrollmentRequestStatus @default(PENDING)
+
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([status])
+  @@index([studentId])
+  @@index([courseId])
+}
+
 model PaymentPlan {
   id             String               @id @default(uuid())
   organizationId String
@@ -497,7 +538,7 @@ model PaymentTransaction {
 model ClassSession {
   id               String             @id @default(uuid())
   organizationId   String
-  branchId         String?
+  branchId         String
   courseId         String
   teacherId        String
   title            String
@@ -513,7 +554,7 @@ model ClassSession {
   updatedById      String?
   attendances      Attendance[]
   attendanceAudits AttendanceAudit[]
-  branch           Branch?            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch           Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
   course           Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
   organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   teacher          Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
@@ -529,7 +570,7 @@ model ClassSession {
 model Assessment {
   id                    String                 @id @default(uuid())
   organizationId        String
-  branchId              String?
+  branchId              String
   courseId              String
   title                 String
   description           String?
@@ -550,7 +591,7 @@ model Assessment {
   randomizeOptions      Boolean                @default(false)
   randomizeQuestions    Boolean                @default(false)
   aiQuestionGenerations AIQuestionGeneration[]
-  branch                Branch?                @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch                Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade)
   course                Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
   organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   questions             AssessmentQuestion[]
@@ -625,7 +666,7 @@ model AssessmentAnswer {
 model Attendance {
   id               String            @id @default(uuid())
   organizationId   String
-  branchId         String?
+  branchId         String
   classSessionId   String
   studentId        String
   status           AttendanceStatus  @default(PRESENT)
@@ -634,7 +675,7 @@ model Attendance {
   notes            String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  branch           Branch?           @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch           Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
   classSession     ClassSession      @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   student          Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -885,15 +926,15 @@ model ChatMessage {
   content        String
   isAIResponse   Boolean               @default(false)
   createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  editedAt       DateTime?
-  deletedAt      DateTime?
   deliveredAt    DateTime?
   seenAt         DateTime?
   status         ChatMessageStatus     @default(SENT)
+  deletedAt      DateTime?
+  editedAt       DateTime?
+  updatedAt      DateTime              @updatedAt
+  attachments    ChatAttachment[]
   conversation   ChatConversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User?                 @relation("ChatMessageSender", fields: [senderId], references: [id])
-  attachments    ChatAttachment[]
   reactions      ChatMessageReaction[]
 
   @@index([conversationId])
@@ -903,15 +944,14 @@ model ChatMessage {
 }
 
 model ChatMessageReaction {
-  id        String   @id @default(uuid())
+  id        String      @id @default(uuid())
   messageId String
   userId    String
   emoji     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
   @@index([messageId])
@@ -920,7 +960,7 @@ model ChatMessageReaction {
 }
 
 model ChatAttachment {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   messageId   String
   fileName    String
   storagePath String
@@ -930,9 +970,8 @@ model ChatAttachment {
   width       Int?
   height      Int?
   duration    Float?
-  createdAt   DateTime @default(now())
-
-  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([mimeType])
@@ -1112,6 +1151,13 @@ enum EnrollmentStatus {
   COMPLETED
   DROPPED
   SUSPENDED
+}
+
+enum EnrollmentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum PaymentPlanStatus {

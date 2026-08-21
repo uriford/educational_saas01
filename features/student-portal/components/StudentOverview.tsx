@@ -1,6 +1,8 @@
 import {
   ArrowRight,
   BookOpen,
+  CreditCard,
+  ClipboardCheck,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -26,17 +28,6 @@ type UpcomingClass = {
   };
 };
 
-type StudentOverviewProps = {
-  student: {
-    studentId: string;
-    admissionDate: Date;
-    status: string;
-  };
-  courseCount: number;
-  upcomingClassCount: number;
-  upcomingClasses: UpcomingClass[];
-};
-
 function formatDate(date: Date | string) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
@@ -52,11 +43,34 @@ function formatTime(date: Date | string) {
   }).format(new Date(date));
 }
 
+type StudentOverviewProps = {
+  student: {
+    studentId: string;
+    admissionDate: Date;
+    status: string;
+  };
+  courseCount: number;
+  upcomingClassCount: number;
+  upcomingClasses: UpcomingClass[];
+  pendingPayments: number;
+  enrollmentRequests: {
+    id: string;
+    status: string;
+    course: {
+      name: string;
+      code: string;
+    };
+    createdAt: Date;
+  }[];
+};
+
 export default function StudentOverview({
   student,
   courseCount,
   upcomingClassCount,
   upcomingClasses,
+  pendingPayments,
+  enrollmentRequests,
 }: StudentOverviewProps) {
   const admissionDate = new Date(
     student.admissionDate,
@@ -267,6 +281,100 @@ export default function StudentOverview({
           )}
         </div>
       </section>
+      <section className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <CreditCard className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <h3 className="font-semibold">
+                Payment Due
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Your outstanding payment balance.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <p className="text-3xl font-bold">
+              ৳
+              {pendingPayments.toLocaleString("en-BD")}
+            </p>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              View installments, due dates, and receipts.
+            </p>
+
+            <Link
+              href="/student/payments"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            >
+              View Payments
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+
+
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <ClipboardCheck className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <h3 className="font-semibold">
+                Enrollment Requests
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Track your course applications.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {enrollmentRequests.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No enrollment requests.
+              </p>
+            ) : (
+              enrollmentRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="rounded-xl border p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-medium">
+                        {request.course.name}
+                      </p>
+
+                      <p className="text-xs text-muted-foreground">
+                        {request.course.code}
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+                      {request.status}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Submitted{" "}
+                    {formatDate(request.createdAt)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

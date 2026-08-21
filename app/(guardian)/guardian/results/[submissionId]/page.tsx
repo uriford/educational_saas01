@@ -72,6 +72,8 @@ export default async function GuardianResultDetailPage({
       await ResultService.getStudentResult({
         submissionId,
         studentId: student.id,
+        organizationId: session.user.organizationId,
+        branchId: session.user.branchId,
       });
 
     if (candidate.success && candidate.result) {
