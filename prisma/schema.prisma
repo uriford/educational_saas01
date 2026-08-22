@@ -450,8 +450,19 @@ model EnrollmentRequest {
   phone       String?
 
   paymentMethod PaymentMethod?
+
+  requestedAmount Decimal? @db.Decimal(10, 2)
+
   transactionId String?
   paymentPhone  String?
+
+  paymentDate      DateTime?
+  paymentReference String?
+
+  cardHolderName String?
+  cardLastFour   String?
+
+  paymentNote String?
 
   status EnrollmentRequestStatus @default(PENDING)
 
@@ -1179,6 +1190,7 @@ enum PaymentMethod {
   CASH
   BANK_TRANSFER
   MOBILE_BANKING
+  CARD
   OTHER
 }
 
