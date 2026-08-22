@@ -16,7 +16,18 @@ export default async function EnrollmentRequestsPage() {
         </p>
       </div>
 
-      <EnrollmentRequestTable requests={requests} />
+      <EnrollmentRequestTable
+        requests={requests.map((request) => ({
+          ...request,
+          firstName: request.firstName ?? "Unknown",
+          lastName: request.lastName,
+          email: request.email ?? "",
+          student: request.student ?? {
+            firstName: request.firstName ?? "Unknown",
+            lastName: request.lastName ?? null,
+          },
+        }))}
+      />
     </div>
   );
 }

@@ -45,17 +45,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
 
       async authorize(credentials) {
-        console.log(
-          "[AUTH TEST] authorize() ENTERED",
-        );
 
         if (
           !credentials?.email ||
           !credentials?.password
         ) {
-          console.log(
-            "[AUTH TEST] Missing credentials",
-          );
 
           return null;
         }
@@ -70,13 +64,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 "true",
             });
 
-          console.log(
-            "[AUTH TEST] AuthService result:",
-            {
-              success: response.success,
-              message: response.message,
-            },
-          );
 
           if (!response.success) {
             return null;
@@ -99,7 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           };
         } catch (error) {
           console.error(
-            "[AUTH TEST] authorize() EXCEPTION:",
+            "AUTHORIZATION_ERROR:",
             error,
           );
 
@@ -112,19 +99,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
 
-      console.log(
-        "========== JWT CALLBACK =========="
-      );
-
-      console.log(
-        "JWT USER:",
-        JSON.stringify(user, null, 2)
-      );
-
-      console.log(
-        "JWT TOKEN BEFORE:",
-        JSON.stringify(token, null, 2)
-      );
 
       if (user) {
         token.id = user.id;
@@ -157,24 +131,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
-      console.log(
-        "JWT TOKEN AFTER:",
-        JSON.stringify(token, null, 2)
-      );
 
       return token;
     },
 
     async session({ session, token }) {
 
-      console.log(
-        "========== SESSION CALLBACK =========="
-      );
-
-      console.log(
-        "SESSION TOKEN:",
-        JSON.stringify(token, null, 2)
-      );
 
       if (session.user) {
         session.user.id =

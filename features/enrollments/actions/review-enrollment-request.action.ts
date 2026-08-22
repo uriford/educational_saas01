@@ -1,10 +1,22 @@
 "use server";
 
+import bcrypt from "bcrypt";
+import crypto from "node:crypto";
+
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { EnrollmentRepository } from "../repository/enrollment.repository";
 import { NotificationAutomationService } from "@/features/notifications/services/notification-automation.service";
+import { StudentRepository } from "@/features/students/repository/student.repository";
+
+function generateStudentUserCode() {
+  return `STU-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
+}
+
+function generateTemporaryPassword() {
+  return `Student@${crypto.randomBytes(8).toString("base64url")}`;
+}
 
 export async function reviewEnrollmentRequestAction(
   requestId: string,
@@ -89,11 +101,106 @@ export async function reviewEnrollmentRequestAction(
         }
 
 
+        let student;
+
+        if (request.studentId) {
+
+          student =
+            await tx.student.findUnique({
+              where: {
+                id: request.studentId,
+              },
+            });
+
+          if (!student) {
+            throw new Error(
+              "Existing student not found.",
+            );
+          }
+
+        } else {
+
+          const existingStudent =
+            request.email
+              ? await tx.student.findFirst({
+                  where: {
+                    organizationId:
+                      request.organizationId,
+
+                    email:
+                      request.email,
+
+                    deletedAt:
+                      null,
+                  },
+                })
+              : null;
+
+
+          if (existingStudent) {
+
+            student = existingStudent;
+
+          } else {
+
+            const studentId =
+              await StudentRepository.generateStudentIdWithTx(tx);
+
+
+            student =
+              await tx.student.create({
+                data: {
+
+                  studentId,
+
+                  organizationId:
+                    request.organizationId,
+
+                  branchId:
+                    request.branchId,
+
+                  firstName:
+                    request.firstName ?? "Unknown",
+
+                  lastName:
+                    request.lastName,
+
+                  email:
+                    request.email,
+
+                  phone:
+                    request.phone,
+
+                  guardianName:
+                    request.guardianName,
+
+                  guardianPhone:
+                    request.guardianPhone,
+
+                  guardianEmail:
+                    request.guardianEmail,
+
+                  gender:
+                    request.gender,
+
+                  dateOfBirth:
+                    request.dateOfBirth,
+
+                  address:
+                    request.address,
+                },
+              });
+
+          }
+
+        }
+
+
         const enrollment =
           await EnrollmentRepository.createWithTx(
             tx,
             {
-              studentId: request.studentId,
+              studentId: student.id,
               courseId: request.courseId,
             },
           );
@@ -104,6 +211,7 @@ export async function reviewEnrollmentRequestAction(
             id: requestId,
           },
           data: {
+            studentId: student.id,
             status: "APPROVED",
             reviewedById: session.user.id,
             reviewedAt: new Date(),
@@ -125,19 +233,25 @@ export async function reviewEnrollmentRequestAction(
             entityId:
               enrollment.id,
             description:
-              `Enrollment approved for ${request.studentName}.`,
+              `Enrollment approved for ${request.firstName ?? "Student"}.`,
           },
         });
 
 
         return {
           enrollmentId: enrollment.id,
-          studentId: request.studentId,
+          studentId: student.id,
           organizationId:
             request.organizationId,
           courseId: request.courseId,
           courseName:
             enrollment.course.name,
+
+          temporaryPassword:
+            (student as any).temporaryPassword ?? null,
+
+          email:
+            request.email,
         };
       },
       {
@@ -148,7 +262,7 @@ export async function reviewEnrollmentRequestAction(
 
 
     await NotificationAutomationService.notifyStudent({
-      studentId: result.studentId,
+      studentId: result.studentId!,
       organizationId:
         result.organizationId,
       type: "SUCCESS",
@@ -167,6 +281,12 @@ export async function reviewEnrollmentRequestAction(
       success: true,
       message:
         "Enrollment approved successfully.",
+
+      email:
+        result.email,
+
+      temporaryPassword:
+        result.temporaryPassword,
     };
 
   } catch (error) {

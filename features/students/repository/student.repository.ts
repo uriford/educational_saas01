@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import type { CreateStudentData } from "../types";
 
 export class StudentRepository {
@@ -170,6 +171,27 @@ export class StudentRepository {
     }
 
     const lastNumber = Number(lastStudent.studentId.replace("STD-", ""));
+
+    return `STD-${String(lastNumber + 1).padStart(6, "0")}`;
+  }
+
+  static async generateStudentIdWithTx(tx: Prisma.TransactionClient) {
+    const lastStudent = await tx.student.findFirst({
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        studentId: true,
+      },
+    });
+
+    if (!lastStudent) {
+      return "STD-000001";
+    }
+
+    const lastNumber = Number(
+      lastStudent.studentId.replace("STD-", "")
+    );
 
     return `STD-${String(lastNumber + 1).padStart(6, "0")}`;
   }

@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+import {
+  SubscriptionService,
+} from "@/features/subscriptions/services/subscription.service";
+
 export async function POST(
   request: Request,
 ) {
@@ -18,6 +22,37 @@ export async function POST(
         status: 401,
       },
     );
+  }
+
+  if (!session.user.organizationId) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Organization context required",
+      },
+      {
+        status: 403,
+      },
+    );
+  }
+
+  if (session.user.role !== "SUPER_ADMIN") {
+    const hasAccess =
+      await SubscriptionService.hasAccess(
+        session.user.organizationId,
+      );
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Subscription inactive",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
   }
 
   const body = await request.json();

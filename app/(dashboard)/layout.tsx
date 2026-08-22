@@ -27,18 +27,6 @@ export default async function Layout({
 }) {
   const session = await auth();
   
-  console.log(
-    "========== DASHBOARD AUTH SESSION =========="
-  );
-
-  console.log(
-    JSON.stringify(session, null, 2)
-  );
-
-  console.log(
-    "============================================"
-  );
-
 
   if (!session?.user?.id) {
     redirect("/login");
@@ -108,18 +96,6 @@ export default async function Layout({
     session.user.organizationId,
     session.user.id,
     session.user.branchId ?? undefined,
-  );
-
-  console.log(
-    "========== DASHBOARD SETTINGS =========="
-  );
-
-  console.log(
-    JSON.stringify(settings, null, 2)
-  );
-
-  console.log(
-    "========================================"
   );
 
   if (!settings.organization || !settings.user) {

@@ -102,7 +102,8 @@ export async function requestEnrollmentAction(
         organizationId: course.organizationId,
         branchId: course.branchId,
 
-        studentName: `${student.firstName} ${student.lastName ?? ""}`.trim(),
+        firstName: student.firstName,
+        lastName: student.lastName,
         email: student.email ?? "",
         phone: student.phone,
 

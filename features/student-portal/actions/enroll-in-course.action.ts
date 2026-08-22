@@ -106,8 +106,8 @@ export async function enrollInCourseAction(courseId: string) {
         organizationId: course.organizationId,
         branchId: course.branchId,
 
-        studentName:
-          `${student.firstName} ${student.lastName ?? ""}`.trim(),
+        firstName: student.firstName,
+        lastName: student.lastName,
 
         email:
           student.email ??

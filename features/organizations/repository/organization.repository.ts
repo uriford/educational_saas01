@@ -411,4 +411,21 @@ export class OrganizationRepository {
       };
     });
   }
+
+  static async findPublicBySlug(slug: string) {
+    return db.organization.findFirst({
+      where: {
+        slug,
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+      },
+    });
+  }
+
 }

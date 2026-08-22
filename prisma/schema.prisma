@@ -409,7 +409,9 @@ model LessonResource {
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  submittedIp String?
+  lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([lessonId])
   @@index([lessonId, order])
@@ -436,18 +438,48 @@ model CourseEnrollment {
   @@index([status])
 }
 
+model AdmissionRateLimit {
+  id String @id @default(uuid())
+
+  ipAddress String
+  action    String
+
+  attempts Int @default(1)
+
+  windowStart DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ipAddress, action])
+  @@index([ipAddress])
+}
+
 model EnrollmentRequest {
   id String @id @default(uuid())
 
-  studentId String
+  studentId String?
   courseId  String
 
   organizationId String
   branchId       String?
 
-  studentName String
-  email       String
-  phone       String?
+  firstName String?
+  lastName  String?
+
+  email String?
+  phone String?
+
+  guardianName  String?
+  guardianPhone String?
+  guardianEmail String?
+
+  gender      Gender?
+  dateOfBirth DateTime?
+
+  address String?
+
+  admissionNote String?
 
   paymentMethod PaymentMethod?
 
@@ -473,11 +505,13 @@ model EnrollmentRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  branch       Branch?      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([branchId])
