@@ -3,7 +3,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PaymentMethod } from "@prisma/client";
-import { PaymentMethod } from "@prisma/client";
 
 type EnrollmentRequestPayload = {
   paymentMethod: PaymentMethod;

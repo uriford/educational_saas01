@@ -1,5 +1,7 @@
 "use client";
 
+import { PaymentMethod } from "@prisma/client";
+
 import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -33,7 +35,7 @@ export default function EnrollmentRequestDialog({
   const [loading, setLoading] = useState(false);
 
   const [paymentMethod, setPaymentMethod] =
-    useState("MOBILE_BANKING");
+    useState<PaymentMethod>(PaymentMethod.MOBILE_BANKING);
 
 
   const [form, setForm] = useState({
@@ -78,8 +80,8 @@ export default function EnrollmentRequestDialog({
         await requestEnrollmentAction(
           courseId,
           {
-            paymentMethod,
             ...form,
+            paymentMethod,
           },
         );
 
@@ -154,7 +156,9 @@ export default function EnrollmentRequestDialog({
 
           <Select
             value={paymentMethod}
-            onValueChange={setPaymentMethod}
+            onValueChange={(value) =>
+              setPaymentMethod(value as PaymentMethod)
+            }
           >
 
             <SelectItem value="MOBILE_BANKING">
@@ -179,7 +183,7 @@ export default function EnrollmentRequestDialog({
 
 
 
-        {paymentMethod === "MOBILE_BANKING" && (
+        {paymentMethod === PaymentMethod.MOBILE_BANKING && (
           <>
             <Input
               placeholder="Transaction ID"
@@ -207,7 +211,7 @@ export default function EnrollmentRequestDialog({
 
 
 
-        {paymentMethod === "BANK_TRANSFER" && (
+        {paymentMethod === PaymentMethod.BANK_TRANSFER && (
           <>
 
             <Input
@@ -226,7 +230,7 @@ export default function EnrollmentRequestDialog({
 
 
 
-        {paymentMethod === "CARD" && (
+        {paymentMethod === PaymentMethod.CARD && (
           <>
 
             <Input
