@@ -30,8 +30,7 @@ export default async function StudentRoutinePage() {
     return (
       <div className="space-y-6">
         <section className="rounded-2xl border bg-card p-8 shadow-sm">
-          <h1 className="text-2xl " +
-        font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Routine
           </h1>
 
