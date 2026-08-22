@@ -2,9 +2,11 @@
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@prisma/client";
 
 type EnrollmentRequestPayload = {
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   requestedAmount: string;
   transactionId?: string;
   paymentPhone?: string;
@@ -108,7 +110,7 @@ export async function requestEnrollmentAction(
         phone: student.phone,
 
         paymentMethod:
-          payload.paymentMethod as any,
+          payload.paymentMethod,
 
         requestedAmount:
           payload.requestedAmount

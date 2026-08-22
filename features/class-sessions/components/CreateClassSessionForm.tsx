@@ -19,6 +19,10 @@ type Teacher = {
   status: string;
 };
 
+function convertToBangladeshTime(value: string) {
+  return `${value}:00+06:00`;
+}
+
 type Props = {
   courseId: string;
   courseName: string;
@@ -61,8 +65,8 @@ export default function CreateClassSessionForm({
         teacherId,
         title,
         description,
-        startTime,
-        endTime,
+        startTime: convertToBangladeshTime(startTime),
+        endTime: convertToBangladeshTime(endTime),
         room,
       });
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
-  CheckCircle2,
   Clock3,
   GraduationCap,
   Search,

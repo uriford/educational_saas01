@@ -1,22 +1,11 @@
 "use server";
 
-import bcrypt from "bcrypt";
-import crypto from "node:crypto";
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { EnrollmentRepository } from "../repository/enrollment.repository";
 import { NotificationAutomationService } from "@/features/notifications/services/notification-automation.service";
 import { StudentRepository } from "@/features/students/repository/student.repository";
-
-function generateStudentUserCode() {
-  return `STU-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
-}
-
-function generateTemporaryPassword() {
-  return `Student@${crypto.randomBytes(8).toString("base64url")}`;
-}
 
 export async function reviewEnrollmentRequestAction(
   requestId: string,
@@ -248,7 +237,11 @@ export async function reviewEnrollmentRequestAction(
             enrollment.course.name,
 
           temporaryPassword:
-            (student as any).temporaryPassword ?? null,
+            (
+              student as typeof student & {
+                temporaryPassword?: string | null;
+              }
+            ).temporaryPassword ?? null,
 
           email:
             request.email,

@@ -47,13 +47,34 @@ type Props = {
 function formatDateTimeLocal(date: Date) {
   const value = new Date(date);
 
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  const hours = String(value.getHours()).padStart(2, "0");
-  const minutes = String(value.getMinutes()).padStart(2, "0");
+  const formatter = new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone: "Asia/Dhaka",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    },
+  );
 
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const parts = formatter
+    .formatToParts(value)
+    .reduce(
+      (acc, part) => {
+        acc[part.type] = part.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function convertToBangladeshTime(value: string) {
+  return `${value}:00+06:00`;
 }
 
 export default function EditClassSessionForm({
@@ -100,8 +121,8 @@ export default function EditClassSessionForm({
         title,
         teacherId,
         description,
-        startTime,
-        endTime,
+        startTime: convertToBangladeshTime(startTime),
+        endTime: convertToBangladeshTime(endTime),
         room,
         status,
       });
