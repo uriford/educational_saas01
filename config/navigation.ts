@@ -24,6 +24,11 @@ export const platformItems = [
     href: "/organizations",
     icon: Building2,
   },
+  {
+    title: "Platform Admins",
+    href: "/platform-admins",
+    icon: Users,
+  },
 ];
 
 export const organizationItems = [
