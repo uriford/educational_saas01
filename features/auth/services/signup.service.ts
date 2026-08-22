@@ -5,7 +5,6 @@ import crypto from "node:crypto";
 
 import { SignupRepository } from "../repository/signup.repository";
 import type { SignupFormData } from "../schemas/signup.schema";
-import { EmailVerificationService } from "./email-verification.service";
 
 type SignupResponse =
   | {
@@ -59,36 +58,17 @@ export class SignupService {
           password,
         });
 
-      try {
-        await EmailVerificationService.createAndSend({
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-        });
-      } catch (emailError) {
-        console.error(
-          "========== VERIFICATION EMAIL ERROR ==========",
-        );
-        console.error(emailError);
-        console.error(
-          "========== VERIFICATION EMAIL ERROR STACK ==========",
-        );
-
-        if (emailError instanceof Error) {
-          console.error(emailError.stack);
-        }
-
-        return {
-          success: false,
-          message:
-            "Account was created, but we could not send the verification email. Please try again later.",
-        };
-      }
+      // DEMO MODE:
+      // Email verification is temporarily disabled.
+      // Users are created as verified during signup.
+      console.log(
+        "[SIGNUP] Email verification skipped (demo mode).",
+      );
 
       return {
         success: true,
         message:
-          "Account created successfully. Please check your email to verify your account.",
+          "Account created successfully. You can login now.",
         userId: user.id,
       };
     } catch (error) {

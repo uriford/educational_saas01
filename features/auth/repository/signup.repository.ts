@@ -55,7 +55,7 @@ export class SignupRepository {
             organizationId: organization.id,
             branchId:null,
 
-            emailVerified:false,
+            emailVerified: true,
           },
         });
 
