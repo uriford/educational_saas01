@@ -17,13 +17,9 @@ export default async function ExploreCoursesPage() {
     redirect("/dashboard");
   }
 
-  if (!session.user.organizationId) {
-    redirect("/login");
-  }
-
   const courses =
     await CourseService.getPublicCourses(
-      session.user.organizationId,
+      session.user.organizationId ?? undefined,
     );
 
 

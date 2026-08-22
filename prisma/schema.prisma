@@ -1053,6 +1053,7 @@ model PushSubscription {
 }
 
 enum Role {
+  USER
   SUPER_ADMIN
   ORGANIZATION_ADMIN
   BRANCH_ADMIN

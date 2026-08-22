@@ -10,8 +10,7 @@ export default async function StudentProfileEditPage() {
   if (
     !session?.user?.id ||
     session.user.role !== "STUDENT" ||
-    !session.user.organizationId ||
-    !session.user.branchId
+    !session.user.organizationId
   ) {
     redirect("/login");
   }
@@ -20,7 +19,6 @@ export default async function StudentProfileEditPage() {
     await StudentService.getByUserId(
       session.user.id,
       session.user.organizationId,
-      session.user.branchId,
     );
 
   if (!student) {

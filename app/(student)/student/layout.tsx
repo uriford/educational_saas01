@@ -18,7 +18,11 @@ export default async function StudentLayout({
 }) {
   const session = await auth();
 
+  console.log("========== STUDENT SESSION DEBUG ==========");
+  console.log(JSON.stringify(session, null, 2));
+
   if (!session?.user?.id) {
+    console.log("NO SESSION USER ID");
     redirect("/login");
   }
 

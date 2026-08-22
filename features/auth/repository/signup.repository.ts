@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 
 export class SignupRepository {
+
   static async findUserByEmail(email: string) {
     return db.user.findFirst({
       where: {
@@ -10,13 +11,7 @@ export class SignupRepository {
     });
   }
 
-  /**
-   * Creates the platform-level student account.
-   *
-   * Organization and branch are intentionally NULL here.
-   * The student is assigned to an organization/course later
-   * through the admin enrollment system.
-   */
+
   static async createStudentAccount(data: {
     code: string;
     firstName: string;
@@ -25,23 +20,141 @@ export class SignupRepository {
     phone: string;
     password: string;
   }) {
-    return db.user.create({
-      data: {
-        code: data.code,
-        firstName: data.firstName,
-        lastName: data.lastName || null,
-        email: data.email,
-        phone: data.phone,
-        password: data.password,
-        role: "STUDENT",
-        status: "ACTIVE",
 
-        // Student is not assigned to an organization yet.
-        organizationId: null,
-        branchId: null,
+    const organization =
+      await db.organization.findUnique({
+        where:{
+          slug:"american-council",
+        },
+      });
 
-        emailVerified: false,
-      },
+
+    if(!organization){
+      throw new Error(
+        "Default organization not found."
+      );
+    }
+
+
+    return db.$transaction(async(tx)=>{
+
+
+      const user =
+        await tx.user.create({
+          data:{
+            code:data.code,
+            firstName:data.firstName,
+            lastName:data.lastName || null,
+            email:data.email,
+            phone:data.phone,
+            password:data.password,
+
+            role:"STUDENT",
+            status:"ACTIVE",
+
+            organizationId: organization.id,
+            branchId:null,
+
+            emailVerified:false,
+          },
+        });
+
+
+
+      const existingStudent =
+        await tx.student.findFirst({
+          where:{
+            organizationId: organization.id,
+            email:data.email,
+            deletedAt:null,
+          },
+        });
+
+
+
+      if(existingStudent){
+
+        await tx.student.update({
+          where:{
+            id:existingStudent.id,
+          },
+          data:{
+            userId:user.id,
+          },
+        });
+
+
+      }else{
+
+
+        const lastStudent =
+          await tx.student.findFirst({
+            orderBy:{
+              createdAt:"desc",
+            },
+            select:{
+              studentId:true,
+            },
+          });
+
+
+
+        let nextNumber=1;
+
+
+        if(lastStudent?.studentId){
+
+          nextNumber =
+            Number(
+              lastStudent.studentId.replace(
+                "STD-",
+                ""
+              )
+            ) + 1;
+
+        }
+
+
+
+        const studentId =
+          `STD-${String(nextNumber).padStart(6,"0")}`;
+
+
+
+        await tx.student.create({
+
+          data:{
+
+            userId:user.id,
+
+            organizationId:
+              organization.id,
+
+            branchId:null,
+
+            studentId,
+
+            firstName:data.firstName,
+
+            lastName:
+              data.lastName || null,
+
+            email:data.email,
+
+            phone:data.phone,
+
+          },
+
+        });
+
+      }
+
+
+
+      return user;
+
     });
+
   }
+
 }

@@ -19,15 +19,28 @@ export default async function StudentSchedulePage() {
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    redirect("/login");
+  if (!session.user.organizationId) {
+    redirect("/student-pending");
   }
 
   const organizationId = session.user.organizationId;
-  const branchId = session.user.branchId;
+  const branchId = session.user.branchId ?? undefined;
+
+  if (!branchId) {
+    return (
+      <div className="space-y-6">
+        <section className="rounded-2xl border bg-card p-8 shadow-sm">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Schedule
+          </h1>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your schedule will appear after you are enrolled into a course.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   const student = await StudentService.getByUserId(
     session.user.id,

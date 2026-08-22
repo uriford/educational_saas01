@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
+import { ROLES } from "@/features/auth/roles";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -42,12 +43,8 @@ export default async function ExploreCourseDetailsPage({
     redirect("/login");
   }
 
-  if (session.user.role !== "STUDENT") {
+  if (session.user.role !== ROLES.STUDENT) {
     redirect("/dashboard");
-  }
-
-  if (!session.user.organizationId) {
-    redirect("/login");
   }
 
   const { courseId } = await params;
@@ -55,10 +52,6 @@ export default async function ExploreCourseDetailsPage({
   const student = await db.student.findFirst({
     where: {
       userId: session.user.id,
-      organizationId: session.user.organizationId,
-      ...(session.user.branchId
-        ? { branchId: session.user.branchId }
-        : {}),
       deletedAt: null,
     },
     select: {
@@ -66,32 +59,37 @@ export default async function ExploreCourseDetailsPage({
     },
   });
 
-  if (!student) {
-    redirect("/student");
-  }
 
   const course = await db.course.findFirst({
     where: {
       id: courseId,
-      organizationId: session.user.organizationId,
-      ...(session.user.branchId
-        ? { branchId: session.user.branchId }
-        : {}),
       status: "ACTIVE",
       deletedAt: null,
     },
     include: {
-      enrollments: {
-        where: {
-          studentId: student.id,
-        },
-        select: {
-          id: true,
-          status: true,
-          progress: true,
-          enrolledAt: true,
-        },
-      },
+      enrollments: student
+        ? {
+            where: {
+              studentId: student.id,
+            },
+            select: {
+              id: true,
+              status: true,
+              progress: true,
+              enrolledAt: true,
+            },
+          }
+        : {
+            where: {
+              id: "00000000-0000-0000-0000-000000000000",
+            },
+            select: {
+              id: true,
+              status: true,
+              progress: true,
+              enrolledAt: true,
+            },
+          },
     },
   });
 
@@ -102,17 +100,18 @@ export default async function ExploreCourseDetailsPage({
   const enrollment = course.enrollments[0] ?? null;
   const enrolled = Boolean(enrollment);
 
-  const pendingRequest =
-    await db.enrollmentRequest.findFirst({
-      where: {
-        studentId: student.id,
-        courseId: course.id,
-        status: "PENDING",
-      },
-      select: {
-        id: true,
-      },
-    });
+  const pendingRequest = student
+    ? await db.enrollmentRequest.findFirst({
+        where: {
+          studentId: student.id,
+          courseId: course.id,
+          status: "PENDING",
+        },
+        select: {
+          id: true,
+        },
+      })
+    : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">

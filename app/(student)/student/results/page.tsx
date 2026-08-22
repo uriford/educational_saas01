@@ -17,11 +17,8 @@ export default async function StudentResultsPage() {
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    redirect("/login");
+  if (!session.user.organizationId) {
+    redirect("/student-pending");
   }
 
   const student = await StudentService.getByUserId(
@@ -31,7 +28,17 @@ export default async function StudentResultsPage() {
   );
 
   if (!student) {
-    redirect("/login");
+    return (
+      <div className="rounded-2xl border bg-card p-8">
+        <h1 className="text-2xl font-bold">
+          Results
+        </h1>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          Results will appear after completing assessments.
+        </p>
+      </div>
+    );
   }
 
   const result =

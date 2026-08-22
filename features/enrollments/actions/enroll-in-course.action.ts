@@ -39,47 +39,22 @@ export async function enrollInCourseAction(courseId: string) {
     }
 
 
-    let student = await db.student.findFirst({
-      where: {
-        userId: session.user.id,
-        deletedAt: null,
-      },
-    });
-
-
-    if (!student) {
-      const generatedId =
-        await generateStudentId();
-
-      student = await db.student.create({
-        data: {
+    const student =
+      await db.student.findFirst({
+        where:{
           userId: session.user.id,
-          organizationId: course.organizationId,
-          branchId: course.branchId,
-          studentId: generatedId,
-          firstName:
-            session.user.name?.split(" ")[0] ??
-            "Student",
-          lastName:
-            session.user.name?.split(" ").slice(1).join(" ") ||
-            null,
-          email: session.user.email ?? null,
+          deletedAt:null,
         },
       });
 
 
-      await db.user.update({
-        where: {
-          id: session.user.id,
-        },
-        data: {
-          organizationId:
-            course.organizationId,
-          branchId:
-            course.branchId,
-        },
-      });
+    if(!student){
+      return {
+        success:false,
+        message:"Student profile not found.",
+      };
     }
+
 
 
     return EnrollmentService.create(
@@ -88,7 +63,7 @@ export async function enrollInCourseAction(courseId: string) {
         courseId,
       },
       course.organizationId,
-      course.branchId ?? undefined,
+      undefined,
       session.user.id,
     );
 

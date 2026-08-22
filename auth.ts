@@ -2,8 +2,11 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { AuthService } from "@/features/auth/services/auth.service";
+import { db } from "@/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
+
   secret: process.env.AUTH_SECRET,
 
   session: {
@@ -107,6 +110,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           user.organizationId;
         token.branchId = user.branchId;
         token.rememberMe = user.rememberMe;
+      }
+
+      if (token.id) {
+        const dbUser =
+          await db.user.findUnique({
+            where: {
+              id: token.id as string,
+            },
+            select: {
+              role: true,
+              organizationId: true,
+              branchId: true,
+            },
+          });
+
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.organizationId =
+            dbUser.organizationId;
+          token.branchId =
+            dbUser.branchId;
+        }
       }
 
       return token;

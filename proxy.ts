@@ -4,6 +4,7 @@ import authConfig from "./auth.config";
 
 const proxyConfig = {
   ...authConfig,
+  trustHost: true,
   providers: [],
 };
 
