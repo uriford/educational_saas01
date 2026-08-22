@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ChevronsUpDown,
   LogOut,
@@ -159,7 +160,7 @@ export default function AppSidebar({
             render={
               <Button
                 variant="ghost"
-                className="h-auto w-full justify-start gap-3 rounded-lg px-2.5 py-2.5 hover:bg-sidebar-accent"
+                className="h-auto w-full min-w-0 justify-start gap-3 rounded-lg px-2.5 py-2.5 hover:bg-sidebar-accent"
               >
                 <Avatar className="size-9 shrink-0">
                   {user.avatar ? (
