@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
   CheckCircle2,
   Clock3,
   Loader2,
@@ -195,7 +194,11 @@ export default function AssessmentAttempt({
 
 
   useEffect(() => {
-    void startAttempt();
+    const initialize = async () => {
+      await startAttempt();
+    };
+
+    void initialize();
   }, [startAttempt]);
 
 
@@ -224,12 +227,6 @@ export default function AssessmentAttempt({
       });
 
 
-    if (!result.success) {
-      setMessage(
-        result.message ??
-          "Save failed.",
-      );
-    }
 
 
     setSaving(null);
@@ -268,10 +265,6 @@ export default function AssessmentAttempt({
 
     if(!result.success){
 
-      setMessage(
-        result.message ??
-        "Submission failed.",
-      );
 
       setSubmitting(false);
 

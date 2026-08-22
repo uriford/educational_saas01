@@ -83,32 +83,3 @@ export async function enrollInCourseAction(courseId: string) {
   }
 }
 
-
-async function generateStudentId() {
-  const lastStudent =
-    await db.student.findFirst({
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        studentId: true,
-      },
-    });
-
-
-  if (!lastStudent) {
-    return "STD-000001";
-  }
-
-
-  const number =
-    Number(
-      lastStudent.studentId.replace(
-        "STD-",
-        "",
-      ),
-    ) + 1;
-
-
-  return `STD-${String(number).padStart(6,"0")}`;
-}

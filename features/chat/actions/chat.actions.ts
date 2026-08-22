@@ -7,7 +7,6 @@ import {
 } from "@/features/subscriptions/services/subscription.service";
 import { ROLES } from "@/features/auth/roles";
 import { GuardianService } from "@/features/guardian-portal/services/guardian.service";
-import { StudentService } from "@/features/students/services/student.service";
 import { db } from "@/lib/db";
 
 
@@ -721,20 +720,33 @@ async function authorizeMessageMutation(data: {
     throw new Error("Message not found");
   }
 
+  /*
+   * Message mutations are only allowed for the original sender.
+   *
+   * senderId references User.id, not Student.id.
+   */
   if (message.senderId !== data.userId) {
     throw new Error(
       "You can only modify your own messages",
     );
   }
 
+  /*
+   * AI responses are immutable.
+   */
   if (message.isAIResponse) {
     throw new Error(
       "AI messages cannot be modified",
     );
   }
 
+  /*
+   * Prevent editing/deleting already removed messages.
+   */
   if (message.deletedAt) {
-    throw new Error("Message has already been deleted");
+    throw new Error(
+      "Message has already been deleted",
+    );
   }
 
   return message;

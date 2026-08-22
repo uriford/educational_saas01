@@ -209,13 +209,13 @@ export async function getStudentConversation(
 export async function getGuardianStudentConversation(
   conversationId: string,
   organizationId: string,
-  studentUserId: string,
+  studentId: string,
 ) {
   return db.chatConversation.findFirst({
     where: {
       id: conversationId,
       organizationId,
-      studentId: studentUserId,
+      studentId,
     },
     include: conversationInclude,
   });

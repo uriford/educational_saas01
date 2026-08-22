@@ -1,8 +1,9 @@
 "use client";
-import Image from "next/image";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import {
   BookOpen,
   CalendarDays,
@@ -10,145 +11,202 @@ import {
   CreditCard,
   GraduationCap,
   LayoutDashboard,
-  Megaphone,  UserCircle,
+  Megaphone,
+  UserCircle,
 } from "lucide-react";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+
 
 const navigation = [
   {
-    label: "Overview",
-    href: "/student",
-    icon: LayoutDashboard,
+    label:"Overview",
+    href:"/student",
+    icon:LayoutDashboard,
   },
   {
-    label: "My Courses",
-    href: "/student/courses",
-    icon: BookOpen,
+    label:"My Courses",
+    href:"/student/courses",
+    icon:BookOpen,
   },
   {
-    label: "Explore Courses",
-    href: "/student/explore-courses",
-    icon: GraduationCap,
+    label:"Explore Courses",
+    href:"/student/explore-courses",
+    icon:GraduationCap,
   },
   {
-    label: "Routine",
-    href: "/student/routine",
-    icon: CalendarDays,
+    label:"Routine",
+    href:"/student/routine",
+    icon:CalendarDays,
   },
   {
-    label: "Schedule",
-    href: "/student/schedule",
-    icon: CalendarDays,
+    label:"Schedule",
+    href:"/student/schedule",
+    icon:CalendarDays,
   },
   {
-    label: "Results",
-    href: "/student/results",
-    icon: ClipboardCheck,
+    label:"Results",
+    href:"/student/results",
+    icon:ClipboardCheck,
   },
   {
-    label: "Payments",
-    href: "/student/payments",
-    icon: CreditCard,
+    label:"Payments",
+    href:"/student/payments",
+    icon:CreditCard,
   },
   {
-    label: "Announcements",
-    href: "/student/announcements",
-    icon: Megaphone,
+    label:"Announcements",
+    href:"/student/announcements",
+    icon:Megaphone,
   },
   {
-    label: "Profile",
-    href: "/student/profile",
-    icon: UserCircle,
+    label:"Profile",
+    href:"/student/profile",
+    icon:UserCircle,
   },
 ];
 
-type StudentSidebarProps = {
-  firstName: string;
-  fullName: string;
-  avatar: string | null;
+
+type Props={
+ firstName:string;
+ fullName:string;
+ avatar:string|null;
 };
 
+
 export default function StudentSidebar({
-  firstName,
-  fullName,
-  avatar,
-}: StudentSidebarProps) {
-  const pathname = usePathname();
+ firstName,
+ fullName,
+ avatar,
+}:Props){
 
-  return (
-    <aside className="hidden w-64 shrink-0 border-r bg-background lg:block">
-      <div className="flex h-full min-h-screen flex-col">
-        <div className="flex h-16 items-center gap-3 border-b px-6">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <GraduationCap className="size-5" />
-          </div>
+ const pathname=usePathname();
 
-          <div>
-            <p className="font-semibold leading-none">
-              American Council
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Student Portal
-            </p>
-          </div>
-        </div>
 
-        <nav className="flex-1 space-y-1 p-4">
-          {navigation.map((item) => {
-            const Icon = item.icon;
+ return (
+ <Sidebar>
 
-            const active =
-              item.href === "/student"
-                ? pathname === "/student"
-                : pathname.startsWith(item.href);
+  <SidebarHeader className="border-b px-4 py-4">
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={[
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                ].join(" ")}
-              >
-                <Icon className="size-4.5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+    <div className="flex items-center gap-3">
 
-        <div className="border-t p-4">
-          <Link
-            href="/student/profile"
-            className="flex items-center gap-3 rounded-xl p-3 hover:bg-muted"
-          >
-            {avatar ? (
-              <Image
-                src={avatar}
-                alt={fullName}
-                width={36}
-                height={36}
-                className="size-9 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                {firstName.charAt(0).toUpperCase()}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">
-                {fullName}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                View profile
-              </p>
-            </div>
-          </Link>
-        </div>
+      <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <GraduationCap className="size-5"/>
       </div>
-    </aside>
-  );
+
+      <div>
+        <p className="font-semibold">
+          American Council
+        </p>
+
+        <p className="text-xs text-muted-foreground">
+          Student Portal
+        </p>
+      </div>
+
+    </div>
+
+  </SidebarHeader>
+
+
+  <SidebarContent className="px-2 py-3">
+
+   <SidebarMenu>
+
+    {navigation.map((item)=>{
+
+      const Icon=item.icon;
+
+      const active =
+        item.href==="/student"
+        ? pathname==="/student"
+        : pathname.startsWith(item.href);
+
+
+      return (
+
+      <SidebarMenuItem key={item.href}>
+
+       <Link
+        href={item.href}
+        className={[
+          "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+          active
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        ].join(" ")}
+       >
+
+        <Icon className="size-4"/>
+
+        <span>
+          {item.label}
+        </span>
+
+       </Link>
+
+      </SidebarMenuItem>
+
+      );
+
+    })}
+
+   </SidebarMenu>
+
+  </SidebarContent>
+
+
+  <SidebarFooter className="border-t p-3">
+
+    <Link
+      href="/student/profile"
+      className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted"
+    >
+
+    {
+      avatar
+      ?
+      <Image
+        src={avatar}
+        alt={fullName}
+        width={36}
+        height={36}
+        className="size-9 rounded-full object-cover"
+      />
+      :
+      <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+        {firstName[0]}
+      </div>
+    }
+
+
+    <div className="min-w-0">
+
+      <p className="truncate text-sm font-medium">
+        {fullName}
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        Student
+      </p>
+
+    </div>
+
+    </Link>
+
+
+  </SidebarFooter>
+
+
+ </Sidebar>
+ );
+
 }

@@ -65,13 +65,8 @@ export class AuthService {
       };
     }
 
-    if (!user.emailVerified) {
-      return {
-        success: false,
-        message:
-          "Please verify your email address before signing in.",
-      };
-    }
+    // Demo mode: email verification temporarily bypassed.
+    // Re-enable this check before production launch.
 
     await AuthRepository.resetLoginAttempt(identifier);
     await AuthRepository.updateLastLogin(user.id);

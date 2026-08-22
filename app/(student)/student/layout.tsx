@@ -6,6 +6,7 @@ import { ROLES } from "@/features/auth/roles";
 import { StudentService } from "@/features/students/services/student.service";
 import { db } from "@/lib/db";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 import StudentSidebar from "@/features/student-portal/components/StudentSidebar";
 import StudentHeader from "@/features/student-portal/components/StudentHeader";
@@ -90,6 +91,7 @@ export default async function StudentLayout({
       storageKey={`theme-${session.user.id}`}
     >
       <div className="min-h-screen bg-muted/30">
+      <SidebarProvider>
       <div className="flex min-h-screen">
         <StudentSidebar
           firstName={student.firstName}
@@ -115,6 +117,7 @@ export default async function StudentLayout({
           </main>
         </div>
       </div>
+      </SidebarProvider>
       </div>
     </ThemeProvider>
   );
