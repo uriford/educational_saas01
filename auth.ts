@@ -4,10 +4,18 @@ import Credentials from "next-auth/providers/credentials";
 import { AuthService } from "@/features/auth/services/auth.service";
 import { db } from "@/lib/db";
 
+console.log(
+  "AUTH SECRET EXISTS:",
+  !!process.env.AUTH_SECRET
+);
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
 
   secret: process.env.AUTH_SECRET,
+
+  useSecureCookies:
+    process.env.NODE_ENV === "production",
 
   session: {
     strategy: "jwt",
