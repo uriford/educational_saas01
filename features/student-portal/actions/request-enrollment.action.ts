@@ -3,7 +3,22 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
-export async function requestEnrollmentAction(courseId: string) {
+type EnrollmentRequestPayload = {
+  paymentMethod: string;
+  requestedAmount: string;
+  transactionId?: string;
+  paymentPhone?: string;
+  paymentDate?: string;
+  paymentReference?: string;
+  cardHolderName?: string;
+  cardLastFour?: string;
+  paymentNote?: string;
+};
+
+export async function requestEnrollmentAction(
+  courseId: string,
+  payload: EnrollmentRequestPayload,
+) {
   try {
     const session = await auth();
 
@@ -90,6 +105,37 @@ export async function requestEnrollmentAction(courseId: string) {
         studentName: `${student.firstName} ${student.lastName ?? ""}`.trim(),
         email: student.email ?? "",
         phone: student.phone,
+
+        paymentMethod:
+          payload.paymentMethod as any,
+
+        requestedAmount:
+          payload.requestedAmount
+            ? Number(payload.requestedAmount)
+            : null,
+
+        transactionId:
+          payload.transactionId || null,
+
+        paymentPhone:
+          payload.paymentPhone || null,
+
+        paymentDate:
+          payload.paymentDate
+            ? new Date(payload.paymentDate)
+            : null,
+
+        paymentReference:
+          payload.paymentReference || null,
+
+        cardHolderName:
+          payload.cardHolderName || null,
+
+        cardLastFour:
+          payload.cardLastFour || null,
+
+        paymentNote:
+          payload.paymentNote || null,
 
         status: "PENDING",
       },

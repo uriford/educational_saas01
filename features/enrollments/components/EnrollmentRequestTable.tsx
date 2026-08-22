@@ -2,17 +2,27 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { reviewEnrollmentRequestAction } from "../actions/review-enrollment-request.action";
 
 type Request = {
   id: string;
+
   studentName: string;
   email: string;
   phone: string | null;
+
   paymentMethod: string | null;
+  requestedAmount: unknown;
   transactionId: string | null;
   paymentPhone: string | null;
+  paymentDate: Date | null;
+  paymentReference: string | null;
+  cardHolderName: string | null;
+  cardLastFour: string | null;
+  paymentNote: string | null;
+
   createdAt: Date;
 
   student: {
@@ -37,9 +47,7 @@ type Props = {
 export default function EnrollmentRequestTable({
   requests,
 }: Props) {
-  const [isPending, startTransition] =
-    useTransition();
-
+  const [isPending, startTransition] = useTransition();
 
   function review(
     id: string,
@@ -63,7 +71,6 @@ export default function EnrollmentRequestTable({
     });
   }
 
-
   if (!requests.length) {
     return (
       <div className="rounded-lg border p-8 text-center text-muted-foreground">
@@ -72,16 +79,15 @@ export default function EnrollmentRequestTable({
     );
   }
 
-
   return (
     <div className="space-y-4">
       {requests.map((request) => (
         <div
           key={request.id}
-          className="rounded-xl border p-5 space-y-4"
+          className="space-y-5 rounded-xl border p-5"
         >
-          <div className="flex flex-col gap-2">
-            <h3 className="font-semibold text-lg">
+          <div>
+            <h3 className="text-lg font-semibold">
               {request.studentName}
             </h3>
 
@@ -96,13 +102,10 @@ export default function EnrollmentRequestTable({
             )}
           </div>
 
-
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <p>
               Course:{" "}
-              <strong>
-                {request.course.name}
-              </strong>
+              <strong>{request.course.name}</strong>
             </p>
 
             <p>
@@ -110,25 +113,66 @@ export default function EnrollmentRequestTable({
             </p>
 
             <p>
-              Branch:{" "}
-              {request.branch?.name ?? "Online"}
-            </p>
-
-            <p>
-              Payment:{" "}
-              {request.paymentMethod ?? "N/A"}
+              Branch: {request.branch?.name ?? "Online"}
             </p>
           </div>
 
+          <div className="rounded-lg bg-muted/40 p-4 space-y-2">
+            <h4 className="font-semibold">
+              Payment Information
+            </h4>
+
+            <p>
+              Method: {request.paymentMethod ?? "N/A"}
+            </p>
+
+            <p>
+              Amount:{" "}
+              {request.requestedAmount ? String(request.requestedAmount) : "N/A"}
+            </p>
+
+            {request.transactionId && (
+              <p>
+                Transaction ID: {request.transactionId}
+              </p>
+            )}
+
+            {request.paymentPhone && (
+              <p>
+                Payment Phone: {request.paymentPhone}
+              </p>
+            )}
+
+            {request.paymentReference && (
+              <p>
+                Reference: {request.paymentReference}
+              </p>
+            )}
+
+            {request.cardHolderName && (
+              <p>
+                Card Holder: {request.cardHolderName}
+              </p>
+            )}
+
+            {request.cardLastFour && (
+              <p>
+                Card Last 4: **** {request.cardLastFour}
+              </p>
+            )}
+
+            {request.paymentNote && (
+              <p>
+                Note: {request.paymentNote}
+              </p>
+            )}
+          </div>
 
           <div className="flex gap-3">
             <Button
               disabled={isPending}
               onClick={() =>
-                review(
-                  request.id,
-                  "APPROVE",
-                )
+                review(request.id, "APPROVE")
               }
             >
               Approve
@@ -138,10 +182,7 @@ export default function EnrollmentRequestTable({
               variant="destructive"
               disabled={isPending}
               onClick={() =>
-                review(
-                  request.id,
-                  "REJECT",
-                )
+                review(request.id, "REJECT")
               }
             >
               Reject
