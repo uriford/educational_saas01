@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   CalendarDays,
@@ -32,6 +33,8 @@ export default function WelcomeBanner({
   userName,
   organizationName,
 }: WelcomeBannerProps) {
+  const router = useRouter();
+
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/[0.08] via-background to-background shadow-sm">
       <div className="relative flex flex-col justify-between gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:p-8">
@@ -57,6 +60,7 @@ export default function WelcomeBanner({
 
         <Button
           size="lg"
+          onClick={() => router.push("/students/create")}
           className="w-full shrink-0 gap-2 rounded-lg shadow-sm sm:w-auto"
         >
           <Plus className="size-4" />

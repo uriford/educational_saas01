@@ -109,10 +109,10 @@ export default function StudentProfile({
         <div className="absolute right-[18%] top-8 size-32 rounded-full border border-white/10" />
         <div className="absolute right-[15%] top-3 size-44 rounded-full border border-white/5" />
 
-        <div className="relative flex min-h-[220px] flex-col justify-end p-6 sm:min-h-[240px] sm:p-8">
+        <div className="relative flex min-h-[190px] flex-col justify-end p-4 sm:min-h-[240px] sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 
-            <div className="flex min-w-0 items-end gap-4">
+            <div className="flex min-w-0 flex-1 items-end gap-3 sm:gap-4">
               <StudentAvatarUpload
                 firstName={student.firstName}
                 fullName={fullName}
@@ -120,7 +120,7 @@ export default function StudentProfile({
               />
 
               <div className="min-w-0 pb-1">
-                <h2 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+                <h2 className="max-w-[180px] truncate text-xl font-bold tracking-tight sm:max-w-none sm:text-3xl">
                   {fullName}
                 </h2>
 
@@ -142,7 +142,7 @@ export default function StudentProfile({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <section className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
               <UserCircle className="size-5 text-primary" />
@@ -159,7 +159,7 @@ export default function StudentProfile({
             </div>
           </div>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2 sm:gap-5">
             <Detail
               icon={Mail}
               label="Email"
@@ -194,7 +194,7 @@ export default function StudentProfile({
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <section className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
               <ShieldCheck className="size-5 text-primary" />
@@ -255,7 +255,7 @@ export default function StudentProfile({
             </div>
           </div>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2 sm:gap-5">
             <Detail
               icon={UserCircle}
               label="Guardian Name"

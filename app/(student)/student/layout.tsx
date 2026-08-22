@@ -91,33 +91,33 @@ export default async function StudentLayout({
       storageKey={`theme-${session.user.id}`}
     >
       <div className="min-h-screen bg-muted/30">
-      <SidebarProvider>
-      <div className="flex min-h-screen">
-        <StudentSidebar
-          firstName={student.firstName}
-          fullName={fullName}
-          avatar={student.avatar}
-        />
+        <SidebarProvider>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <StudentHeader
+          <StudentSidebar
             firstName={student.firstName}
             fullName={fullName}
             avatar={student.avatar}
           />
 
-          <main className="flex-1">
+          <main className="flex min-h-screen min-w-0 flex-1 flex-col">
+
+            <StudentHeader
+              firstName={student.firstName}
+              fullName={fullName}
+              avatar={student.avatar}
+            />
+
             <div className="border-b bg-background px-3 py-2.5 sm:px-4 sm:py-3 lg:px-8">
               <Breadcrumbs />
             </div>
 
-            <div className="p-6 lg:p-8">
+            <div className="flex-1 p-3 sm:p-4 lg:p-8">
               {children}
             </div>
+
           </main>
-        </div>
-      </div>
-      </SidebarProvider>
+
+        </SidebarProvider>
       </div>
     </ThemeProvider>
   );

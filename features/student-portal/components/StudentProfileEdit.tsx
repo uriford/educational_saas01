@@ -104,7 +104,7 @@ export default function StudentProfileEdit({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6"
+      className="space-y-5 sm:space-y-6"
     >
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
@@ -116,8 +116,8 @@ export default function StudentProfileEdit({
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
+        <section className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="font-semibold">
             Personal Information
           </h2>
@@ -277,7 +277,7 @@ export default function StudentProfileEdit({
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-card p-6 shadow-sm">
+        <section className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="font-semibold">
             Guardian Information
           </h2>
