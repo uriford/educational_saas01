@@ -111,6 +111,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
+
+      console.log(
+        "========== JWT CALLBACK =========="
+      );
+
+      console.log(
+        "JWT USER:",
+        JSON.stringify(user, null, 2)
+      );
+
+      console.log(
+        "JWT TOKEN BEFORE:",
+        JSON.stringify(token, null, 2)
+      );
+
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -142,10 +157,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
+      console.log(
+        "JWT TOKEN AFTER:",
+        JSON.stringify(token, null, 2)
+      );
+
       return token;
     },
 
     async session({ session, token }) {
+
+      console.log(
+        "========== SESSION CALLBACK =========="
+      );
+
+      console.log(
+        "SESSION TOKEN:",
+        JSON.stringify(token, null, 2)
+      );
+
       if (session.user) {
         session.user.id =
           (token.id as string) ??
