@@ -100,23 +100,48 @@ export default function AIQuestionGenerator({
   const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadDocuments() {
       setLoadingDocuments(true);
       setError("");
 
-      const result = await getAISourceDocumentsAction();
+      try {
+        const result = await getAISourceDocumentsAction();
 
-      if (!result.success) {
-        setError(result.message);
-        setLoadingDocuments(false);
-        return;
+        if (cancelled) return;
+
+        if (!result.success) {
+          setDocuments([]);
+          setError(result.message);
+          return;
+        }
+
+        setDocuments(result.documents as SourceDocument[]);
+      } catch (loadError) {
+        console.error(
+          "LOAD AI SOURCE DOCUMENTS ERROR:",
+          loadError,
+        );
+
+        if (!cancelled) {
+          setDocuments([]);
+          setError(
+            "Unable to load source documents. Please try again.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingDocuments(false);
+        }
       }
-
-      setDocuments(result.documents as SourceDocument[]);
-      setLoadingDocuments(false);
     }
 
     loadDocuments();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleUpload() {
@@ -182,8 +207,16 @@ export default function AIQuestionGenerator({
         `Source document "${result.document?.name ?? uploadName}" is ready for AI generation.`,
       );
     } catch (uploadError) {
-      console.error(uploadError);
-      setError("Something went wrong while uploading the PDF.");
+      console.error(
+        "UPLOAD AI SOURCE DOCUMENT CLIENT ERROR:",
+        uploadError,
+      );
+
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Unable to upload and process the PDF. Please try again.",
+      );
     } finally {
       setUploading(false);
     }

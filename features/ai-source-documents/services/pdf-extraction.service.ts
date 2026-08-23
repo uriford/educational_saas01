@@ -1,5 +1,7 @@
+import { getPath } from "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
-import path from "node:path";
+
+PDFParse.setWorker(getPath());
 
 export type PDFExtractionPage = {
   pageNumber: number;
@@ -11,19 +13,6 @@ export type PDFExtractionResult = {
   pageCount: number;
   pages: PDFExtractionPage[];
 };
-
-const PDF_WORKER_PATH = path.join(
-  process.cwd(),
-  "node_modules",
-  "pdfjs-dist",
-  "legacy",
-  "build",
-  "pdf.worker.mjs",
-);
-
-if (PDFParse.isNodeJS) {
-  PDFParse.setWorker(PDF_WORKER_PATH);
-}
 
 function normalizeText(value: string): string {
   return value
