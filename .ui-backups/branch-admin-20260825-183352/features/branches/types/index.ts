@@ -1,6 +1,6 @@
 export type CreateBranchInput = {
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   address?: string;
   creationPassword: string;

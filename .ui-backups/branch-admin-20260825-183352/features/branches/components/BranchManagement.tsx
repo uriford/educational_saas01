@@ -99,13 +99,6 @@ export default function BranchManagement({
   const [branchMessage, setBranchMessage] =
     useState("");
 
-  const [branchCredentials, setBranchCredentials] =
-    useState<{
-      branchName: string;
-      email: string;
-      temporaryPassword: string;
-    } | null>(null);
-
   const [organizationUsers, setOrganizationUsers] =
     useState<OrganizationUser[]>([]);
 
@@ -233,26 +226,12 @@ export default function BranchManagement({
 
     setBranchMessage(result.message);
 
-    if (
-      result.success &&
-      "branch" in result &&
-      "temporaryPassword" in result
-    ) {
+    if (result.success) {
       setName("");
       setEmail("");
       setPhone("");
       setAddress("");
       setCreationPassword("");
-
-      setBranchCredentials({
-        branchName: result.branch.name,
-        email:
-          "branchAdmin" in result
-            ? result.branchAdmin.email
-            : "",
-        temporaryPassword:
-          result.temporaryPassword,
-      });
 
       router.refresh();
     }
@@ -284,63 +263,6 @@ export default function BranchManagement({
 
   return (
     <div className="flex flex-col gap-6">
-      {branchCredentials && (
-        <Card className="border-emerald-500/30 bg-emerald-500/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 className="h-5 w-5" />
-              Branch Administrator Credentials
-            </CardTitle>
-
-            <CardDescription>
-              Branch "{branchCredentials.branchName}" was
-              created successfully. Give these credentials
-              directly to the Branch Administrator. The
-              temporary password is shown here because the
-              system does not send it by email.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border bg-background p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Login Email
-                </p>
-                <p className="mt-1 break-all font-mono text-sm font-semibold">
-                  {branchCredentials.email}
-                </p>
-              </div>
-
-              <div className="rounded-lg border bg-background p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Temporary Password
-                </p>
-                <p className="mt-1 break-all font-mono text-sm font-semibold">
-                  {branchCredentials.temporaryPassword}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-              <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-
-              <div>
-                <p className="text-sm font-medium">
-                  Keep these credentials secure
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  The password is stored securely as a hash.
-                  This is the only time the temporary password
-                  is displayed. The Branch Administrator can
-                  use it immediately with this email to sign in.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -397,17 +319,16 @@ export default function BranchManagement({
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">
-                    Branch Admin Login Email
+                    Branch Email
                   </label>
 
                   <Input
-                    required
                     type="email"
                     value={email}
                     onChange={(event) =>
                       setEmail(event.target.value)
                     }
-                    placeholder="branch-admin@example.com"
+                    placeholder="branch@example.com"
                   />
                 </div>
 

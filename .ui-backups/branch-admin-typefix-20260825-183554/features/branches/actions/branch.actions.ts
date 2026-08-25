@@ -5,7 +5,7 @@ import { BranchService } from "../services/branch.service";
 
 export async function createBranchAction(data: {
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   address?: string;
   creationPassword: string;

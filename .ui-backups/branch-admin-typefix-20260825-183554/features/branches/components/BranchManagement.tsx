@@ -233,26 +233,27 @@ export default function BranchManagement({
 
     setBranchMessage(result.message);
 
-    if (
-      result.success &&
-      "branch" in result &&
-      "temporaryPassword" in result
-    ) {
+    if (result.success) {
       setName("");
       setEmail("");
       setPhone("");
       setAddress("");
       setCreationPassword("");
 
-      setBranchCredentials({
-        branchName: result.branch.name,
-        email:
-          "branchAdmin" in result
-            ? result.branchAdmin.email
-            : "",
-        temporaryPassword:
-          result.temporaryPassword,
-      });
+      if (
+        result.branch &&
+        result.temporaryPassword
+      ) {
+        setBranchCredentials({
+          branchName: result.branch.name,
+          email:
+            result.branchAdmin?.email ??
+            result.branch.email ??
+            "",
+          temporaryPassword:
+            result.temporaryPassword,
+        });
+      }
 
       router.refresh();
     }

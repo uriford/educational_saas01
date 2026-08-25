@@ -395,14 +395,6 @@ export class BranchService {
       throw new Error("Branch name is required.");
     }
 
-    const branchEmail = data.email?.trim().toLowerCase();
-
-    if (!branchEmail) {
-      throw new Error(
-        "Branch email is required because it will be used as the Branch Administrator login email.",
-      );
-    }
-
     if (!data.creationPassword) {
       throw new Error(
         "Branch creation password is required.",
@@ -444,78 +436,15 @@ export class BranchService {
       );
     }
 
-    const existingUser = await db.user.findFirst({
-      where: {
-        organizationId,
-        email: branchEmail,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (existingUser) {
-      throw new Error(
-        "A user account with this branch email already exists in the organization.",
-      );
-    }
-
     const branch = await BranchRepository.createBranch({
       organizationId,
       name: data.name.trim(),
       slug: createBranchSlug(data.name),
       code: createBranchCode(),
-      email: branchEmail,
+      email: data.email?.trim() || undefined,
       phone: data.phone?.trim() || undefined,
       address: data.address?.trim() || undefined,
       createdById: userId,
-    });
-
-    const temporaryPassword =
-      `Branch@${crypto.randomBytes(8).toString("base64url")}`;
-
-    const passwordHash = await bcrypt.hash(
-      temporaryPassword,
-      12,
-    );
-
-    const branchAdminCode =
-      `USR-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
-
-    const branchAdmin = await db.user.create({
-      data: {
-        organizationId,
-        branchId: branch.id,
-        code: branchAdminCode,
-        firstName: "Branch",
-        lastName: "Administrator",
-        email: branchEmail,
-        password: passwordHash,
-        role: "BRANCH_ADMIN",
-        status: "ACTIVE",
-        emailVerified: false,
-        isBranchManager: true,
-        createdById: userId,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-      },
-    });
-
-    await db.auditLog.create({
-      data: {
-        organizationId,
-        branchId: branch.id,
-        userId,
-        action: "CREATE",
-        entityType: "User",
-        entityId: branchAdmin.id,
-        description:
-          `Branch administrator "${branchAdmin.email}" was automatically created for branch "${branch.name}".`,
-      },
     });
 
     await db.auditLog.create({
@@ -532,19 +461,12 @@ export class BranchService {
 
     return {
       success: true,
-      message: `Branch "${branch.name}" and its Branch Administrator account were created successfully.`,
+      message: `Branch "${branch.name}" created successfully.`,
       branch: {
         id: branch.id,
         name: branch.name,
         code: branch.code,
-        email: branch.email,
       },
-      branchAdmin: {
-        id: branchAdmin.id,
-        email: branchAdmin.email,
-        role: branchAdmin.role,
-      },
-      temporaryPassword,
     };
   }
 }
