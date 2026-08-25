@@ -30,18 +30,27 @@ export default async function CommunicationPage() {
     session.user.role === "ORGANIZATION_ADMIN" ||
     session.user.role === "SUPER_ADMIN";
 
-  let currentStaff = null;
+  /*
+   * Always resolve the current user's ChatStaff record.
+   *
+   * Admins still retain organization-wide inbox access below,
+   * but their own ChatStaff record must also be resolved so
+   * StaffInbox can maintain the heartbeat that tells the
+   * student chat system a human is actually available.
+   */
+  const currentStaff =
+    await getChatStaffByUserId(
+      session.user.organizationId,
+      session.user.id,
+    );
 
-  if (!isAdmin) {
-    currentStaff =
-      await getChatStaffByUserId(
-        session.user.organizationId,
-        session.user.id,
-      );
-
-    if (!currentStaff) {
-      return null;
-    }
+  /*
+   * Non-admin users must have an explicit ChatStaff record.
+   * Organization/Super admins may still access the inbox even
+   * if their ChatStaff record does not exist.
+   */
+  if (!isAdmin && !currentStaff) {
+    return null;
   }
 
   const conversations =

@@ -331,6 +331,33 @@ export class ClassSessionService {
         };
       }
 
+      /*
+       * A class becoming COMPLETED can change course progress
+       * when the course uses Total Classes mode.
+       *
+       * Recalculate using the authoritative CourseProgressService.
+       */
+      const updatedSession =
+        await db.classSession.findUnique({
+          where: {
+            id: data.id,
+          },
+          select: {
+            courseId: true,
+          },
+        });
+
+      if (updatedSession?.courseId) {
+        const { CourseProgressService } =
+          await import(
+            "@/features/courses/services/course-progress.service"
+          );
+
+        await CourseProgressService.recalculateForCourse(
+          updatedSession.courseId,
+        );
+      }
+
       return {
         success: true,
         message: "Class session updated successfully.",

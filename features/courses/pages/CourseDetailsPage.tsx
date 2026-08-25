@@ -197,7 +197,7 @@ export default async function CourseDetailsPage({ courseId }: Props) {
                   {plainCourse.code}
                 </p>
 
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
+                <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                   {plainCourse.description ||
                     "No course description has been added yet."}
                 </p>

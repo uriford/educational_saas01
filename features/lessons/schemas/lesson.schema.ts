@@ -1,5 +1,74 @@
 import { z } from "zod";
 
+function normalizeVideoUrl(value: string): string {
+  const url = value.trim();
+
+  if (!url) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
+
+    // Already an embed URL.
+    if (
+      hostname === "youtube.com" &&
+      parsed.pathname.startsWith("/embed/")
+    ) {
+      return url;
+    }
+
+    // youtube.com/watch?v=VIDEO_ID
+    if (
+      hostname === "youtube.com" &&
+      parsed.pathname === "/watch"
+    ) {
+      const videoId = parsed.searchParams.get("v");
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+
+    // youtu.be/VIDEO_ID
+    if (hostname === "youtu.be") {
+      const videoId = parsed.pathname.split("/").filter(Boolean)[0];
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+
+    // youtube.com/shorts/VIDEO_ID
+    if (
+      hostname === "youtube.com" &&
+      parsed.pathname.startsWith("/shorts/")
+    ) {
+      const videoId = parsed.pathname
+        .split("/")
+        .filter(Boolean)[1];
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+
+    // Keep other valid video URLs unchanged.
+    return url;
+  } catch {
+    return url;
+  }
+}
+
+const videoUrlSchema = z
+  .string()
+  .trim()
+  .url("Invalid video URL.")
+  .transform(normalizeVideoUrl)
+  .optional()
+  .or(z.literal(""));
+
 export const createLessonSchema = z.object({
   courseId: z
     .string()
@@ -28,12 +97,7 @@ export const createLessonSchema = z.object({
     "LINK",
   ]),
 
-  videoUrl: z
-    .string()
-    .trim()
-    .url("Invalid video URL.")
-    .optional()
-    .or(z.literal("")),
+  videoUrl: videoUrlSchema,
 
   documentUrl: z
     .string()

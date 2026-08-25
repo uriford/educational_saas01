@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { ROLES } from "@/features/auth/roles";
+import { db } from "@/lib/db";
 
 import {
   assignConversationStaff,
@@ -73,16 +74,9 @@ export async function claimConversationAction(
         currentStaff.lastSeenAt.getTime() <=
         90 * 1000;
 
-    const recentlyActive =
-      currentStaff.lastActiveAt &&
-      now -
-        currentStaff.lastActiveAt.getTime() <=
-        2 * 60 * 1000;
-
     if (
       currentStaff.status !== "ONLINE" ||
-      !recentlySeen ||
-      !recentlyActive
+      !recentlySeen
     ) {
       return {
         success: false,
@@ -194,14 +188,27 @@ export async function assignConversationAction(data: {
       };
     }
 
-    const staff = await getOrganizationChatStaff(
-      organizationId,
-    );
-
-    const targetStaff = staff.find(
-      (member) =>
-        member.id === data.staffId,
-    );
+    const targetStaff =
+      await db.chatStaff.findFirst({
+        where: {
+          id: data.staffId,
+          organizationId,
+        },
+        select: {
+          id: true,
+          userId: true,
+          status: true,
+          canReply: true,
+          lastSeenAt: true,
+          lastActiveAt: true,
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
 
     if (!targetStaff) {
       return {
@@ -223,23 +230,16 @@ export async function assignConversationAction(data: {
       targetStaff.lastSeenAt &&
       now -
         targetStaff.lastSeenAt.getTime() <=
-        90 * 1000;
-
-    const recentlyActive =
-      targetStaff.lastActiveAt &&
-      now -
-        targetStaff.lastActiveAt.getTime() <=
         2 * 60 * 1000;
 
     if (
       targetStaff.status !== "ONLINE" ||
-      !recentlySeen ||
-      !recentlyActive
+      !recentlySeen
     ) {
       return {
         success: false,
         message:
-          "This staff member is not currently active.",
+          "This staff member is not currently online. Ask them to open the Communication page first.",
       };
     }
 

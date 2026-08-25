@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 export class LessonProgressRepository {
   static async findEnrollmentForStudent(
@@ -88,9 +89,7 @@ export class LessonProgressRepository {
     });
   }
 
-  static async findEnrollmentProgress(
-    enrollmentId: string,
-  ) {
+  static async findEnrollmentProgress(enrollmentId: string) {
     return db.lessonProgress.findMany({
       where: {
         enrollmentId,
@@ -113,10 +112,7 @@ export class LessonProgressRepository {
     });
   }
 
-  static async findLessonProgress(
-    enrollmentId: string,
-    lessonId: string,
-  ) {
+  static async findLessonProgress(enrollmentId: string, lessonId: string) {
     return db.lessonProgress.findUnique({
       where: {
         enrollmentId_lessonId: {
@@ -127,10 +123,7 @@ export class LessonProgressRepository {
     });
   }
 
-  static async markViewed(
-    enrollmentId: string,
-    lessonId: string,
-  ) {
+  static async markViewed(enrollmentId: string, lessonId: string) {
     return db.lessonProgress.upsert({
       where: {
         enrollmentId_lessonId: {
@@ -152,8 +145,9 @@ export class LessonProgressRepository {
   static async markCompleted(
     enrollmentId: string,
     lessonId: string,
+    tx: Prisma.TransactionClient = db,
   ) {
-    return db.lessonProgress.upsert({
+    return tx.lessonProgress.upsert({
       where: {
         enrollmentId_lessonId: {
           enrollmentId,
@@ -179,8 +173,9 @@ export class LessonProgressRepository {
     courseId: string,
     organizationId: string,
     branchId?: string,
+    tx: Prisma.TransactionClient = db,
   ) {
-    return db.lesson.count({
+    return tx.lesson.count({
       where: {
         courseId,
         organizationId,
@@ -193,8 +188,9 @@ export class LessonProgressRepository {
 
   static async countCompletedLessons(
     enrollmentId: string,
+    tx: Prisma.TransactionClient = db,
   ) {
-    return db.lessonProgress.count({
+    return tx.lessonProgress.count({
       where: {
         enrollmentId,
         completed: true,
@@ -209,19 +205,27 @@ export class LessonProgressRepository {
   static async updateEnrollmentProgress(
     enrollmentId: string,
     progress: number,
+    tx: Prisma.TransactionClient = db,
   ) {
-    return db.courseEnrollment.update({
+    const normalizedProgress = Math.min(
+      100,
+      Math.max(0, Math.round(progress)),
+    );
+
+    return tx.courseEnrollment.update({
       where: {
         id: enrollmentId,
       },
       data: {
-        progress,
-        ...(progress >= 100
-          ? {
-              status: "COMPLETED",
-              completedAt: new Date(),
-            }
-          : {}),
+        progress: normalizedProgress,
+        status:
+          normalizedProgress >= 100
+            ? "COMPLETED"
+            : "ACTIVE",
+        completedAt:
+          normalizedProgress >= 100
+            ? new Date()
+            : null,
       },
     });
   }

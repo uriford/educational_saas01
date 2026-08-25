@@ -107,6 +107,17 @@ export class CourseService {
         };
       }
 
+      /*
+       * Course progress depends on totalClasses, duration,
+       * and startDate. Recalculate existing enrollments after
+       * every successful course update so edits immediately
+       * affect student progress.
+       */
+      const { CourseProgressService } =
+        await import("./course-progress.service");
+
+      await CourseProgressService.recalculateForCourse(id);
+
       return {
         success: true,
         message: "Course updated successfully.",

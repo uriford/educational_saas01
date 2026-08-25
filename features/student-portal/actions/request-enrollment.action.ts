@@ -63,6 +63,7 @@ export async function requestEnrollmentAction(
     const course = await db.course.findFirst({
       where: {
         id: courseId,
+        organizationId: student.organizationId,
         status: "ACTIVE",
         deletedAt: null,
       },

@@ -8,6 +8,7 @@ export type CreateCourseData = {
   name: string;
   description?: string;
   duration?: number;
+  totalClasses?: number;
   fee?: number;
   capacity?: number;
   status?: CourseStatus;
@@ -21,7 +22,10 @@ export type CreateCourseRepositoryData = CreateCourseData & {
   createdById: string;
 };
 
-export type UpdateCourseData = Partial<CreateCourseData>;
+export type UpdateCourseData =
+  Omit<Partial<CreateCourseData>, "totalClasses"> & {
+    totalClasses?: number | null;
+  };
 
 export type UpdateCourseRepositoryData = UpdateCourseData & {
   updatedById: string;

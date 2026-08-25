@@ -22,6 +22,15 @@ export class ResultRepository {
           select: {
             totalMarks: true,
             passingMarks: true,
+            _count: {
+              select: {
+                questions: {
+                  where: {
+                    deletedAt: null,
+                  },
+                },
+              },
+            },
           },
         },
         student: {
@@ -399,6 +408,8 @@ export class ResultRepository {
         (item) =>
           (item.question.type === "SHORT_ANSWER" ||
             item.question.type === "LONG_ANSWER") &&
+          item.answer !== null &&
+          item.answer.trim().length > 0 &&
           item.marksAwarded === null,
       );
 

@@ -48,6 +48,7 @@ model Organization {
   teachers                 Teacher[]
   teacherIdCounter         TeacherIdCounter?
   users                    User[]
+  accountInvitations       AccountInvitation[]
 }
 
 model OrganizationSettings {
@@ -95,6 +96,7 @@ model Branch {
   enrollmentRequests    EnrollmentRequest[]
   teachers              Teacher[]
   users                 User[]
+  accountInvitations    AccountInvitation[]
 }
 
 model BranchCreationCredential {
@@ -141,10 +143,42 @@ model User {
   pushSubscriptions       PushSubscription[]
   students                Student?
   teachers                Teacher?
+  accountInvitationsSent  AccountInvitation[]      @relation("AccountInvitationInviter")
   branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Cascade)
   organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, email])
+}
+
+model AccountInvitation {
+  id             String @id @default(uuid())
+  organizationId String
+  branchId       String
+  invitedById    String
+
+  email     String
+  firstName String
+  lastName  String?
+  phone     String?
+  role      Role
+
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  invitedBy    User         @relation("AccountInvitationInviter", fields: [invitedById], references: [id])
+
+  @@index([organizationId])
+  @@index([branchId])
+  @@index([invitedById])
+  @@index([email])
+  @@index([expiresAt])
+  @@index([organizationId, email])
 }
 
 model LoginAttempt {
@@ -323,6 +357,7 @@ model Course {
   name               String
   description        String?
   duration           Int?
+  totalClasses       Int?
   fee                Decimal?            @db.Decimal(10, 2)
   capacity           Int?
   status             CourseStatus        @default(INACTIVE)

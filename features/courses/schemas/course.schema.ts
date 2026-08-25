@@ -26,6 +26,12 @@ const courseFields = {
     .min(0, "Duration cannot be negative")
     .optional(),
 
+  totalClasses: z
+    .number()
+    .int("Total classes must be a whole number")
+    .min(1, "Total classes must be at least 1")
+    .optional(),
+
   fee: z
     .number()
     .finite("Course fee must be a valid number")

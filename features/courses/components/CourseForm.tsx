@@ -88,6 +88,7 @@ export default function CourseForm({
       name: "",
       description: "",
       duration: undefined,
+      totalClasses: undefined,
       fee: undefined,
       capacity: undefined,
       status: "INACTIVE",
@@ -250,6 +251,38 @@ export default function CourseForm({
             </div>
 
             <FieldError message={errors.duration?.message} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="totalClasses">
+              Total Classes
+            </Label>
+
+            <div className="relative">
+              <Input
+                id="totalClasses"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="20"
+                className="pr-20"
+                aria-invalid={!!errors.totalClasses}
+                {...register("totalClasses", {
+                  setValueAs: (value) =>
+                    value === "" ? undefined : Number(value),
+                })}
+              />
+
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                classes
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Optional. Leave blank to calculate progress automatically from actual class duration.
+            </p>
+
+            <FieldError message={errors.totalClasses?.message} />
           </div>
 
           <div className="space-y-2">

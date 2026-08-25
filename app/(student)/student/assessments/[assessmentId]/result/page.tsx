@@ -32,10 +32,7 @@ export default async function StudentAssessmentResultPage({
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
+  if (!session.user.organizationId) {
     redirect("/login");
   }
 

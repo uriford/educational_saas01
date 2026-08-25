@@ -117,9 +117,19 @@ export class AssessmentSubmissionService {
           await AssessmentSubmissionRepository.submit(
             latestSubmission.id,
             data.studentId,
+            data.organizationId,
+            data.branchId,
             score,
             percentage,
           );
+
+        if (!expiredSubmission) {
+          return {
+            success: false,
+            message:
+              "This assessment attempt was already submitted or is no longer available.",
+          };
+        }
 
         return {
           success: true,
@@ -259,7 +269,8 @@ export class AssessmentSubmissionService {
       if (!question) {
         return {
           success: false,
-          message: "Question not found.",
+          message:
+            "This question does not belong to the assessment.",
         };
       }
 
@@ -390,24 +401,32 @@ export class AssessmentSubmissionService {
           : 0;
 
       const pendingManualGrading =
-        submission.assessment.questions.some(
-          (question) =>
-            (question.type === "SHORT_ANSWER" ||
-              question.type === "LONG_ANSWER") &&
-            submission.answers.some(
-              (answer) =>
-                answer.questionId === question.id &&
-                answer.marksAwarded === null,
-            ),
+        submission.answers.some(
+          (answer) =>
+            (answer.question.type === "SHORT_ANSWER" ||
+              answer.question.type === "LONG_ANSWER") &&
+            answer.answer !== null &&
+            answer.answer.trim().length > 0 &&
+            answer.marksAwarded === null,
         );
 
       const updatedSubmission =
         await AssessmentSubmissionRepository.submit(
           data.submissionId,
           data.studentId,
+          data.organizationId,
+          data.branchId,
           score,
           percentage,
         );
+
+      if (!updatedSubmission) {
+        return {
+          success: false,
+          message:
+            "This assessment could not be submitted because the submission is no longer active or is not accessible.",
+        };
+      }
 
       return {
         success: true,

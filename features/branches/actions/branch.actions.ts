@@ -47,6 +47,40 @@ export async function createBranchAction(data: {
   }
 }
 
+export async function updateBranchEmailAction(
+  data: {
+    email: string;
+  },
+) {
+  const session = await auth();
+
+  if (
+    !session?.user?.id ||
+    !session.user.organizationId
+  ) {
+    return {
+      success: false,
+      message: "Unauthorized.",
+    };
+  }
+
+  try {
+    return await BranchService.updateBranchEmail(
+      session.user.organizationId,
+      session.user.id,
+      data.email,
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to update branch email.",
+    };
+  }
+}
+
 export async function setBranchCreationPasswordAction(
   data: {
     password: string;

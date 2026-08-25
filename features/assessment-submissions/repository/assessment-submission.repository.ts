@@ -260,14 +260,37 @@ export class AssessmentSubmissionRepository {
   static async submit(
     id: string,
     studentId: string,
+    organizationId: string,
+    branchId: string | undefined,
     score: number,
     percentage: number,
   ) {
+    const submission =
+      await db.assessmentSubmission.findFirst({
+        where: {
+          id,
+          studentId,
+          status: "IN_PROGRESS",
+          assessment: {
+            organizationId,
+            ...(branchId
+              ? { branchId }
+              : {}),
+            deletedAt: null,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!submission) {
+      return null;
+    }
+
     return db.assessmentSubmission.update({
       where: {
-        id,
-        studentId,
-        status: "IN_PROGRESS",
+        id: submission.id,
       },
       data: {
         status: "SUBMITTED",

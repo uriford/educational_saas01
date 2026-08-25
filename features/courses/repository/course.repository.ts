@@ -18,6 +18,7 @@ export class CourseRepository {
         name: data.name,
         description: data.description,
         duration: data.duration,
+        totalClasses: data.totalClasses,
         fee: data.fee,
         capacity: data.capacity,
         status: data.status ?? "INACTIVE",
@@ -255,6 +256,22 @@ export class CourseRepository {
 
       data: {
         ...courseData,
+
+        /*
+         * totalClasses is optional.
+         * If the admin clears the field while editing,
+         * explicitly persist NULL so the course switches back
+         * to duration-based progress.
+         */
+        ...(Object.prototype.hasOwnProperty.call(
+          data,
+          "totalClasses",
+        )
+          ? {
+              totalClasses:
+                data.totalClasses ?? null,
+            }
+          : {}),
 
         startDate: startDate
           ? new Date(startDate)

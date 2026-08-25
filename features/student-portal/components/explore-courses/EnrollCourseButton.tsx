@@ -10,11 +10,13 @@ import EnrollmentRequestDialog from "./EnrollmentRequestDialog";
 
 type Props = {
   courseId: string;
+  courseFee: unknown;
 };
 
 
 export default function EnrollCourseButton({
   courseId,
+  courseFee,
 }: Props) {
 
   const [open, setOpen] = useState(false);
@@ -33,6 +35,7 @@ export default function EnrollCourseButton({
 
       <EnrollmentRequestDialog
         courseId={courseId}
+        courseFee={courseFee}
         open={open}
         onClose={() => setOpen(false)}
       />

@@ -19,8 +19,28 @@ import { Button } from "@/components/ui/button";
 import { requestEnrollmentAction } from "../../actions/request-enrollment.action";
 
 
+function formatPrice(price: unknown) {
+  if (price === null || price === undefined) {
+    return "Contact for price";
+  }
+
+  const numericPrice = Number(price);
+
+  if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+    return "Free";
+  }
+
+  return new Intl.NumberFormat("en-BD", {
+    style: "currency",
+    currency: "BDT",
+    maximumFractionDigits: 0,
+  }).format(numericPrice);
+}
+
+
 type Props = {
   courseId: string;
+  courseFee: unknown;
   open: boolean;
   onClose: () => void;
 };
@@ -28,6 +48,7 @@ type Props = {
 
 export default function EnrollmentRequestDialog({
   courseId,
+  courseFee,
   open,
   onClose,
 }: Props) {
@@ -128,6 +149,21 @@ export default function EnrollmentRequestDialog({
         </div>
 
 
+        <div className="rounded-xl border bg-muted/40 p-4">
+          <p className="text-sm text-muted-foreground">
+            Course Fee
+          </p>
+
+          <p className="mt-1 text-2xl font-bold">
+            {formatPrice(courseFee)}
+          </p>
+
+          <p className="mt-1 text-xs text-muted-foreground">
+            This is the total fee for this course.
+          </p>
+        </div>
+
+
         <div className="space-y-2">
           <Label>
             Requested Amount
@@ -135,7 +171,8 @@ export default function EnrollmentRequestDialog({
 
           <Input
             type="number"
-            placeholder="Enter amount"
+            min="0"
+            placeholder="Enter amount you are paying"
             value={form.requestedAmount}
             onChange={(e)=>
               update(
@@ -144,6 +181,10 @@ export default function EnrollmentRequestDialog({
               )
             }
           />
+
+          <p className="text-xs text-muted-foreground">
+            You may request enrollment with a partial payment if applicable.
+          </p>
         </div>
 
 

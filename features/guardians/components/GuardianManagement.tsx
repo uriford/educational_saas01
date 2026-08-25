@@ -3,14 +3,17 @@
 import { useMemo, useState } from "react";
 
 import {
+  Building2,
   CheckCircle2,
-  ChevronDown,  Loader2,
+  ChevronDown,
+  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
   Search,
   ShieldCheck,
-  Trash2,  UserX,
+  Trash2,
+  UserX,
   Users,
 } from "lucide-react";
 
@@ -22,6 +25,13 @@ import {
 } from "../actions/guardian.actions";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -493,7 +503,6 @@ export default function GuardianManagement({
         : "ACTIVE";
 
     setBusyId(guardian.id);
-    setMenuId(null);
     setMessage(null);
 
     try {
@@ -541,7 +550,6 @@ export default function GuardianManagement({
     if (!confirmed) return;
 
     setBusyId(guardian.id);
-    setMenuId(null);
     setMessage(null);
 
     try {
@@ -640,8 +648,18 @@ export default function GuardianManagement({
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+          <CardContent className="space-y-8 p-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold tracking-tight">
+                  Guardian information
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Basic account and contact information.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>First name</Label>
                 <Input
@@ -698,7 +716,7 @@ export default function GuardianManagement({
                       setBranchId(event.target.value);
                       setSelectedStudents([]);
                     }}
-                    className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                    className="h-11 w-full rounded-lg border-border/70 bg-background px-3 text-sm shadow-sm transition-colors focus:border-primary focus:ring-2 focus:ring-primary/15"
                     disabled={
                       actorRole === "BRANCH_ADMIN"
                     }
@@ -723,18 +741,29 @@ export default function GuardianManagement({
                   <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 opacity-50" />
                 </div>
               </div>
+              </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4 rounded-xl border bg-muted/10 p-4">
               <div>
-                <Label>Linked students</Label>
+                <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  Branch assignment
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Choose the guardian&apos;s primary branch. Linked students can
+                  still display their own branch below.
+                </p>
+              </div>
+
+              <div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Select every student this guardian is responsible for.
                 </p>
               </div>
 
               {selectedStudents.length > 0 && (
-                <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                <div className="space-y-2 rounded-xl border border-primary/10 bg-background p-3 shadow-sm">
                   {selectedStudents.map((selected) => {
                     const student = students.find(
                       (item) =>
@@ -746,7 +775,7 @@ export default function GuardianManagement({
                     return (
                       <div
                         key={student.id}
-                        className="flex flex-col gap-2 rounded-md border bg-background p-3 sm:flex-row sm:items-center"
+                        className="flex flex-col gap-3 rounded-lg border bg-background p-3 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center"
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                           <Avatar className="h-9 w-9">
@@ -798,10 +827,10 @@ export default function GuardianManagement({
                 onChange={(event) =>
                   setStudentSearch(event.target.value)
                 }
-                placeholder="Search students..."
+                placeholder="Search by student name or ID..."
               />
 
-              <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border p-2">
+              <div className="max-h-72 space-y-1 overflow-y-auto rounded-xl border bg-background p-2 shadow-sm">
                 {!branchId ? (
                   <p className="p-4 text-center text-sm text-muted-foreground">
                     Select a branch to see available students.
@@ -825,10 +854,10 @@ export default function GuardianManagement({
                         onClick={() =>
                           toggleStudent(student.id)
                         }
-                        className={`flex w-full items-center gap-3 rounded-md p-3 text-left transition-colors ${
+                        className={`flex w-full items-center gap-3 rounded-lg border border-transparent p-3 text-left transition-all ${
                           selected
-                            ? "bg-primary/10"
-                            : "hover:bg-muted"
+                            ? "border-primary/20 bg-primary/10 shadow-sm"
+                            : "hover:border-border hover:bg-muted/50"
                         }`}
                       >
                         <div
@@ -853,12 +882,18 @@ export default function GuardianManagement({
                           <p className="truncate text-sm font-medium">
                             {getName(student)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {student.studentId}
-                            {student.branch
-                              ? ` • ${student.branch.name}`
-                              : ""}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                            <span>{student.studentId}</span>
+
+                            {student.branch && (
+                              <>
+                                <span aria-hidden="true">•</span>
+                                <span className="rounded-full bg-muted px-2 py-0.5">
+                                  {student.branch.name}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -867,9 +902,10 @@ export default function GuardianManagement({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="-mx-6 -mb-6 mt-2 flex flex-col-reverse gap-2 border-t bg-muted/20 px-6 py-4 sm:flex-row sm:justify-end">
               <Button
                 variant="outline"
+                className="h-10 rounded-lg px-5"
                 onClick={closeForm}
                 disabled={loading}
               >
@@ -883,6 +919,7 @@ export default function GuardianManagement({
                     : handleCreate
                 }
                 disabled={loading}
+                className="h-10 rounded-lg px-5 shadow-sm"
               >
                 {loading && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -897,7 +934,7 @@ export default function GuardianManagement({
         </Card>
       )}
 
-      <Card>
+      <Card className="overflow-hidden border-border/70 shadow-sm">
         <CardHeader>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -929,7 +966,7 @@ export default function GuardianManagement({
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="overflow-visible">
           {filteredGuardians.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
               <ShieldCheck className="mb-3 h-10 w-10 text-muted-foreground" />
@@ -965,7 +1002,7 @@ export default function GuardianManagement({
                 return (
                   <div
                     key={guardian.id}
-                    className="rounded-xl border p-4 transition-shadow hover:shadow-sm"
+                    className="group rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary/20 hover:shadow-md"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -1003,13 +1040,25 @@ export default function GuardianManagement({
                       </div>
 
                       <div className="min-w-44">
-                        <p className="text-xs text-muted-foreground">
+                        <p className="mb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                           Branch
                         </p>
-                        <p className="text-sm font-medium">
-                          {guardian.branch?.name ??
-                            "Unassigned"}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                            <Building2 className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">
+                              {guardian.branch?.name ??
+                                "Unassigned"}
+                            </p>
+                            {guardian.branch?.code && (
+                              <p className="text-[11px] text-muted-foreground">
+                                {guardian.branch.code}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
                       <div className="min-w-56">
@@ -1033,7 +1082,7 @@ export default function GuardianManagement({
                                 }) => (
                                   <span
                                     key={id}
-                                    className="rounded-md bg-muted px-2 py-1 text-xs"
+                                    className="rounded-md border bg-muted/60 px-2 py-1 text-xs"
                                     title={
                                       relationship ??
                                       undefined
@@ -1064,76 +1113,58 @@ export default function GuardianManagement({
                         </p>
                       </div>
 
-                      <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setMenuId(
-                              menuId === guardian.id
-                                ? null
-                                : guardian.id,
-                            )
-                          }
-                          disabled={
-                            busyId === guardian.id
-                          }
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled={busyId === guardian.id}
+                          aria-label={`Actions for ${getName(guardian)}`}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-all outline-none hover:border-border hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-open:border-border data-open:bg-muted data-open:text-foreground disabled:pointer-events-none disabled:opacity-50"
                         >
                           {busyId === guardian.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <MoreHorizontal className="h-4 w-4" />
                           )}
-                        </Button>
+                        </DropdownMenuTrigger>
 
-                        {menuId === guardian.id && (
-                          <div className="absolute right-0 z-20 mt-2 w-48 rounded-lg border bg-popover p-1 shadow-lg">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuId(null);
-                                openEdit(guardian);
-                              }}
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Edit guardian
-                            </button>
+                        <DropdownMenuContent
+                          align="end"
+                          sideOffset={8}
+                          className="w-52 rounded-xl p-1.5 shadow-xl"
+                        >
+                          <DropdownMenuItem
+                            className="cursor-pointer rounded-lg px-3 py-2.5"
+                            onClick={() => openEdit(guardian)}
+                          >
+                            <Pencil className="mr-2.5 h-4 w-4" />
+                            Edit guardian
+                          </DropdownMenuItem>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleStatus(guardian)
-                              }
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
-                            >
-                              {guardian.status ===
-                              "ACTIVE" ? (
-                                <>
-                                  <UserX className="h-4 w-4" />
-                                  Suspend
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="h-4 w-4" />
-                                  Activate
-                                </>
-                              )}
-                            </button>
+                          <DropdownMenuItem
+                            className="cursor-pointer rounded-lg px-3 py-2.5"
+                            onClick={() => handleStatus(guardian)}
+                          >
+                            {guardian.status === "ACTIVE" ? (
+                              <UserX className="mr-2.5 h-4 w-4" />
+                            ) : (
+                              <ShieldCheck className="mr-2.5 h-4 w-4" />
+                            )}
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleDelete(guardian)
-                              }
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete guardian
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                            {guardian.status === "ACTIVE"
+                              ? "Suspend guardian"
+                              : "Activate guardian"}
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator className="my-1.5" />
+
+                          <DropdownMenuItem
+                            className="cursor-pointer rounded-lg px-3 py-2.5 text-destructive focus:text-destructive"
+                            onClick={() => handleDelete(guardian)}
+                          >
+                            <Trash2 className="mr-2.5 h-4 w-4" />
+                            Delete guardian
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 );

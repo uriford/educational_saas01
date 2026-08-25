@@ -35,13 +35,14 @@ export default async function EditStudentPage({
           lastName: student.lastName ?? "",
           email: student.email ?? "",
           phone: student.phone ?? "",
-          gender: student.gender ?? "MALE",
+          gender: student.gender ?? undefined,
           dateOfBirth: student.dateOfBirth
             ? student.dateOfBirth.toISOString().split("T")[0]
             : "",
           address: student.address ?? "",
           guardianName: student.guardianName ?? "",
           guardianPhone: student.guardianPhone ?? "",
+          guardianEmail: student.guardianEmail ?? "",
         }}
       />
     </div>

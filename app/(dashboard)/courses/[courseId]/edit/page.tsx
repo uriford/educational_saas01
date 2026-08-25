@@ -52,9 +52,12 @@ export default async function EditCoursePage({
             name: course.name,
             description: course.description ?? "",
             duration: course.duration ?? undefined,
-            fee: course.fee
-              ? Number(course.fee)
-              : undefined,
+            totalClasses: course.totalClasses ?? undefined,
+            fee:
+              course.fee !== null &&
+              course.fee !== undefined
+                ? Number(course.fee)
+                : undefined,
             capacity: course.capacity ?? undefined,
             startDate: course.startDate
               ? course.startDate.toISOString().split("T")[0]

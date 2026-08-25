@@ -48,11 +48,18 @@ export async function saveAssessmentAnswerAction(data: {
     };
   }
 
+  if (!student.branchId) {
+    return {
+      success: false,
+      message: "Student branch information is missing.",
+    };
+  }
+
   return AssessmentSubmissionService.saveAnswer({
     submissionId: data.submissionId,
     studentId: student.id,
-    organizationId: session.user.organizationId,
-    branchId: session.user.branchId,
+    organizationId: student.organizationId,
+    branchId: student.branchId,
     questionId: data.questionId,
     answer: data.answer,
   });

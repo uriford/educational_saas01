@@ -230,7 +230,10 @@ export default async function ExploreCourseDetailsPage({
                 Request Submitted
               </Button>
             ) : (
-              <EnrollCourseButton courseId={course.id} />
+              <EnrollCourseButton
+                courseId={course.id}
+                courseFee={course.fee}
+              />
             )}
           </div>
         </CardContent>

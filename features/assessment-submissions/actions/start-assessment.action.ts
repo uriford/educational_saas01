@@ -52,10 +52,17 @@ export async function startAssessmentAction(
     };
   }
 
+  if (!student.branchId) {
+    return {
+      success: false,
+      message: "Student branch information is missing.",
+    };
+  }
+
   return AssessmentSubmissionService.start({
     assessmentId,
     studentId: student.id,
-    organizationId: session.user.organizationId,
-    branchId: session.user.branchId,
+    organizationId: student.organizationId,
+    branchId: student.branchId,
   });
 }

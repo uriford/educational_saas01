@@ -88,10 +88,11 @@ export class PublicRepository {
 
         classSessions: {
           where: {
-            status: {
-              in: ["SCHEDULED", "ONGOING"],
-            },
+            status: "SCHEDULED",
             deletedAt: null,
+            startTime: {
+              gte: new Date(),
+            },
           },
           select: {
             id: true,

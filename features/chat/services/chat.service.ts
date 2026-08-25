@@ -16,8 +16,11 @@ import {
   assignConversationStaff,
 } from "../repository/chat.repository";
 
-const PRESENCE_TIMEOUT_MS = 90 * 1000;
-const ACTIVE_TIMEOUT_MS = 2 * 60 * 1000;
+import {
+  publishConversationAssignment,
+} from "../realtime/pusher.server";
+
+const PRESENCE_TIMEOUT_MS = 2 * 60 * 1000;
 
 function isStaffCurrentlyActive(staff: {
   canReply: boolean;
@@ -25,26 +28,28 @@ function isStaffCurrentlyActive(staff: {
   lastSeenAt: Date | null;
   lastActiveAt: Date | null;
 }) {
+  /*
+   * Human availability is deliberately simple and deterministic.
+   *
+   * `lastSeenAt` is the heartbeat.
+   * `lastActiveAt` is telemetry only.
+   *
+   * A staff member is considered human-available when:
+   *   1. They are allowed to reply.
+   *   2. Their explicit status is ONLINE.
+   *   3. Their heartbeat is fresh.
+   */
   if (!staff.canReply || staff.status !== "ONLINE") {
     return false;
   }
 
-  const now = Date.now();
+  if (!staff.lastSeenAt) {
+    return false;
+  }
 
-  const seenRecently =
-    staff.lastSeenAt &&
-    now - staff.lastSeenAt.getTime() <=
-      PRESENCE_TIMEOUT_MS;
+  const age = Date.now() - staff.lastSeenAt.getTime();
 
-  const activeRecently =
-    staff.lastActiveAt &&
-    now - staff.lastActiveAt.getTime() <=
-      ACTIVE_TIMEOUT_MS;
-
-  return Boolean(
-    seenRecently &&
-    activeRecently,
-  );
+  return age >= 0 && age <= PRESENCE_TIMEOUT_MS;
 }
 
 async function findBestAvailableStaff(
@@ -122,11 +127,29 @@ export async function startChatConversation(data: {
       );
 
     if (bestStaff) {
-      return assignConversationStaff(
-        conversation.id,
-        data.organizationId,
-        bestStaff.id,
-      );
+      const assignedConversation =
+        await assignConversationStaff(
+          conversation.id,
+          data.organizationId,
+          bestStaff.id,
+        );
+
+      try {
+        await publishConversationAssignment(
+          data.organizationId,
+          conversation.id,
+          {
+            assignedStaffId: bestStaff.id,
+          },
+        );
+      } catch (publishError) {
+        console.error(
+          "Failed to publish automatic conversation assignment:",
+          publishError,
+        );
+      }
+
+      return assignedConversation;
     }
   } catch (error) {
     console.error(
@@ -420,27 +443,7 @@ export async function getAvailableChatStaff(
   const now = Date.now();
 
   return staff.filter((member) => {
-    if (
-      !member.canReply ||
-      member.status !== "ONLINE"
-    ) {
-      return false;
-    }
-
-    const seenRecently =
-      member.lastSeenAt &&
-      now - member.lastSeenAt.getTime() <=
-        PRESENCE_TIMEOUT_MS;
-
-    const activeRecently =
-      member.lastActiveAt &&
-      now - member.lastActiveAt.getTime() <=
-        ACTIVE_TIMEOUT_MS;
-
-    return Boolean(
-      seenRecently &&
-      activeRecently,
-    );
+    return isStaffCurrentlyActive(member);
   });
 }
 

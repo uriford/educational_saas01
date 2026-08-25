@@ -68,7 +68,7 @@ export default function CourseAssessments({
               No assessments created
             </h3>
 
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
               Create an assessment to evaluate students enrolled in this
               course.
             </p>
@@ -106,7 +106,7 @@ export default function CourseAssessments({
                   </div>
 
                   {assessment.description && (
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                       {assessment.description}
                     </p>
                   )}

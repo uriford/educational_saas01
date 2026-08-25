@@ -158,6 +158,60 @@ export class AssessmentService {
         };
       }
 
+      // Once an assessment is published, students may already have
+      // access to it or be actively attempting it. Its academic
+      // configuration must therefore remain immutable.
+      if (existing.status === "PUBLISHED") {
+        const isChangingAcademicConfiguration =
+          data.title !== undefined &&
+          data.title.trim() !== existing.title ||
+          data.description !== undefined &&
+          (data.description ?? null) !==
+            (existing.description ?? null) ||
+          data.duration !== undefined &&
+          (data.duration ?? null) !==
+            (existing.duration ?? null) ||
+          data.totalMarks !== undefined &&
+          Number(data.totalMarks) !==
+            Number(existing.totalMarks) ||
+          data.passingMarks !== undefined &&
+          Number(data.passingMarks) !==
+            Number(existing.passingMarks) ||
+          data.maxAttempts !== undefined &&
+          Number(data.maxAttempts) !==
+            Number(existing.maxAttempts) ||
+          data.startDate !== undefined &&
+          (data.startDate?.getTime() ?? null) !==
+            (existing.startDate?.getTime() ?? null) ||
+          data.endDate !== undefined &&
+          (data.endDate?.getTime() ?? null) !==
+            (existing.endDate?.getTime() ?? null);
+
+        if (isChangingAcademicConfiguration) {
+          return {
+            success: false,
+            message:
+              "Published assessments cannot be edited. Close or archive the assessment before making configuration changes.",
+          };
+        }
+
+        // A published assessment may only transition forward to
+        // CLOSED or ARCHIVED. Re-publishing is harmless, but no
+        // academic configuration changes are permitted.
+        if (
+          data.status !== undefined &&
+          data.status !== "PUBLISHED" &&
+          data.status !== "CLOSED" &&
+          data.status !== "ARCHIVED"
+        ) {
+          return {
+            success: false,
+            message:
+              "A published assessment cannot be moved back to draft.",
+          };
+        }
+      }
+
       const totalMarks =
         data.totalMarks ??
         Number(existing.totalMarks);
@@ -230,6 +284,48 @@ export class AssessmentService {
           message:
             "Assessment end date must be after start date.",
         };
+      }
+
+      // Publishing is the point at which the assessment becomes
+      // immutable for students. Therefore, its configured total
+      // marks must exactly match the marks assigned to its active
+      // questions.
+      if (
+        data.status === "PUBLISHED" &&
+        existing.status !== "PUBLISHED"
+      ) {
+        const activeQuestions =
+          await db.assessmentQuestion.findMany({
+            where: {
+              assessmentId: existing.id,
+              deletedAt: null,
+            },
+            select: {
+              marks: true,
+            },
+          });
+
+        if (activeQuestions.length === 0) {
+          return {
+            success: false,
+            message:
+              "An assessment must contain at least one active question before it can be published.",
+          };
+        }
+
+        const questionMarksTotal = activeQuestions.reduce(
+          (total, question) =>
+            total + Number(question.marks),
+          0,
+        );
+
+        if (questionMarksTotal !== totalMarks) {
+          return {
+            success: false,
+            message:
+              `Question marks total ${questionMarksTotal}, but the assessment total marks is ${totalMarks}. Please make them match before publishing.`,
+          };
+        }
       }
 
       const result =

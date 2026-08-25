@@ -10,6 +10,20 @@ type Props = {
   }>;
 };
 
+function toDateTimeLocal(value: Date | null | undefined) {
+  if (!value) return undefined;
+
+  const date = new Date(value);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default async function Page({ params }: Props) {
   const { announcementId } = await params;
 
@@ -31,34 +45,18 @@ export default async function Page({ params }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Edit Announcement
-        </h1>
-
-        <p className="text-sm text-muted-foreground">
-          Update this announcement.
-        </p>
-      </div>
-
-      <div className="rounded-xl border bg-card p-4 sm:p-6">
-        <AnnouncementForm
-          mode="edit"
-          announcementId={announcement.id}
-          defaultValues={{
-            title: announcement.title,
-            content: announcement.content,
-            status: announcement.status,
-            publishAt: announcement.publishAt
-              ? new Date(announcement.publishAt)
-              : undefined,
-            expiresAt: announcement.expiresAt
-              ? new Date(announcement.expiresAt)
-              : undefined,
-          }}
-        />
-      </div>
+    <div className="space-y-6">
+      <AnnouncementForm
+        mode="edit"
+        announcementId={announcement.id}
+        defaultValues={{
+          title: announcement.title,
+          content: announcement.content,
+          status: announcement.status,
+          publishAt: toDateTimeLocal(announcement.publishAt),
+          expiresAt: toDateTimeLocal(announcement.expiresAt),
+        }}
+      />
     </div>
   );
 }

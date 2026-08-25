@@ -26,6 +26,8 @@ export class ResultService {
             (answer) =>
               (answer.question.type === "SHORT_ANSWER" ||
                 answer.question.type === "LONG_ANSWER") &&
+              answer.answer !== null &&
+              answer.answer.trim().length > 0 &&
               answer.marksAwarded === null,
           );
 
@@ -69,7 +71,8 @@ export class ResultService {
           score,
           percentage,
           answeredCount,
-          questionCount: submission.answers.length,
+          questionCount:
+            submission.assessment._count.questions,
           manualGradingPending,
           passed,
           createdAt: submission.createdAt,
@@ -441,6 +444,8 @@ export class ResultService {
             (answer) =>
               (answer.question.type === "SHORT_ANSWER" ||
                 answer.question.type === "LONG_ANSWER") &&
+              answer.answer !== null &&
+              answer.answer.trim().length > 0 &&
               answer.marksAwarded === null,
           );
 
@@ -600,13 +605,23 @@ export class ResultService {
       );
 
       const pendingManualGrading =
-        questions.some(
-          (question) =>
-            (question.type === "SHORT_ANSWER" ||
-              question.type === "LONG_ANSWER") &&
-            answersByQuestion.get(question.id)
-              ?.marksAwarded === null,
-        );
+        questions.some((question) => {
+          if (
+            question.type !== "SHORT_ANSWER" &&
+            question.type !== "LONG_ANSWER"
+          ) {
+            return false;
+          }
+
+          const answer = answersByQuestion.get(question.id);
+
+          return (
+            answer?.answer !== null &&
+            answer?.answer !== undefined &&
+            answer.answer.trim().length > 0 &&
+            answer.marksAwarded === null
+          );
+        });
 
       const passed =
         submission.status === "GRADED"

@@ -191,6 +191,16 @@ export class BranchService {
     );
   }
 
+  static async getBranchById(
+    organizationId: string,
+    branchId: string,
+  ) {
+    return BranchRepository.getBranchById(
+      organizationId,
+      branchId,
+    );
+  }
+
   static async getSecurityStatus(
     organizationId: string,
   ) {
@@ -202,6 +212,97 @@ export class BranchService {
     return {
       configured: Boolean(credential),
       updatedAt: credential?.updatedAt ?? null,
+    };
+  }
+
+  static async updateBranchEmail(
+    organizationId: string,
+    userId: string,
+    email: string,
+  ) {
+    const user =
+      await BranchRepository.getUserForBranchSecurity(
+        userId,
+        organizationId,
+      );
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Unauthorized.",
+      };
+    }
+
+    if (user.role !== "BRANCH_ADMIN") {
+      return {
+        success: false,
+        message:
+          "Only branch administrators can update their branch email.",
+      };
+    }
+
+    if (
+      !user.branchId ||
+      !user.branch ||
+      user.branch.deletedAt
+    ) {
+      return {
+        success: false,
+        message:
+          "Your account is not assigned to an active branch.",
+      };
+    }
+
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail) {
+      return {
+        success: false,
+        message: "Branch email is required.",
+      };
+    }
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        normalizedEmail,
+      )
+    ) {
+      return {
+        success: false,
+        message: "Please enter a valid email address.",
+      };
+    }
+
+    const result =
+      await BranchRepository.updateBranchEmail(
+        organizationId,
+        user.branchId,
+        normalizedEmail,
+      );
+
+    if (result.count === 0) {
+      return {
+        success: false,
+        message: "Branch not found.",
+      };
+    }
+
+    await db.auditLog.create({
+      data: {
+        organizationId,
+        branchId: user.branchId,
+        userId,
+        action: "UPDATE",
+        entityType: "Branch",
+        entityId: user.branchId,
+        description:
+          `Branch email was updated to "${normalizedEmail}".`,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Branch email updated successfully.",
     };
   }
 

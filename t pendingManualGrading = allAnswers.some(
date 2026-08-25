@@ -1,0 +1,83 @@
+[1mdiff --git a/features/results/repository/result.repository.ts b/features/results/repository/result.repository.ts[m
+[1mindex 6c10987..c9bce98 100644[m
+[1m--- a/features/results/repository/result.repository.ts[m
+[1m+++ b/features/results/repository/result.repository.ts[m
+[36m@@ -22,6 +22,15 @@[m [mexport class ResultRepository {[m
+           select: {[m
+             totalMarks: true,[m
+             passingMarks: true,[m
+[32m+[m[32m            _count: {[m
+[32m+[m[32m              select: {[m
+[32m+[m[32m                questions: {[m
+[32m+[m[32m                  where: {[m
+[32m+[m[32m                    deletedAt: null,[m
+[32m+[m[32m                  },[m
+[32m+[m[32m                },[m
+[32m+[m[32m              },[m
+[32m+[m[32m            },[m
+           },[m
+         },[m
+         student: {[m
+[1mdiff --git a/features/results/services/result.service.ts b/features/results/services/result.service.ts[m
+[1mindex 29f62b3..d5fe81e 100644[m
+[1m--- a/features/results/services/result.service.ts[m
+[1m+++ b/features/results/services/result.service.ts[m
+[36m@@ -26,6 +26,8 @@[m [mexport class ResultService {[m
+             (answer) =>[m
+               (answer.question.type === "SHORT_ANSWER" ||[m
+                 answer.question.type === "LONG_ANSWER") &&[m
+[32m+[m[32m              answer.answer !== null &&[m
+[32m+[m[32m              answer.answer.trim().length > 0 &&[m
+               answer.marksAwarded === null,[m
+           );[m
+ [m
+[36m@@ -69,7 +71,8 @@[m [mexport class ResultService {[m
+           score,[m
+           percentage,[m
+           answeredCount,[m
+[31m-          questionCount: submission.answers.length,[m
+[32m+[m[32m          questionCount:[m
+[32m+[m[32m            submission.assessment._count.questions,[m
+           manualGradingPending,[m
+           passed,[m
+           createdAt: submission.createdAt,[m
+[36m@@ -441,6 +444,8 @@[m [mexport class ResultService {[m
+             (answer) =>[m
+               (answer.question.type === "SHORT_ANSWER" ||[m
+                 answer.question.type === "LONG_ANSWER") &&[m
+[32m+[m[32m              answer.answer !== null &&[m
+[32m+[m[32m              answer.answer.trim().length > 0 &&[m
+               answer.marksAwarded === null,[m
+           );[m
+ [m
+[36m@@ -600,13 +605,23 @@[m [mexport class ResultService {[m
+       );[m
+ [m
+       const pendingManualGrading =[m
+[31m-        questions.some([m
+[31m-          (question) =>[m
+[31m-            (question.type === "SHORT_ANSWER" ||[m
+[31m-              question.type === "LONG_ANSWER") &&[m
+[31m-            answersByQuestion.get(question.id)[m
+[31m-              ?.marksAwarded === null,[m
+[31m-        );[m
+[32m+[m[32m        questions.some((question) => {[m
+[32m+[m[32m          if ([m
+[32m+[m[32m            question.type !== "SHORT_ANSWER" &&[m
+[32m+[m[32m            question.type !== "LONG_ANSWER"[m
+[32m+[m[32m          ) {[m
+[32m+[m[32m            return false;[m
+[32m+[m[32m          }[m
+[32m+[m
+[32m+[m[32m          const answer = answersByQuestion.get(question.id);[m
+[32m+[m
+[32m+[m[32m          return ([m
+[32m+[m[32m            answer?.answer !== null &&[m
+[32m+[m[32m            answer?.answer !== undefined &&[m
+[32m+[m[32m            answer.answer.trim().length > 0 &&[m
+[32m+[m[32m            answer.marksAwarded === null[m
+[32m+[m[32m          );[m
+[32m+[m[32m        });[m
+ [m
+       const passed =[m
+         submission.status === "GRADED"[m

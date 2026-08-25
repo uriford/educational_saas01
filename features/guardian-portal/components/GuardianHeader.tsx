@@ -8,19 +8,22 @@ import { Button } from "@/components/ui/button";
 type Props = {
   firstName: string;
   fullName: string;
+  onMenuClick: () => void;
 };
 
 export default function GuardianHeader({
   firstName,
   fullName,
+  onMenuClick,
 }: Props) {
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-4 lg:px-8">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-4 lg:px-8">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           className="lg:hidden"
+          onClick={onMenuClick}
           aria-label="Open navigation"
         >
           <Menu className="h-5 w-5" />
@@ -30,6 +33,7 @@ export default function GuardianHeader({
           <p className="text-sm font-medium">
             Welcome, {firstName}
           </p>
+
           <p className="hidden text-xs text-muted-foreground sm:block">
             Guardian Portal
           </p>
@@ -38,14 +42,23 @@ export default function GuardianHeader({
 
       <div className="flex items-center gap-2">
         <div className="hidden text-right sm:block">
-          <p className="text-sm font-medium">{fullName}</p>
-          <p className="text-xs text-muted-foreground">Guardian</p>
+          <p className="text-sm font-medium">
+            {fullName}
+          </p>
+
+          <p className="text-xs text-muted-foreground">
+            Guardian
+          </p>
         </div>
 
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() =>
+            signOut({
+              callbackUrl: "/login",
+            })
+          }
           aria-label="Sign out"
         >
           <LogOut className="h-4 w-4" />

@@ -4,6 +4,10 @@ import {
   NotificationService,
 } from "@/features/notifications/services/notification.service";
 
+import {
+  SubscriptionService,
+} from "@/features/subscriptions/services/subscription.service";
+
 import NotificationList from "@/features/notifications/components/NotificationList";
 
 export default async function NotificationsPage() {
@@ -14,6 +18,19 @@ export default async function NotificationsPage() {
     !session.user.organizationId
   ) {
     return null;
+  }
+
+  if (
+    session.user.role !== "SUPER_ADMIN"
+  ) {
+    const hasAccess =
+      await SubscriptionService.hasAccess(
+        session.user.organizationId,
+      );
+
+    if (!hasAccess) {
+      return null;
+    }
   }
 
   const notifications =
@@ -43,7 +60,8 @@ export default async function NotificationsPage() {
             message: notification.message,
             href: notification.href,
             isRead: notification.isRead,
-            createdAt: notification.createdAt,
+            createdAt:
+              notification.createdAt,
           }),
         )}
       />

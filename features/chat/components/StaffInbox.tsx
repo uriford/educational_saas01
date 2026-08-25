@@ -278,24 +278,36 @@ export default function StaffInbox({
     }
 
     let mounted = true;
-    let lastInteractionAt = Date.now();
     let heartbeatTimer: ReturnType<
       typeof setInterval
     > | null = null;
 
+    /*
+     * Presence is heartbeat-based, not mouse/keyboard based.
+     *
+     * lastActiveAt is intentionally not maintained here for
+     * availability decisions. It is only telemetry.
+     */
     const markActivity = () => {
-      lastInteractionAt = Date.now();
+      // Intentionally retained for existing UI activity telemetry.
     };
 
     const sendPresence = async (
       status: "ONLINE" | "OFFLINE",
     ) => {
       try {
-        const active =
-          Date.now() -
-            lastInteractionAt <=
-          2 * 60 * 1000;
-
+        /*
+         * Presence heartbeat is intentionally independent of
+         * mouse/keyboard activity.
+         *
+         * ONLINE means the staff member currently has the
+         * communication interface open and visible. The server
+         * uses lastSeenAt as the authoritative heartbeat for
+         * human-first chat fallback.
+         *
+         * lastActiveAt remains telemetry only and must not decide
+         * whether Gemini replaces an available human.
+         */
         await fetch(
           "/api/chat/staff/presence",
           {
@@ -306,11 +318,7 @@ export default function StaffInbox({
             },
             body: JSON.stringify({
               status,
-              active,
-              lastActiveAt:
-                new Date(
-                  lastInteractionAt,
-                ).toISOString(),
+              active: status === "ONLINE",
             }),
             keepalive:
               status === "OFFLINE",
@@ -329,34 +337,15 @@ export default function StaffInbox({
         document.visibilityState ===
         "visible"
       ) {
-        markActivity();
         void sendPresence("ONLINE");
       }
     };
-
-    const interactionEvents = [
-      "mousemove",
-      "mousedown",
-      "keydown",
-      "touchstart",
-      "scroll",
-      "click",
-    ] as const;
-
-    for (const eventName of interactionEvents) {
-      window.addEventListener(
-        eventName,
-        markActivity,
-        { passive: true },
-      );
-    }
 
     document.addEventListener(
       "visibilitychange",
       handleVisibility,
     );
 
-    markActivity();
     void sendPresence("ONLINE");
 
     heartbeatTimer = setInterval(() => {
@@ -413,13 +402,6 @@ export default function StaffInbox({
       if (heartbeatTimer) {
         clearInterval(
           heartbeatTimer,
-        );
-      }
-
-      for (const eventName of interactionEvents) {
-        window.removeEventListener(
-          eventName,
-          markActivity,
         );
       }
 

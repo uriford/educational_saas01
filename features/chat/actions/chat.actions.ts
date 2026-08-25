@@ -378,8 +378,31 @@ export async function sendMessageAction(data: {
      */
     if (session.user.role === "STUDENT" || session.user.role === ROLES.GUARDIAN) {
       try {
-        const useAI = await shouldUseAIChatFallback(
-          organizationId,
+        /*
+         * HUMAN-FIRST GUARANTEE:
+         *
+         * Gemini is used only when there is no eligible human
+         * chat staff member with a recent presence heartbeat.
+         *
+         * A staff member does NOT need recent mouse/keyboard
+         * activity to remain available for a student.
+         */
+        const useAI =
+          await shouldUseAIChatFallback(
+            organizationId,
+          );
+
+        console.info(
+          "[CHAT AI FALLBACK]",
+          JSON.stringify({
+            organizationId,
+            conversationId: data.conversationId,
+            useAI,
+            reason: useAI
+              ? "NO_AVAILABLE_HUMAN_STAFF"
+              : "HUMAN_STAFF_AVAILABLE",
+            checkedAt: new Date().toISOString(),
+          }),
         );
 
         if (useAI) {

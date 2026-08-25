@@ -1,12 +1,9 @@
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { EnrollmentRepository } from "../repository/enrollment.repository";
 import { NotificationAutomationService } from "@/features/notifications/services/notification-automation.service";
 
-type EnrollmentStatus =
-  | "ACTIVE"
-  | "COMPLETED"
-  | "DROPPED"
-  | "SUSPENDED";
+type EnrollmentStatus = "ACTIVE" | "COMPLETED" | "DROPPED" | "SUSPENDED";
 
 type CreateEnrollmentInput = {
   studentId: string;
@@ -65,19 +62,17 @@ export class EnrollmentService {
         };
       }
 
-      const existing =
-        await EnrollmentRepository.findByStudentAndCourse(
-          data.studentId,
-          data.courseId,
-          organizationId,
-          branchId,
-        );
+      const existing = await EnrollmentRepository.findByStudentAndCourse(
+        data.studentId,
+        data.courseId,
+        organizationId,
+        branchId,
+      );
 
       if (existing) {
         return {
           success: false,
-          message:
-            "Student is already enrolled in this course.",
+          message: "Student is already enrolled in this course.",
         };
       }
 
@@ -92,17 +87,15 @@ export class EnrollmentService {
         if (activeEnrollments >= course.capacity) {
           return {
             success: false,
-            message:
-              "This course has reached its capacity.",
+            message: "This course has reached its capacity.",
           };
         }
       }
 
-      const enrollment =
-        await EnrollmentRepository.create({
-          studentId: data.studentId,
-          courseId: data.courseId,
-        });
+      const enrollment = await EnrollmentRepository.create({
+        studentId: data.studentId,
+        courseId: data.courseId,
+      });
 
       await db.auditLog.create({
         data: {
@@ -132,10 +125,7 @@ export class EnrollmentService {
         enrollment,
       };
     } catch (error) {
-      console.error(
-        "CREATE ENROLLMENT ERROR:",
-        error,
-      );
+      console.error("CREATE ENROLLMENT ERROR:", error);
 
       return {
         success: false,
@@ -144,16 +134,8 @@ export class EnrollmentService {
     }
   }
 
-  static async getById(
-    id: string,
-    organizationId: string,
-    branchId?: string,
-  ) {
-    return EnrollmentRepository.findById(
-      id,
-      organizationId,
-      branchId,
-    );
+  static async getById(id: string, organizationId: string, branchId?: string) {
+    return EnrollmentRepository.findById(id, organizationId, branchId);
   }
 
   static async getCourseEnrollments(
@@ -173,10 +155,48 @@ export class EnrollmentService {
     organizationId: string,
     branchId?: string,
   ) {
-    return EnrollmentRepository.findByStudent(
-      studentId,
-      organizationId,
-      branchId,
+    const enrollments =
+      await EnrollmentRepository.findByStudent(
+        studentId,
+        organizationId,
+        branchId,
+      );
+
+    /*
+     * CourseEnrollment.progress is a cached value.
+     * Recalculate it before returning student enrollments so
+     * the student UI always receives authoritative progress.
+     */
+    const { CourseProgressService } =
+      await import(
+        "@/features/courses/services/course-progress.service"
+      );
+
+    return Promise.all(
+      enrollments.map(async (enrollment) => {
+        const result =
+          await CourseProgressService.calculate(
+            enrollment.id,
+          );
+
+        const nextStatus: Prisma.CourseEnrollmentGetPayload<{
+          select: { status: true };
+        }>["status"] =
+          result.progress >= 100
+            ? enrollment.status === "DROPPED" ||
+              enrollment.status === "SUSPENDED"
+              ? enrollment.status
+              : "COMPLETED"
+            : enrollment.status === "COMPLETED"
+              ? "ACTIVE"
+              : enrollment.status;
+
+        return {
+          ...enrollment,
+          progress: result.progress,
+          status: nextStatus,
+        };
+      }),
     );
   }
 
@@ -188,23 +208,18 @@ export class EnrollmentService {
     actorId?: string,
   ) {
     try {
-      if (
-        data.progress < 0 ||
-        data.progress > 100
-      ) {
+      if (data.progress < 0 || data.progress > 100) {
         return {
           success: false,
-          message:
-            "Progress must be between 0 and 100.",
+          message: "Progress must be between 0 and 100.",
         };
       }
 
-      const enrollment =
-        await EnrollmentRepository.findById(
-          id,
-          organizationId,
-          branchId,
-        );
+      const enrollment = await EnrollmentRepository.findById(
+        id,
+        organizationId,
+        branchId,
+      );
 
       if (!enrollment) {
         return {
@@ -213,27 +228,42 @@ export class EnrollmentService {
         };
       }
 
-      const result =
-        await db.courseEnrollment.updateMany({
-          where: {
-            id,
-            course: {
-              organizationId,
-              ...(branchId && {
-                branchId,
-              }),
-            },
+      const normalizedProgress = Math.min(
+        100,
+        Math.max(0, Math.round(data.progress)),
+      );
+
+      const finalStatus =
+        normalizedProgress >= 100
+          ? "COMPLETED"
+          : data.status === "COMPLETED"
+            ? "ACTIVE"
+            : data.status;
+
+      const finalProgress =
+        finalStatus === "COMPLETED"
+          ? 100
+          : normalizedProgress;
+
+      const result = await db.courseEnrollment.updateMany({
+        where: {
+          id,
+          course: {
+            organizationId,
+            ...(branchId && {
+              branchId,
+            }),
           },
-          data: {
-            status: data.status,
-            progress: data.progress,
-            ...(data.status === "COMPLETED"
-              ? {
-                  completedAt: new Date(),
-                }
-              : {}),
-          },
-        });
+        },
+        data: {
+          status: finalStatus,
+          progress: finalProgress,
+          completedAt:
+            finalStatus === "COMPLETED"
+              ? new Date()
+              : null,
+        },
+      });
 
       if (result.count === 0) {
         return {
@@ -250,7 +280,7 @@ export class EnrollmentService {
           action: "UPDATE",
           entityType: "CourseEnrollment",
           entityId: id,
-          description: `Enrollment updated: status ${data.status}, progress ${data.progress}%.`,
+          description: `Enrollment updated: status ${finalStatus}, progress ${finalProgress}%.`,
         },
       });
 
@@ -258,36 +288,31 @@ export class EnrollmentService {
         studentId: enrollment.studentId,
         organizationId,
         type:
-          data.status === "COMPLETED"
+          finalStatus === "COMPLETED"
             ? "SUCCESS"
             : "STUDENT",
         title:
-          data.status === "COMPLETED"
+          finalStatus === "COMPLETED"
             ? "Course completed"
             : "Enrollment updated",
         message:
-          data.status === "COMPLETED"
+          finalStatus === "COMPLETED"
             ? "Congratulations! Your course enrollment has been marked as completed."
-            : `Your enrollment status is now ${data.status}. Your progress is ${data.progress}%.`,
+            : `Your enrollment status is now ${finalStatus}. Your progress is ${finalProgress}%.`,
         href: `/student/courses/${enrollment.courseId}`,
-        dedupeKey: `student-enrollment-updated:${id}:${data.status}:${data.progress}`,
+        dedupeKey: `student-enrollment-updated:${id}:${finalStatus}:${finalProgress}`,
       });
 
       return {
         success: true,
-        message:
-          "Enrollment updated successfully.",
+        message: "Enrollment updated successfully.",
       };
     } catch (error) {
-      console.error(
-        "UPDATE ENROLLMENT ERROR:",
-        error,
-      );
+      console.error("UPDATE ENROLLMENT ERROR:", error);
 
       return {
         success: false,
-        message:
-          "Failed to update enrollment.",
+        message: "Failed to update enrollment.",
       };
     }
   }
@@ -300,12 +325,11 @@ export class EnrollmentService {
     actorId?: string,
   ) {
     try {
-      const enrollment =
-        await EnrollmentRepository.findById(
-          id,
-          organizationId,
-          branchId,
-        );
+      const enrollment = await EnrollmentRepository.findById(
+        id,
+        organizationId,
+        branchId,
+      );
 
       if (!enrollment) {
         return {
@@ -314,13 +338,12 @@ export class EnrollmentService {
         };
       }
 
-      const result =
-        await EnrollmentRepository.updateStatus(
-          id,
-          organizationId,
-          branchId,
-          status,
-        );
+      const result = await EnrollmentRepository.updateStatus(
+        id,
+        organizationId,
+        branchId,
+        status,
+      );
 
       if (result.count === 0) {
         return {
@@ -354,35 +377,25 @@ export class EnrollmentService {
 
       return {
         success: true,
-        message:
-          "Enrollment status updated successfully.",
+        message: "Enrollment status updated successfully.",
       };
     } catch (error) {
-      console.error(
-        "UPDATE ENROLLMENT STATUS ERROR:",
-        error,
-      );
+      console.error("UPDATE ENROLLMENT STATUS ERROR:", error);
 
       return {
         success: false,
-        message:
-          "Failed to update enrollment status.",
+        message: "Failed to update enrollment status.",
       };
     }
   }
 
-  static async delete(
-    id: string,
-    organizationId: string,
-    branchId?: string,
-  ) {
+  static async delete(id: string, organizationId: string, branchId?: string) {
     try {
-      const enrollment =
-        await EnrollmentRepository.findById(
-          id,
-          organizationId,
-          branchId,
-        );
+      const enrollment = await EnrollmentRepository.findById(
+        id,
+        organizationId,
+        branchId,
+      );
 
       if (!enrollment) {
         return {
@@ -391,12 +404,11 @@ export class EnrollmentService {
         };
       }
 
-      const result =
-        await EnrollmentRepository.delete(
-          id,
-          organizationId,
-          branchId,
-        );
+      const result = await EnrollmentRepository.delete(
+        id,
+        organizationId,
+        branchId,
+      );
 
       if (result.count === 0) {
         return {
@@ -407,19 +419,14 @@ export class EnrollmentService {
 
       return {
         success: true,
-        message:
-          "Enrollment removed successfully.",
+        message: "Enrollment removed successfully.",
       };
     } catch (error) {
-      console.error(
-        "DELETE ENROLLMENT ERROR:",
-        error,
-      );
+      console.error("DELETE ENROLLMENT ERROR:", error);
 
       return {
         success: false,
-        message:
-          "Failed to remove enrollment.",
+        message: "Failed to remove enrollment.",
       };
     }
   }

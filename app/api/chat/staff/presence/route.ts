@@ -118,14 +118,17 @@ export async function POST(request: Request) {
       });
     }
 
-    const active =
-      body?.active === true ||
-      (
-        typeof body?.lastActiveAt === "string" &&
-        now.getTime() -
-          new Date(body.lastActiveAt).getTime() <=
-          ACTIVE_WINDOW_MS
-      );
+    /*
+     * `active` is telemetry only.
+     *
+     * Human availability is determined by:
+     *   status === ONLINE
+     *   + fresh lastSeenAt
+     *
+     * Never use a client-supplied timestamp to decide whether
+     * Gemini should replace a human.
+     */
+    const active = body?.active === true;
 
     const lastActiveAt = active
       ? now

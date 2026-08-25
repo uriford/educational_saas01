@@ -107,6 +107,19 @@ export async function reviewEnrollmentRequestAction(
             );
           }
 
+          // A branchless student gets their permanent branch
+          // context from the approved enrollment request.
+          if (!student.branchId && request.branchId) {
+            student = await tx.student.update({
+              where: {
+                id: student.id,
+              },
+              data: {
+                branchId: request.branchId,
+              },
+            });
+          }
+
         } else {
 
           const existingStudent =

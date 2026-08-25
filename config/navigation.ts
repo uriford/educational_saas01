@@ -43,6 +43,11 @@ export const organizationItems = [
     icon: Users,
   },
   {
+    title: "Guardians",
+    href: "/guardians",
+    icon: Users,
+  },
+  {
     title: "Enrollment Requests",
     href: "/enrollment-requests",
     icon: ClipboardCheck,

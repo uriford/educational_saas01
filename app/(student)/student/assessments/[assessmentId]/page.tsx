@@ -27,10 +27,7 @@ export default async function StudentAssessmentPage({
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
+  if (!session.user.organizationId) {
     redirect("/login");
   }
 

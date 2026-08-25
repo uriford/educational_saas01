@@ -64,6 +64,30 @@ export class BranchRepository {
     });
   }
 
+  static async getBranchById(
+    organizationId: string,
+    branchId: string,
+  ) {
+    return db.branch.findFirst({
+      where: {
+        id: branchId,
+        organizationId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        email: true,
+        phone: true,
+        address: true,
+        isHeadquarters: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+  }
+
   static async findBranch(
     organizationId: string,
     branchId: string,
@@ -186,6 +210,23 @@ export class BranchRepository {
         role: "BRANCH_ADMIN",
         branchId,
         isBranchManager: true,
+      },
+    });
+  }
+
+  static async updateBranchEmail(
+    organizationId: string,
+    branchId: string,
+    email: string | null,
+  ) {
+    return db.branch.updateMany({
+      where: {
+        id: branchId,
+        organizationId,
+        deletedAt: null,
+      },
+      data: {
+        email,
       },
     });
   }

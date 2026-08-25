@@ -46,7 +46,14 @@ export default async function GuardiansPage() {
       ? BranchService.getAllBranches(
           organizationId,
         )
-      : Promise.resolve([]);
+      : session.user.branchId
+        ? BranchService.getBranchById(
+            organizationId,
+            session.user.branchId,
+          ).then((branch) =>
+            branch ? [branch] : [],
+          )
+        : Promise.resolve([]);
 
   const [guardians, students, branches] =
     await Promise.all([

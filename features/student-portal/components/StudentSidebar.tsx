@@ -13,6 +13,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Megaphone,
+  MessageCircle,
   UserCircle,
 } from "lucide-react";
 
@@ -66,6 +67,11 @@ const navigation = [
     label:"Announcements",
     href:"/student/announcements",
     icon:Megaphone,
+  },
+  {
+    label:"Chat",
+    href:"/student/chat",
+    icon:MessageCircle,
   },
   {
     label:"Profile",
