@@ -111,6 +111,10 @@ export class StudentService {
     return StudentRepository.findByUserId(userId, organizationId, branchId);
   }
 
+  static async getByUserIdOnly(userId: string) {
+    return StudentRepository.findByUserIdOnly(userId);
+  }
+
   static async updateOwnAvatar(
     id: string,
     userId: string,

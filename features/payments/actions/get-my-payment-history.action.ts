@@ -9,11 +9,12 @@ export async function getMyPaymentHistoryAction() {
   const student = await db.student.findFirst({
     where: {
       userId: session.user.id,
-      organizationId: session.user.organizationId,
-      branchId: session.user.branchId,
+      deletedAt: null,
     },
     select: {
       id: true,
+      organizationId: true,
+      branchId: true,
     },
   });
 
@@ -21,12 +22,16 @@ export async function getMyPaymentHistoryAction() {
     throw new Error("Student profile not found");
   }
 
+  if (!student.branchId) {
+    throw new Error("Student branch not found");
+  }
+
   return db.paymentTransaction.findMany({
     where: {
       installment: {
         paymentPlan: {
-          organizationId: session.user.organizationId,
-          branchId: session.user.branchId,
+          organizationId: student.organizationId,
+          branchId: student.branchId,
           enrollment: {
             studentId: student.id,
           },

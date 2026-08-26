@@ -27,13 +27,9 @@ export default async function StudentLayout({
     redirect("/dashboard");
   }
 
-  const student = session.user.organizationId
-    ? await StudentService.getByUserId(
-        session.user.id,
-        session.user.organizationId,
-        session.user.branchId ?? undefined,
-      )
-    : null;
+  const student = await StudentService.getByUserIdOnly(
+    session.user.id,
+  );
 
   if (!student) {
     const userSettings = await db.user.findUnique({

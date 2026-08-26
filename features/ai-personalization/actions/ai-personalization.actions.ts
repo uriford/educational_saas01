@@ -15,10 +15,8 @@ export async function generateAIPersonalizationAction(
 
     
     const student =
-      await StudentService.getByUserId(
+      await StudentService.getByUserIdOnly(
         session.user.id,
-        session.user.organizationId,
-        session.user.branchId,
       );
 
     if (!student) {
@@ -55,10 +53,8 @@ export async function getAIPersonalizationAction(
 
     
     const student =
-      await StudentService.getByUserId(
+      await StudentService.getByUserIdOnly(
         session.user.id,
-        session.user.organizationId,
-        session.user.branchId,
       );
 
     if (!student) {

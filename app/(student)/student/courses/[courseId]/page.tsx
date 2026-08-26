@@ -86,19 +86,10 @@ export default async function StudentCoursePage({
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    redirect("/login");
-  }
-
   const { courseId } = await params;
 
-  const student = await StudentService.getByUserId(
+  const student = await StudentService.getByUserIdOnly(
     session.user.id,
-    session.user.organizationId,
-    session.user.branchId,
   );
 
   if (!student) {
@@ -122,11 +113,15 @@ export default async function StudentCoursePage({
     );
   }
 
+  if (!student.branchId) {
+    redirect("/login");
+  }
+
   const enrollments =
     await EnrollmentService.getStudentEnrollments(
       student.id,
-      session.user.organizationId,
-      session.user.branchId,
+      student.organizationId,
+      student.branchId,
     );
 
   const enrollment = enrollments.find(
@@ -148,19 +143,19 @@ export default async function StudentCoursePage({
   ] = await Promise.all([
     ClassSessionService.getCourseSessions(
       course.id,
-      session.user.organizationId,
-      session.user.branchId,
+      student.organizationId,
+      student.branchId,
     ),
     AssessmentRepository.findByCourse(
       course.id,
-      session.user.organizationId,
-      session.user.branchId,
+      student.organizationId,
+      student.branchId,
     ),
     LessonProgressService.getCourseLessons(
       student.id,
       course.id,
-      session.user.organizationId,
-      session.user.branchId,
+      student.organizationId,
+      student.branchId,
     ),
     getAIPersonalizationAction(course.id),
     getMyPaymentHistoryAction(),

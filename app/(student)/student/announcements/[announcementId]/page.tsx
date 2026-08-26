@@ -37,21 +37,16 @@ export default async function StudentAnnouncementDetailsPage({
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    redirect("/login");
-  }
-
-  const student = await StudentService.getByUserId(
+  const student = await StudentService.getByUserIdOnly(
     session.user.id,
-    session.user.organizationId,
-    session.user.branchId,
   );
 
   if (!student) {
     redirect("/student");
+  }
+
+  if (!student.branchId) {
+    redirect("/login");
   }
 
   const { announcementId } = await params;
@@ -60,7 +55,7 @@ export default async function StudentAnnouncementDetailsPage({
     await AnnouncementService.getPublishedByIdForStudent(
       announcementId,
       student.organizationId,
-      session.user.branchId,
+      student.branchId,
     );
 
   if (!announcement) {

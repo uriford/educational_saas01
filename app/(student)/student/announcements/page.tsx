@@ -44,17 +44,8 @@ export default async function StudentAnnouncementsPage() {
     redirect("/dashboard");
   }
 
-  if (
-    !session.user.organizationId ||
-    !session.user.branchId
-  ) {
-    redirect("/login");
-  }
-
-  const student = await StudentService.getByUserId(
+  const student = await StudentService.getByUserIdOnly(
     session.user.id,
-    session.user.organizationId,
-    session.user.branchId,
   );
 
   if (!student) {
@@ -80,11 +71,12 @@ export default async function StudentAnnouncementsPage() {
     );
   }
 
-  const announcements =
-    await AnnouncementService.getPublishedForStudent(
-      student.organizationId,
-      session.user.branchId,
-    );
+  const announcements = student.branchId
+    ? await AnnouncementService.getPublishedForStudent(
+        student.organizationId,
+        student.branchId,
+      )
+    : [];
 
   return (
     <div className="space-y-6">

@@ -144,6 +144,20 @@ export class StudentRepository {
       },
     });
   }
+
+  static async findByUserIdOnly(userId: string) {
+    return db.student.findFirst({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      include: {
+        organization: true,
+        branch: true,
+        user: true,
+      },
+    });
+  }
   static async findByEmail(email: string, organizationId: string) {
     const normalizedEmail = email.trim().toLowerCase();
 

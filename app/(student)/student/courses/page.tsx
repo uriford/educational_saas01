@@ -19,14 +19,8 @@ export default async function StudentCoursesPage() {
     redirect("/dashboard");
   }
 
-  if (!session.user.organizationId) {
-    redirect("/login");
-  }
-
-  const student = await StudentService.getByUserId(
+  const student = await StudentService.getByUserIdOnly(
     session.user.id,
-    session.user.organizationId,
-    session.user.branchId ?? undefined,
   );
 
   if (!student) {
@@ -46,12 +40,13 @@ export default async function StudentCoursesPage() {
     );
   }
 
-  const enrollments =
-    await EnrollmentService.getStudentEnrollments(
-      student.id,
-      session.user.organizationId,
-      session.user.branchId,
-    );
+  const enrollments = student.branchId
+    ? await EnrollmentService.getStudentEnrollments(
+        student.id,
+        student.organizationId,
+        student.branchId,
+      )
+    : [];
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-8">

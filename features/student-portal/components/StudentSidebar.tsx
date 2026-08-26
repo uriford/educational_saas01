@@ -14,7 +14,6 @@ import {
   LayoutDashboard,
   Megaphone,
   MessageCircle,
-  UserCircle,
 } from "lucide-react";
 
 import {
@@ -72,11 +71,6 @@ const navigation = [
     label:"Chat",
     href:"/student/chat",
     icon:MessageCircle,
-  },
-  {
-    label:"Profile",
-    href:"/student/profile",
-    icon:UserCircle,
   },
 ];
 
