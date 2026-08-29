@@ -133,29 +133,37 @@ export async function getOrganizationChatContext(
       })
     : null;
 
-  const courses = branch
-    ? await db.course.findMany({
-        where: {
-          organizationId,
-          branchId: branch.id,
-          status: "ACTIVE",
-          deletedAt: null,
-        },
-        select: {
-          code: true,
-          name: true,
-          description: true,
-          duration: true,
-          fee: true,
-          capacity: true,
-          startDate: true,
-          endDate: true,
-        },
-        orderBy: {
-          name: "asc",
-        },
-      })
-    : [];
+  /*
+   * Organization-level course knowledge.
+   *
+   * The student's assigned branch is personalization context only.
+   * It must NOT restrict the organization's active course knowledge.
+   *
+   * This allows:
+   * - New students to discover courses across the organization.
+   * - Enrolled students to receive organization-wide course information
+   *   while still having their assigned branch available separately.
+   */
+  const courses = await db.course.findMany({
+    where: {
+      organizationId,
+      status: "ACTIVE",
+      deletedAt: null,
+    },
+    select: {
+      code: true,
+      name: true,
+      description: true,
+      duration: true,
+      fee: true,
+      capacity: true,
+      startDate: true,
+      endDate: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
 
   return {
     organization: {

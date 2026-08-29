@@ -20,6 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import BranchCreationPasswordRecovery from "./BranchCreationPasswordRecovery";
+
 import {
   createBranchAction,
   setBranchCreationPasswordAction,
@@ -87,7 +89,13 @@ export default function BranchManagement({
   const [creationPassword, setCreationPassword] =
     useState("");
 
+  const [currentSecurityPassword, setCurrentSecurityPassword] =
+    useState("");
+
   const [newSecurityPassword, setNewSecurityPassword] =
+    useState("");
+
+  const [confirmSecurityPassword, setConfirmSecurityPassword] =
     useState("");
 
   const [savingBranch, setSavingBranch] =
@@ -268,15 +276,25 @@ export default function BranchManagement({
     setSavingPassword(true);
     setPasswordMessage("");
 
-    const result =
-      await setBranchCreationPasswordAction({
-        password: newSecurityPassword,
-      });
+    const result = passwordConfigured
+      ? await setBranchCreationPasswordAction({
+          mode: "CHANGE",
+          currentPassword: currentSecurityPassword,
+          password: newSecurityPassword,
+          confirmPassword: confirmSecurityPassword,
+        })
+      : await setBranchCreationPasswordAction({
+          mode: "INITIAL",
+          password: newSecurityPassword,
+          confirmPassword: confirmSecurityPassword,
+        });
 
     setPasswordMessage(result.message);
 
     if (result.success) {
+      setCurrentSecurityPassword("");
       setNewSecurityPassword("");
+      setConfirmSecurityPassword("");
     }
 
     setSavingPassword(false);
@@ -293,7 +311,7 @@ export default function BranchManagement({
             </CardTitle>
 
             <CardDescription>
-              Branch "{branchCredentials.branchName}" was
+              Branch &quot;{branchCredentials.branchName}&quot; was
               created successfully. Give these credentials
               directly to the Branch Administrator. The
               temporary password is shown here because the
@@ -523,6 +541,27 @@ export default function BranchManagement({
                 </div>
               </div>
 
+              {passwordConfigured && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">
+                    Current Branch Creation Password
+                  </label>
+
+                  <Input
+                    required
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentSecurityPassword}
+                    onChange={(event) =>
+                      setCurrentSecurityPassword(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Enter current password"
+                  />
+                </div>
+              )}
+
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium">
                   {passwordConfigured
@@ -550,6 +589,26 @@ export default function BranchManagement({
                 </p>
               </div>
 
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium">
+                  Confirm New Branch Creation Password
+                </label>
+
+                <Input
+                  required
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={16}
+                  value={confirmSecurityPassword}
+                  onChange={(event) =>
+                    setConfirmSecurityPassword(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Re-enter the new password"
+                />
+              </div>
+
               {passwordMessage && (
                 <p
                   className={`text-sm ${
@@ -575,6 +634,10 @@ export default function BranchManagement({
                 </Button>
               </div>
             </form>
+
+            <div className="mt-6 border-t pt-6">
+              <BranchCreationPasswordRecovery />
+            </div>
           </CardContent>
         </Card>
       )}

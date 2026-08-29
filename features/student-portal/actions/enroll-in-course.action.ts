@@ -49,6 +49,12 @@ export async function enrollInCourseAction(courseId: string) {
         id: courseId,
         status: "ACTIVE",
         deletedAt: null,
+
+        // Defense-in-depth tenant isolation:
+        // students can only request enrollment in courses
+        // belonging to their own organization + branch.
+        organizationId: student.organizationId,
+        branchId: student.branchId,
       },
       select: {
         id: true,

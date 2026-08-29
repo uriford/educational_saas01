@@ -1,6 +1,9 @@
 "use server";
 
-import { requireActiveSubscription } from "@/features/auth/authorization";
+import {
+  requireActiveSubscription,
+  requireBranchAccess,
+} from "@/features/auth/authorization";
 import { ROLES } from "@/features/auth/roles";
 import { AttendanceService } from "../services/attendance.service";
 
@@ -34,13 +37,53 @@ export async function saveAttendanceAction(data: {
     };
   }
 
+  // SUPER_ADMIN is a separate platform-level authority.
+  // Do not apply branch authorization to SUPER_ADMIN.
+  if (session.user.role !== ROLES.SUPER_ADMIN) {
+    const { db } = await import("@/lib/db");
+
+    const organization = await db.organization.findFirst({
+      where: {
+        id: session.user.organizationId,
+        deletedAt: null,
+      },
+      select: {
+        hasBranches: true,
+      },
+    });
+
+    // Only branched organizations require branch-level authorization.
+    if (organization?.hasBranches) {
+      if (!session.user.branchId) {
+        return {
+          success: false,
+          message:
+            "Branch access is required for this organization.",
+        };
+      }
+
+      try {
+        await requireBranchAccess(
+          session.user.organizationId,
+          session.user.branchId,
+        );
+      } catch {
+        return {
+          success: false,
+          message:
+            "You are not allowed to manage attendance for this branch.",
+        };
+      }
+    }
+  }
+
   const result =
     await AttendanceService.saveAttendance(
       session.user.organizationId,
-      session.user.branchId,
       data.classSessionId,
       session.user.id,
       data.records,
+      session.user.branchId,
     );
 
   return result;

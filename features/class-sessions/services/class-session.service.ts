@@ -32,7 +32,7 @@ function validateDateRange(startTime: Date, endTime: Date) {
 export class ClassSessionService {
   static async create(data: {
     organizationId: string;
-    branchId: string;
+    branchId?: string | null;
     courseId: string;
     teacherId: string;
     title: string;
@@ -65,7 +65,9 @@ export class ClassSessionService {
         where: {
           id: data.courseId,
           organizationId: data.organizationId,
-          branchId: data.branchId,
+          ...(data.branchId
+            ? { branchId: data.branchId }
+            : { branchId: null }),
           deletedAt: null,
         },
       });
@@ -81,7 +83,9 @@ export class ClassSessionService {
         where: {
           id: data.teacherId,
           organizationId: data.organizationId,
-          branchId: data.branchId,
+          ...(data.branchId
+            ? { branchId: data.branchId }
+            : { branchId: null }),
           deletedAt: null,
         },
       });
@@ -100,14 +104,15 @@ export class ClassSessionService {
         };
       }
 
-      const teacherConflict =
-        await ClassSessionRepository.findTeacherConflict({
-          organizationId: data.organizationId,
-          branchId: data.branchId,
-          teacherId: data.teacherId,
-          startTime: data.startTime,
-          endTime: data.endTime,
-        });
+      const teacherConflict = data.branchId
+        ? await ClassSessionRepository.findTeacherConflict({
+            organizationId: data.organizationId,
+            branchId: data.branchId,
+            teacherId: data.teacherId,
+            startTime: data.startTime,
+            endTime: data.endTime,
+          })
+        : null;
 
       if (teacherConflict) {
         return {
@@ -123,14 +128,15 @@ export class ClassSessionService {
       const room = data.room?.trim() || undefined;
 
       if (room) {
-        const roomConflict =
-          await ClassSessionRepository.findRoomConflict({
-            organizationId: data.organizationId,
-            branchId: data.branchId,
-            room,
-            startTime: data.startTime,
-            endTime: data.endTime,
-          });
+        const roomConflict = data.branchId
+          ? await ClassSessionRepository.findRoomConflict({
+              organizationId: data.organizationId,
+              branchId: data.branchId,
+              room,
+              startTime: data.startTime,
+              endTime: data.endTime,
+            })
+          : null;
 
         if (roomConflict) {
           return {

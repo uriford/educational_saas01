@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { ROLES } from "@/features/auth/roles";
 import { StudentService } from "@/features/students/services/student.service";
 import { EnrollmentService } from "@/features/enrollments/services/enrollment.service";
@@ -24,9 +25,26 @@ export default async function StudentRoutinePage() {
   }
 
   const organizationId = session.user.organizationId;
-  const branchId = session.user.branchId ?? undefined;
 
-  if (!branchId) {
+  /*
+   * Resolve the student's branch from the Student record instead of
+   * relying on session.user.branchId. The branch may exist on the
+   * database record even when the current auth session does not
+   * contain it.
+   */
+  const studentRecord = await db.student.findFirst({
+    where: {
+      userId: session.user.id,
+      organizationId,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      branchId: true,
+    },
+  });
+
+  if (!studentRecord?.branchId) {
     return (
       <div className="space-y-6">
         <section className="rounded-2xl border bg-card p-8 shadow-sm">
@@ -41,6 +59,8 @@ export default async function StudentRoutinePage() {
       </div>
     );
   }
+
+  const branchId = studentRecord.branchId;
 
   const student = await StudentService.getByUserId(
     session.user.id,

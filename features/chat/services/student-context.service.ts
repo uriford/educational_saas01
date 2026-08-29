@@ -1,6 +1,7 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
 
 export interface StudentChatContext {
   student: {
@@ -31,6 +32,19 @@ export interface StudentChatContext {
       completedLessons: string[];
       remainingLessons: string[];
     };
+
+    scheduledClasses: Array<{
+      title: string;
+      description: string | null;
+      startTime: string;
+      endTime: string;
+      room: string | null;
+      status: string;
+      teacher: {
+        firstName: string;
+        lastName: string | null;
+      };
+    }>;
   }>;
 }
 
@@ -60,6 +74,7 @@ export async function getStudentChatContext(
     select: {
       firstName: true,
       lastName: true,
+      branchId: true,
       courseEnrollments: {
         where: {
           status: {
@@ -70,6 +85,7 @@ export async function getStudentChatContext(
           enrolledAt: "desc",
         },
         select: {
+          courseId: true,
           status: true,
           progress: true,
           enrolledAt: true,
@@ -112,6 +128,31 @@ export async function getStudentChatContext(
   if (!student) {
     throw new Error("Student not found.");
   }
+
+  /*
+   * Fetch the authenticated student's class sessions using the
+   * existing student-aware repository/service path.
+   *
+   * This keeps schedule access tied to the student's own active/
+   * completed course enrollments instead of trusting user input.
+   */
+  const sessions = student.branchId
+    ? await ClassSessionService.getStudentSessions(
+        studentId,
+        organizationId,
+        student.branchId,
+      )
+    : [];
+
+  const now = new Date();
+
+  const upcomingSessions = sessions
+    .filter(
+      (session) =>
+        session.startTime >= now &&
+        session.status !== "CANCELLED",
+    )
+    .slice(0, 20);
 
   return {
     student: {
@@ -159,6 +200,24 @@ export async function getStudentChatContext(
           completedLessons,
           remainingLessons,
         },
+
+        scheduledClasses: upcomingSessions
+          .filter(
+            (session) =>
+              session.courseId === enrollment.courseId,
+          )
+          .map((session) => ({
+            title: session.title,
+            description: session.description,
+            startTime: session.startTime.toISOString(),
+            endTime: session.endTime.toISOString(),
+            room: session.room,
+            status: session.status,
+            teacher: {
+              firstName: session.teacher.firstName,
+              lastName: session.teacher.lastName,
+            },
+          })),
       };
     }),
   };

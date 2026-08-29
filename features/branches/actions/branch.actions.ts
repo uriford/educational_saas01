@@ -2,6 +2,8 @@
 
 import { auth } from "@/auth";
 import { BranchService } from "../services/branch.service";
+import type { SetBranchCreationPasswordInput } from "../types";
+import { resetBranchCreationPasswordSchema } from "../schemas/reset-branch-creation-password.schema";
 
 export async function createBranchAction(data: {
   name: string;
@@ -82,9 +84,7 @@ export async function updateBranchEmailAction(
 }
 
 export async function setBranchCreationPasswordAction(
-  data: {
-    password: string;
-  },
+  data: SetBranchCreationPasswordInput,
 ) {
   const session = await auth();
 
@@ -191,6 +191,85 @@ export async function assignBranchAdminAction(data: {
         error instanceof Error
           ? error.message
           : "Unable to assign branch administrator.",
+    };
+  }
+}
+
+export async function requestBranchCreationPasswordResetAction() {
+  const session = await auth();
+
+  if (
+    !session?.user?.id ||
+    !session.user.organizationId
+  ) {
+    return {
+      success: false,
+      message: "Unauthorized.",
+    };
+  }
+
+  if (
+    session.user.role !== "ORGANIZATION_ADMIN"
+  ) {
+    return {
+      success: false,
+      message:
+        "Only organization admins can reset the branch creation password.",
+    };
+  }
+
+  try {
+    return await BranchService.requestCreationPasswordReset(
+      session.user.organizationId,
+      session.user.id,
+    );
+  } catch (error) {
+    console.error(
+      "BRANCH CREATION PASSWORD RESET REQUEST ERROR:",
+      error,
+    );
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to process the password reset request.",
+    };
+  }
+}
+
+export async function resetBranchCreationPasswordAction(
+  data: unknown,
+) {
+  const parsed =
+    resetBranchCreationPasswordSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message:
+        parsed.error.issues[0]?.message ??
+        "Invalid password reset data.",
+    };
+  }
+
+  try {
+    return await BranchService.resetCreationPassword(
+      parsed.data,
+    );
+  } catch (error) {
+    console.error(
+      "BRANCH CREATION PASSWORD RESET ERROR:",
+      error,
+    );
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to reset branch creation password.",
     };
   }
 }

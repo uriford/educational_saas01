@@ -69,3 +69,6 @@ output.txt
 # Timestamped development backup files
 *.backup_*
 *.before_*
+
+# Local UI backup snapshots
+.ui-backups/

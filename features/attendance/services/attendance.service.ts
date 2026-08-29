@@ -12,8 +12,8 @@ type AttendanceStatus =
 export class AttendanceService {
   static async getSessionAttendance(
     organizationId: string,
-    branchId: string,
     classSessionId: string,
+    branchId?: string | null,
   ) {
     const organization = await AttendanceService.getOrganizationSettings(
       organizationId,
@@ -57,7 +57,6 @@ export class AttendanceService {
 
   static async saveAttendance(
     organizationId: string,
-    branchId: string,
     classSessionId: string,
     markedById: string,
     records: {
@@ -65,6 +64,7 @@ export class AttendanceService {
       status: AttendanceStatus;
       notes?: string | null;
     }[],
+    branchId?: string | null,
   ) {
     const organization =
       await AttendanceService.getOrganizationSettings(

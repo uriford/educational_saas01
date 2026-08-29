@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import EnrollCourseButton from "@/features/student-portal/components/explore-courses/EnrollCourseButton";
+import { CourseProgressService } from "@/features/courses/services/course-progress.service";
 
 function formatPrice(price: unknown) {
   if (price === null || price === undefined) {
@@ -99,6 +100,10 @@ export default async function ExploreCourseDetailsPage({
 
   const enrollment = course.enrollments[0] ?? null;
   const enrolled = Boolean(enrollment);
+
+  const enrollmentProgress = enrollment
+    ? await CourseProgressService.calculate(enrollment.id)
+    : null;
 
   const pendingRequest = student
     ? await db.enrollmentRequest.findFirst({
@@ -190,7 +195,7 @@ export default async function ExploreCourseDetailsPage({
                   </p>
 
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Progress: {enrollment?.progress ?? 0}%
+                    Progress: {enrollmentProgress?.progress ?? 0}%
                   </p>
                 </>
               ) : pendingRequest ? (

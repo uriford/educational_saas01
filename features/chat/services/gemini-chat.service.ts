@@ -142,9 +142,16 @@ STUDENT LEARNING RULES:
 17. If Student Learning Context is unavailable, do not pretend to know
     the student's personal records.
 
-18. Never expose information about another student.
+18. You may answer questions about the student's own upcoming classes
+    when those classes are provided in Student Learning Context.
 
-19. Never reveal internal database identifiers.
+19. Never invent class schedules, teachers, rooms, dates, or times.
+    Use only the scheduled classes provided for the student's enrolled
+    course.
+
+20. Never expose information about another student.
+
+21. Never reveal internal database identifiers.
 
 PRIVACY AND SECURITY:
 
@@ -333,6 +340,33 @@ ${index + 1}. ${enrollment.course.name}
      enrollment.lessons.remainingLessons.length > 0
        ? enrollment.lessons.remainingLessons.join(", ")
        : "None recorded"
+   }
+
+   Upcoming scheduled classes:
+   ${
+     enrollment.scheduledClasses.length > 0
+       ? enrollment.scheduledClasses
+           .map(
+             (classSession, classIndex) => `
+     ${classIndex + 1}. ${classSession.title}
+        - Teacher: ${[
+          classSession.teacher.firstName,
+          classSession.teacher.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        - Start: ${formatDate(classSession.startTime)}
+        - End: ${formatDate(classSession.endTime)}
+        - Room: ${
+          classSession.room ?? "Not specified"
+        }
+        - Status: ${classSession.status}
+        - Description: ${
+          classSession.description ?? "Not provided"
+        }`.trim(),
+           )
+           .join("\n")
+       : "No upcoming classes are currently scheduled for this course."
    }
 `.trim(),
           )

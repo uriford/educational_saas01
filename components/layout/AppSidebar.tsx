@@ -96,14 +96,20 @@ export default function AppSidebar({
     <Sidebar>
       <SidebarHeader className="border-b px-3 py-4">
         <div className="flex items-center gap-3 px-1">
-          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+          <div
+            className={`flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl text-sm font-bold shadow-sm ${
+              organization.logo
+                ? "bg-transparent"
+                : "bg-primary text-primary-foreground"
+            }`}
+          >
             {organization.logo ? (
               <Image
                 src={organization.logo}
                 alt={organization.name}
-                width={40}
-                height={40}
-                className="size-full object-cover"
+                width={44}
+                height={44}
+                className="size-full object-contain"
               />
             ) : (
               getOrganizationInitials(organization.name)

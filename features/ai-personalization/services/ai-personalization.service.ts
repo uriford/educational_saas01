@@ -46,7 +46,7 @@ export class AIPersonalizationService {
     studentId: string,
     courseId: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null | undefined,
   ) {
     const data =
       await AIPersonalizationRepository.getStudentCourseData(
@@ -346,7 +346,7 @@ ${JSON.stringify(assessments, null, 2)}
     studentId: string,
     courseId: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null | undefined,
   ) {
     const personalization =
       await AIPersonalizationRepository.get(

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { getSession, signOut } from "next-auth/react";
 import {
   ArrowUpRight,
-  Menu,
   GraduationCap,
   LogOut,
   UserCircle,
@@ -282,7 +281,16 @@ export default function PublicNavbar({
                       </Link>
                     }
                   />
-                ) : null}
+                ) : (
+                  <DropdownMenuItem
+                    render={
+                      <Link href="/dashboard">
+                        <GraduationCap className="size-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    }
+                  />
+                )}
 
                 <DropdownMenuSeparator />
 
@@ -297,13 +305,6 @@ export default function PublicNavbar({
             </DropdownMenu>
           ) : null}
 
-          <button
-            type="button"
-            aria-label="Open menu"
-            className="rounded-full border border-border p-2.5 md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
         </div>
       </div>
     </header>

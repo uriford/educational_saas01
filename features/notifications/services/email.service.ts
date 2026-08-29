@@ -77,7 +77,6 @@ export class EmailService {
           hasApiKey: Boolean(apiKey),
           apiKeyLength: apiKey?.length ?? 0,
           from: from ?? null,
-          to: input.to,
           subject: input.subject,
         },
       );

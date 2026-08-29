@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { Upload, Trash2, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { updateOrganizationAction } from "../actions/update-organization.action";
+import {
+  removeOrganizationLogoAction,
+  updateOrganizationLogoAction,
+} from "../actions/update-organization-logo.action";
 import { updatePreferencesAction } from "../actions/update-preferences.action";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +35,71 @@ export default function OrganizationSettingsForm({
   const [form, setForm] = useState(initialData);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [logo, setLogo] = useState(initialData.logo);
+  const [logoUploading, setLogoUploading] = useState(false);
+
+  async function handleLogoChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setLogoUploading(true);
+    setMessage("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const result =
+        await updateOrganizationLogoAction(formData);
+
+      if (!result.success) {
+        setMessage(result.message);
+        return;
+      }
+
+      setLogo(result.logo ?? null);
+      setMessage(result.message);
+      router.refresh();
+    } catch {
+      setMessage(
+        "Something went wrong while uploading the organization logo.",
+      );
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
+  async function handleRemoveLogo() {
+    setLogoUploading(true);
+    setMessage("");
+
+    try {
+      const result =
+        await removeOrganizationLogoAction();
+
+      if (!result.success) {
+        setMessage(result.message);
+        return;
+      }
+
+      setLogo(null);
+      setMessage(result.message);
+      router.refresh();
+    } catch {
+      setMessage(
+        "Something went wrong while removing the organization logo.",
+      );
+    } finally {
+      setLogoUploading(false);
+    }
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
@@ -97,6 +168,82 @@ export default function OrganizationSettingsForm({
           onSubmit={handleSubmit}
           className="flex flex-col gap-6"
         >
+          <div className="rounded-2xl border bg-gradient-to-br from-muted/30 via-background to-muted/10 p-5 shadow-sm">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border bg-transparent shadow-sm">
+                  {logo ? (
+                    <Image
+                      src={logo}
+                      alt={`${form.name} logo`}
+                      width={112}
+                      height={112}
+                      className="h-full w-full object-contain p-1"
+                      unoptimized
+                    />
+                  ) : (
+                    <Building2 className="size-10 text-muted-foreground" />
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    Organization Logo
+                  </h3>
+
+                  <p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">
+                    Upload your organization&apos;s official logo. It will appear
+                    across the platform and on public-facing organization
+                    pages.
+                  </p>
+
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    JPG, PNG, or WebP · Maximum 5 MB
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <label
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 ${
+                    logoUploading
+                      ? "pointer-events-none opacity-60"
+                      : ""
+                  }`}
+                >
+                  <Upload className="size-4" />
+
+                  {logoUploading
+                    ? "Uploading..."
+                    : logo
+                      ? "Replace Logo"
+                      : "Upload Logo"}
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={logoUploading}
+                    onChange={handleLogoChange}
+                  />
+                </label>
+
+                {logo && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={logoUploading}
+                    onClick={handleRemoveLogo}
+                    className="gap-2"
+                  >
+                    <Trash2 className="size-4" />
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-xl border bg-muted/20 p-4">
             <div className="flex items-start gap-3">
               <input

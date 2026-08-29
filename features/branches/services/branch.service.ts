@@ -3,9 +3,12 @@ import crypto from "node:crypto";
 
 import { db } from "@/lib/db";
 import { BranchRepository } from "../repository/branch.repository";
+import { BranchCreationPasswordResetRepository } from "../repository/branch-creation-password-reset.repository";
+import { EmailService } from "@/features/notifications/services/email.service";
 import type {
   CreateBranchInput,
   SetBranchCreationPasswordInput,
+  ResetBranchCreationPasswordInput,
   AssignBranchAdminInput,
 } from "../types";
 
@@ -30,6 +33,17 @@ function createBranchSlug(name: string) {
     .toString("hex");
 
   return `${normalized || "branch"}-${suffix}`;
+}
+
+function assertPasswordsMatch(
+  password: string,
+  confirmPassword: string,
+) {
+  if (password !== confirmPassword) {
+    throw new Error(
+      "New password and confirmation password do not match.",
+    );
+  }
 }
 
 function assertStrongPassword(password: string) {
@@ -340,12 +354,103 @@ export class BranchService {
 
     assertStrongPassword(data.password);
 
+    assertPasswordsMatch(
+      data.password,
+      data.confirmPassword,
+    );
+
+    const existingCredential =
+      await BranchRepository.getCreationCredential(
+        organizationId,
+      );
+
+    /*
+     * INITIAL SETUP
+     */
+    if (data.mode === "INITIAL") {
+      if (existingCredential) {
+        throw new Error(
+          "The branch creation password is already configured. Enter the current password to change it.",
+        );
+      }
+
+      const passwordHash = await bcrypt.hash(
+        data.password,
+        12,
+      );
+
+      await BranchRepository.createCreationCredential(
+        organizationId,
+        passwordHash,
+      );
+
+      await db.auditLog.create({
+        data: {
+          organizationId,
+          branchId: user.branchId,
+          userId,
+          action: "CREATE",
+          entityType: "BranchCreationCredential",
+          entityId: organizationId,
+          description:
+            "Initial branch creation password was configured by the headquarters administrator.",
+        },
+      });
+
+      return {
+        success: true,
+        message:
+          "Branch creation password configured successfully.",
+      };
+    }
+
+    /*
+     * CHANGE EXISTING PASSWORD
+     */
+    if (!existingCredential) {
+      throw new Error(
+        "The branch creation password has not been configured yet. Please create it first.",
+      );
+    }
+
+    if (!data.currentPassword) {
+      throw new Error(
+        "Current branch creation password is required.",
+      );
+    }
+
+    const currentPasswordMatches =
+      await bcrypt.compare(
+        data.currentPassword,
+        existingCredential.passwordHash,
+      );
+
+    if (!currentPasswordMatches) {
+      await db.auditLog.create({
+        data: {
+          organizationId,
+          branchId: user.branchId,
+          userId,
+          action: "UPDATE",
+          entityType:
+            "BranchCreationCredentialAttempt",
+          entityId: organizationId,
+          description:
+            "Failed branch creation password change because the current password was invalid.",
+        },
+      });
+
+      throw new Error(
+        "Current branch creation password is incorrect.",
+      );
+    }
+
     const passwordHash = await bcrypt.hash(
       data.password,
       12,
     );
 
-    await BranchRepository.createCreationCredential(
+    await BranchRepository.updateCreationCredential(
       organizationId,
       passwordHash,
     );
@@ -359,14 +464,296 @@ export class BranchService {
         entityType: "BranchCreationCredential",
         entityId: organizationId,
         description:
-          "Branch creation password was created or changed by the headquarters administrator.",
+          "Branch creation password was changed after successful current-password verification.",
       },
     });
 
     return {
       success: true,
       message:
-        "Branch creation password updated successfully.",
+        "Branch creation password changed successfully.",
+    };
+  }
+
+  static async requestCreationPasswordReset(
+    organizationId: string,
+    userId: string,
+  ) {
+    const user =
+      await BranchRepository.getUserForBranchSecurity(
+        userId,
+        organizationId,
+      );
+
+    if (!user) {
+      throw new Error("Unauthorized.");
+    }
+
+    if (user.role !== "ORGANIZATION_ADMIN") {
+      throw new Error(
+        "Only an organization admin can reset the branch creation password.",
+      );
+    }
+
+    if (
+      !user.branchId ||
+      !user.branch ||
+      user.branch.deletedAt ||
+      !user.branch.isHeadquarters
+    ) {
+      throw new Error(
+        "Only the headquarters administrator can reset the branch creation password.",
+      );
+    }
+
+    if (!user.email) {
+      throw new Error(
+        "No recovery email is configured for this administrator account.",
+      );
+    }
+
+    const credential =
+      await BranchRepository.getCreationCredential(
+        organizationId,
+      );
+
+    if (!credential) {
+      throw new Error(
+        "The branch creation password has not been configured yet.",
+      );
+    }
+
+    await BranchCreationPasswordResetRepository.invalidateExistingTokens(
+      organizationId,
+    );
+
+    const rawToken =
+      BranchCreationPasswordResetRepository.generateRawToken();
+
+    const tokenHash =
+      BranchCreationPasswordResetRepository.hashToken(
+        rawToken,
+      );
+
+    const expiresAt = new Date(
+      Date.now() + 30 * 60 * 1000,
+    );
+
+    await BranchCreationPasswordResetRepository.createToken({
+      organizationId,
+      userId,
+      tokenHash,
+      expiresAt,
+    });
+
+    const baseUrl =
+      process.env.NEXTAUTH_URL ||
+      "http://localhost:3000";
+
+    const resetUrl =
+      `${baseUrl}/branch-security/reset-password?token=${rawToken}`;
+
+    const result = await EmailService.send({
+      to: user.email,
+      subject:
+        "Reset your American Council branch creation password",
+      text: `Hello ${user.firstName},
+
+A request was made to reset the branch creation password for your American Council organization.
+
+Reset the branch creation password using this link:
+
+${resetUrl}
+
+This link will expire in 30 minutes and can only be used once.
+
+If you did not request this reset, you can safely ignore this email.`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6">
+          <h2>Reset Branch Creation Password</h2>
+
+          <p>Hello ${user.firstName},</p>
+
+          <p>
+            A request was made to reset the branch creation
+            password for your American Council organization.
+          </p>
+
+          <p>
+            <a
+              href="${resetUrl}"
+              style="
+                display:inline-block;
+                padding:12px 20px;
+                background:#000;
+                color:#fff;
+                text-decoration:none;
+                border-radius:6px;
+              "
+            >
+              Reset Branch Creation Password
+            </a>
+          </p>
+
+          <p>
+            This link will expire in 30 minutes and can only
+            be used once.
+          </p>
+
+          <p>
+            If you did not request this reset, you can safely
+            ignore this email.
+          </p>
+        </div>
+      `,
+    });
+
+    if (!result.success) {
+      console.error(
+        "BRANCH CREATION PASSWORD RESET EMAIL ERROR:",
+        result.message,
+      );
+
+      throw new Error(
+        "Unable to send the password reset email. Please try again later.",
+      );
+    }
+
+    await db.auditLog.create({
+      data: {
+        organizationId,
+        branchId: user.branchId,
+        userId,
+        action: "CREATE",
+        entityType:
+          "BranchCreationPasswordResetRequest",
+        entityId: organizationId,
+        description:
+          "A branch creation password reset email was requested.",
+      },
+    });
+
+    return {
+      success: true,
+      message:
+        "A password reset link has been sent to your registered administrator email address.",
+    };
+  }
+
+  static async resetCreationPassword(
+    data: ResetBranchCreationPasswordInput,
+  ) {
+    if (!data.token) {
+      throw new Error(
+        "Password reset token is required.",
+      );
+    }
+
+    assertStrongPassword(data.password);
+
+    assertPasswordsMatch(
+      data.password,
+      data.confirmPassword,
+    );
+
+    const tokenHash =
+      BranchCreationPasswordResetRepository.hashToken(
+        data.token,
+      );
+
+    const resetToken =
+      await BranchCreationPasswordResetRepository.findValidToken(
+        tokenHash,
+      );
+
+    if (!resetToken) {
+      return {
+        success: false,
+        message:
+          "This branch password reset link is invalid or has expired.",
+      };
+    }
+
+    const user = resetToken.user;
+
+    if (
+      user.role !== "ORGANIZATION_ADMIN" ||
+      user.status !== "ACTIVE" ||
+      user.deletedAt ||
+      user.organizationId !==
+        resetToken.organizationId ||
+      !user.branch ||
+      user.branch.deletedAt ||
+      !user.branch.isHeadquarters ||
+      resetToken.organization.status !== "ACTIVE"
+    ) {
+      return {
+        success: false,
+        message:
+          "This branch password reset link is no longer valid.",
+      };
+    }
+
+    const passwordHash =
+      await bcrypt.hash(data.password, 12);
+
+    const branchId = user.branch.id;
+
+    await db.$transaction(async (tx) => {
+      await tx.branchCreationCredential.update({
+        where: {
+          organizationId:
+            resetToken.organizationId,
+        },
+        data: {
+          passwordHash,
+        },
+      });
+
+      await tx.branchCreationPasswordResetToken.update({
+        where: {
+          id: resetToken.id,
+        },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+
+      await tx.branchCreationPasswordResetToken.updateMany({
+        where: {
+          organizationId:
+            resetToken.organizationId,
+          usedAt: null,
+          id: {
+            not: resetToken.id,
+          },
+        },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          organizationId:
+            resetToken.organizationId,
+          branchId,
+          userId: user.id,
+          action: "UPDATE",
+          entityType:
+            "BranchCreationCredential",
+          entityId:
+            resetToken.organizationId,
+          description:
+            "Branch creation password was reset through verified administrator email recovery.",
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message:
+        "Branch creation password reset successfully.",
     };
   }
 

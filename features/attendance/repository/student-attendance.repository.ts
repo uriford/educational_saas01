@@ -371,7 +371,7 @@ export class StudentAttendanceRepository {
 
   static async saveManyWithAudit(
     organizationId: string,
-    branchId: string,
+    branchId: string | null | undefined,
     classSessionId: string,
     markedById: string,
     records: {

@@ -20,15 +20,23 @@ export class BranchRepository {
     organizationId: string,
     passwordHash: string,
   ) {
-    return db.branchCreationCredential.upsert({
-      where: {
-        organizationId,
-      },
-      create: {
+    return db.branchCreationCredential.create({
+      data: {
         organizationId,
         passwordHash,
       },
-      update: {
+    });
+  }
+
+  static async updateCreationCredential(
+    organizationId: string,
+    passwordHash: string,
+  ) {
+    return db.branchCreationCredential.update({
+      where: {
+        organizationId,
+      },
+      data: {
         passwordHash,
       },
     });
@@ -243,8 +251,13 @@ export class BranchRepository {
       },
       select: {
         id: true,
-        role: true,
+        organizationId: true,
         branchId: true,
+        email: true,
+        firstName: true,
+        role: true,
+        status: true,
+        deletedAt: true,
         branch: {
           select: {
             id: true,

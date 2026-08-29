@@ -1,5 +1,6 @@
 "use client";
-import Image from "next/image";
+
+import { SidebarTrigger } from "@/components/ui/sidebar";import Image from "next/image";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -12,7 +13,6 @@ import {
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type StudentHeaderProps = {
   firstName: string;
@@ -36,8 +36,8 @@ export default function StudentHeader({
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 lg:px-6">
       <div className="flex items-center gap-3">
-
         <SidebarTrigger className="rounded-lg" />
+
 
         <div>
           <p className="font-semibold">American Council</p>

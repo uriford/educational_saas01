@@ -19,8 +19,7 @@ export default async function AttendancePage({
 
   if (
     !session?.user?.id ||
-    !session.user.organizationId ||
-    !session.user.branchId
+    !session.user.organizationId
   ) {
     redirect("/login");
   }
@@ -40,8 +39,8 @@ export default async function AttendancePage({
   const result =
     await AttendanceService.getSessionAttendance(
       session.user.organizationId,
-      session.user.branchId,
       sessionId,
+      session.user.branchId,
     );
 
   if (!result.enabled) {

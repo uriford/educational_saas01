@@ -6,8 +6,23 @@ export type CreateBranchInput = {
   creationPassword: string;
 };
 
-export type SetBranchCreationPasswordInput = {
+export type SetBranchCreationPasswordInput =
+  | {
+      mode: "INITIAL";
+      password: string;
+      confirmPassword: string;
+    }
+  | {
+      mode: "CHANGE";
+      currentPassword: string;
+      password: string;
+      confirmPassword: string;
+    };
+
+export type ResetBranchCreationPasswordInput = {
+  token: string;
   password: string;
+  confirmPassword: string;
 };
 
 

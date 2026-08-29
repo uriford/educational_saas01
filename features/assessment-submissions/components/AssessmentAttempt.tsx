@@ -193,7 +193,13 @@ export default function AssessmentAttempt({
   }, [assessmentId, duration]);
 
   useEffect(() => {
-    void startAttempt();
+    const timer = window.setTimeout(() => {
+      void startAttempt();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [startAttempt]);
 
   const saveAnswer = useCallback(

@@ -8,6 +8,8 @@ import {
   useRef,
   useState,
 } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -1168,13 +1170,71 @@ export default function MessageBubble({
                 {content && (
                   <div
                     className={cn(
-                      "whitespace-pre-wrap break-words px-4 py-3 text-sm leading-relaxed",
+                      "break-words px-4 py-3 text-sm leading-relaxed",
                       isOwn
                         ? "text-primary-foreground"
                         : "text-foreground",
                     )}
                   >
-                    {content}
+                    {isAI ? (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ children }) => (
+                            <p className="whitespace-pre-wrap [&:not(:first-child)]:mt-3">
+                              {children}
+                            </p>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-semibold">
+                              {children}
+                            </strong>
+                          ),
+                          em: ({ children }) => (
+                            <em>{children}</em>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="my-2 list-disc space-y-1 pl-5">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="my-2 list-decimal space-y-1 pl-5">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="pl-1">{children}</li>
+                          ),
+                          a: ({ children, href }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+                            >
+                              {children}
+                            </a>
+                          ),
+                          code: ({ children }) => (
+                            <code className="rounded bg-muted px-1.5 py-0.5 text-[0.9em]">
+                              {children}
+                            </code>
+                          ),
+                          blockquote: ({ children }) => (
+                            <blockquote className="my-2 border-l-2 border-primary/40 pl-3 text-muted-foreground">
+                              {children}
+                            </blockquote>
+                          ),
+                        }}
+                      >
+                        {content}
+                      </ReactMarkdown>
+                    ) : (
+                      <div className="whitespace-pre-wrap">
+                        {content}
+                      </div>
+                    )}
                   </div>
                 )}
               </>

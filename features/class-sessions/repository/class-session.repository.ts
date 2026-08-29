@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 export class ClassSessionRepository {
   static async create(data: {
     organizationId: string;
-    branchId: string;
+    branchId?: string | null;
     courseId: string;
     teacherId: string;
     title: string;
@@ -16,7 +16,9 @@ export class ClassSessionRepository {
     return db.classSession.create({
       data: {
         organizationId: data.organizationId,
-        branchId: data.branchId,
+        ...(data.branchId
+          ? { branchId: data.branchId }
+          : {}),
         courseId: data.courseId,
         teacherId: data.teacherId,
         title: data.title,

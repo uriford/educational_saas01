@@ -52,17 +52,17 @@ export default async function AIQuestionGeneratorPage({
 
   if (assessment.status !== "DRAFT") {
     return (
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-4 sm:space-y-6">
         <div>
           <p className="text-sm text-muted-foreground">
             {course.name}
           </p>
 
-          <h1 className="text-2xl font-bold">
+          <h1 className="break-words text-xl font-bold leading-tight sm:text-2xl">
             {assessment.title} — AI Question Generator
           </h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
             Prepare source-grounded questions for this assessment.
           </p>
         </div>
@@ -108,17 +108,17 @@ export default async function AIQuestionGeneratorPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
           {course.name}
         </p>
 
-        <h1 className="text-2xl font-bold">
+        <h1 className="break-words text-xl font-bold leading-tight sm:text-2xl">
           {assessment.title} — AI Question Generator
         </h1>
 
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
           Generate source-grounded questions for this draft
           assessment.
         </p>

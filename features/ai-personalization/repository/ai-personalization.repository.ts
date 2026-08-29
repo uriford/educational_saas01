@@ -6,7 +6,7 @@ export class AIPersonalizationRepository {
     studentId: string,
     courseId: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null | undefined,
   ) {
     const enrollment =
       await db.courseEnrollment.findFirst({
@@ -19,12 +19,16 @@ export class AIPersonalizationRepository {
 
           student: {
             organizationId,
-            branchId,
+            ...(branchId
+              ? { branchId }
+              : { branchId: null }),
           },
 
           course: {
             organizationId,
-            branchId,
+            ...(branchId
+              ? { branchId }
+              : { branchId: null }),
           },
         },
 
@@ -82,7 +86,9 @@ export class AIPersonalizationRepository {
 
           course: {
             organizationId,
-            branchId,
+            ...(branchId
+              ? { branchId }
+              : { branchId: null }),
           },
         },
 
@@ -109,7 +115,7 @@ export class AIPersonalizationRepository {
             courseId,
             deletedAt: null,
             organizationId,
-            branchId,
+            ...(branchId ? { branchId } : {}),
           },
 
           status: {
@@ -157,7 +163,7 @@ export class AIPersonalizationRepository {
     studentId: string,
     courseId: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null | undefined,
   ) {
     return db.aIPersonalization.findFirst({
       where: {
@@ -166,12 +172,16 @@ export class AIPersonalizationRepository {
 
         student: {
           organizationId,
-          branchId,
+          ...(branchId
+            ? { branchId }
+            : { branchId: null }),
         },
 
         course: {
           organizationId,
-          branchId,
+          ...(branchId
+            ? { branchId }
+            : { branchId: null }),
         },
       },
     });
@@ -181,7 +191,7 @@ export class AIPersonalizationRepository {
     studentId: string,
     courseId: string,
     organizationId: string,
-    branchId: string,
+    branchId: string | null | undefined,
     data: {
       learningLevel?: string;
       strengths?: Prisma.InputJsonValue;
@@ -206,12 +216,16 @@ export class AIPersonalizationRepository {
 
           student: {
             organizationId,
-            branchId,
+            ...(branchId
+              ? { branchId }
+              : { branchId: null }),
           },
 
           course: {
             organizationId,
-            branchId,
+            ...(branchId
+              ? { branchId }
+              : { branchId: null }),
           },
         },
 

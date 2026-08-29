@@ -8,47 +8,48 @@ datasource db {
 }
 
 model Organization {
-  id                       String                    @id @default(uuid())
-  code                     String                    @unique
-  name                     String
-  slug                     String                    @unique
-  email                    String?
-  phone                    String?
-  domain                   String?
-  logo                     String?
-  status                   OrganizationStatus        @default(ACTIVE)
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  deletedAt                DateTime?
-  createdById              String?
-  updatedById              String?
-  hasBranches              Boolean                   @default(false)
-  aiquestionGenerations    AIQuestionGeneration[]
-  aisourceDocuments        AISourceDocument[]
-  announcements            Announcement[]
-  assessments              Assessment[]
-  attendances              Attendance[]
-  attendanceAudits         AttendanceAudit[]
-  auditLogs                AuditLog[]
-  branches                 Branch[]
-  branchCreationCredential BranchCreationCredential?
-  chatConversations        ChatConversation[]
-  chatStaff                ChatStaff[]
-  classSessions            ClassSession[]
-  courses                  Course[]
-  guardianProfiles         GuardianProfile[]
-  lessons                  Lesson[]
-  notifications            Notification[]
-  settings                 OrganizationSettings?
-  paymentPlans             PaymentPlan[]
-  students                 Student[]
-  enrollmentRequests       EnrollmentRequest[]
-  studentIdCounter         StudentIdCounter?
-  subscriptions            Subscription[]
-  teachers                 Teacher[]
-  teacherIdCounter         TeacherIdCounter?
-  users                    User[]
-  accountInvitations       AccountInvitation[]
+  id                                String                             @id @default(uuid())
+  code                              String                             @unique
+  name                              String
+  slug                              String                             @unique
+  email                             String?
+  phone                             String?
+  domain                            String?
+  logo                              String?
+  status                            OrganizationStatus                 @default(ACTIVE)
+  createdAt                         DateTime                           @default(now())
+  updatedAt                         DateTime                           @updatedAt
+  deletedAt                         DateTime?
+  createdById                       String?
+  updatedById                       String?
+  hasBranches                       Boolean                            @default(false)
+  aiquestionGenerations             AIQuestionGeneration[]
+  aisourceDocuments                 AISourceDocument[]
+  announcements                     Announcement[]
+  assessments                       Assessment[]
+  attendances                       Attendance[]
+  attendanceAudits                  AttendanceAudit[]
+  auditLogs                         AuditLog[]
+  branches                          Branch[]
+  branchCreationCredential          BranchCreationCredential?
+  branchCreationPasswordResetTokens BranchCreationPasswordResetToken[]
+  chatConversations                 ChatConversation[]
+  chatStaff                         ChatStaff[]
+  classSessions                     ClassSession[]
+  courses                           Course[]
+  guardianProfiles                  GuardianProfile[]
+  lessons                           Lesson[]
+  notifications                     Notification[]
+  settings                          OrganizationSettings?
+  paymentPlans                      PaymentPlan[]
+  students                          Student[]
+  enrollmentRequests                EnrollmentRequest[]
+  studentIdCounter                  StudentIdCounter?
+  subscriptions                     Subscription[]
+  teachers                          Teacher[]
+  teacherIdCounter                  TeacherIdCounter?
+  users                             User[]
+  accountInvitations                AccountInvitation[]
 }
 
 model OrganizationSettings {
@@ -110,42 +111,60 @@ model BranchCreationCredential {
   @@index([organizationId])
 }
 
+model BranchCreationPasswordResetToken {
+  id             String    @id @default(uuid())
+  organizationId String
+  userId         String
+  tokenHash      String    @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model User {
-  id                      String                   @id @default(uuid())
-  organizationId          String?
-  branchId                String?
-  code                    String                   @unique
-  firstName               String
-  lastName                String?
-  email                   String
-  phone                   String?
-  password                String
-  role                    Role
-  status                  UserStatus               @default(ACTIVE)
-  avatar                  String?
-  emailVerified           Boolean                  @default(false)
-  lastLoginAt             DateTime?
-  isBranchManager         Boolean                  @default(false)
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  deletedAt               DateTime?
-  createdById             String?
-  updatedById             String?
-  themePreference         ThemePreference          @default(SYSTEM)
-  auditLogs               AuditLog[]
-  chatMessages            ChatMessage[]            @relation("ChatMessageSender")
-  chatMessageReactions    ChatMessageReaction[]
-  chatStaff               ChatStaff[]
-  emailVerificationTokens EmailVerificationToken[]
-  guardianProfile         GuardianProfile?
-  notifications           Notification[]
-  passwordResetTokens     PasswordResetToken[]
-  pushSubscriptions       PushSubscription[]
-  students                Student?
-  teachers                Teacher?
-  accountInvitationsSent  AccountInvitation[]      @relation("AccountInvitationInviter")
-  branch                  Branch?                  @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id                                String                             @id @default(uuid())
+  organizationId                    String?
+  branchId                          String?
+  code                              String                             @unique
+  firstName                         String
+  lastName                          String?
+  email                             String
+  phone                             String?
+  password                          String
+  role                              Role
+  status                            UserStatus                         @default(ACTIVE)
+  avatar                            String?
+  emailVerified                     Boolean                            @default(false)
+  lastLoginAt                       DateTime?
+  isBranchManager                   Boolean                            @default(false)
+  createdAt                         DateTime                           @default(now())
+  updatedAt                         DateTime                           @updatedAt
+  deletedAt                         DateTime?
+  createdById                       String?
+  updatedById                       String?
+  themePreference                   ThemePreference                    @default(SYSTEM)
+  auditLogs                         AuditLog[]
+  chatMessages                      ChatMessage[]                      @relation("ChatMessageSender")
+  chatMessageReactions              ChatMessageReaction[]
+  chatStaff                         ChatStaff[]
+  emailVerificationTokens           EmailVerificationToken[]
+  guardianProfile                   GuardianProfile?
+  notifications                     Notification[]
+  passwordResetTokens               PasswordResetToken[]
+  pushSubscriptions                 PushSubscription[]
+  students                          Student?
+  teachers                          Teacher?
+  accountInvitationsSent            AccountInvitation[]                @relation("AccountInvitationInviter")
+  branch                            Branch?                            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  organization                      Organization?                      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchCreationPasswordResetTokens BranchCreationPasswordResetToken[]
 
   @@unique([organizationId, email])
 }
@@ -618,7 +637,7 @@ model PaymentTransaction {
 model ClassSession {
   id               String             @id @default(uuid())
   organizationId   String
-  branchId         String
+  branchId         String?
   courseId         String
   teacherId        String
   title            String
@@ -634,7 +653,7 @@ model ClassSession {
   updatedById      String?
   attendances      Attendance[]
   attendanceAudits AttendanceAudit[]
-  branch           Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch           Branch?            @relation(fields: [branchId], references: [id], onDelete: Cascade)
   course           Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
   organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   teacher          Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
@@ -746,7 +765,7 @@ model AssessmentAnswer {
 model Attendance {
   id               String            @id @default(uuid())
   organizationId   String
-  branchId         String
+  branchId         String?
   classSessionId   String
   studentId        String
   status           AttendanceStatus  @default(PRESENT)
@@ -755,7 +774,7 @@ model Attendance {
   notes            String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  branch           Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch           Branch?           @relation(fields: [branchId], references: [id], onDelete: Cascade)
   classSession     ClassSession      @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   student          Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -772,7 +791,7 @@ model Attendance {
 model AttendanceAudit {
   id             String            @id @default(uuid())
   organizationId String
-  branchId       String
+  branchId       String?
   attendanceId   String
   classSessionId String
   studentId      String
@@ -783,7 +802,7 @@ model AttendanceAudit {
   changedById    String
   changedAt      DateTime          @default(now())
   attendance     Attendance        @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
-  branch         Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch         Branch?           @relation(fields: [branchId], references: [id], onDelete: Cascade)
   classSession   ClassSession      @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   student        Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)

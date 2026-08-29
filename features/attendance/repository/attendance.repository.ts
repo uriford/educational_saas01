@@ -4,13 +4,13 @@ export class AttendanceRepository {
   static async getSession(
     classSessionId: string,
     organizationId: string,
-    branchId: string,
+    branchId?: string | null,
   ) {
     return db.classSession.findFirst({
       where: {
         id: classSessionId,
         organizationId,
-        branchId,
+        ...(branchId ? { branchId } : { branchId: null }),
         deletedAt: null,
       },
       include: {
@@ -43,13 +43,13 @@ export class AttendanceRepository {
   static async getForSession(
     classSessionId: string,
     organizationId: string,
-    branchId: string,
+    branchId?: string | null,
   ) {
     return db.attendance.findMany({
       where: {
         classSessionId,
         organizationId,
-        branchId,
+        ...(branchId ? { branchId } : { branchId: null }),
       },
       orderBy: {
         student: {
@@ -64,7 +64,7 @@ export class AttendanceRepository {
 
   static async saveMany(
     organizationId: string,
-    branchId: string,
+    branchId: string | null,
     classSessionId: string,
     markedById: string,
     records: {
@@ -84,7 +84,7 @@ export class AttendanceRepository {
           },
           create: {
             organizationId,
-            branchId,
+            branchId: branchId ?? null,
             classSessionId,
             studentId: record.studentId,
             status: record.status,

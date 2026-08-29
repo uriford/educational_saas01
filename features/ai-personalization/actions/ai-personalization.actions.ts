@@ -15,8 +15,10 @@ export async function generateAIPersonalizationAction(
 
     
     const student =
-      await StudentService.getByUserIdOnly(
+      await StudentService.getByUserId(
         session.user.id,
+        session.user.organizationId,
+        session.user.branchId ?? undefined,
       );
 
     if (!student) {
@@ -27,7 +29,7 @@ export async function generateAIPersonalizationAction(
       student.id,
       courseId,
       session.user.organizationId,
-      session.user.branchId,
+      student.branchId,
     );
   } catch (error) {
     console.error(
@@ -53,8 +55,10 @@ export async function getAIPersonalizationAction(
 
     
     const student =
-      await StudentService.getByUserIdOnly(
+      await StudentService.getByUserId(
         session.user.id,
+        session.user.organizationId,
+        session.user.branchId ?? undefined,
       );
 
     if (!student) {
@@ -65,7 +69,7 @@ export async function getAIPersonalizationAction(
       student.id,
       courseId,
       session.user.organizationId,
-      session.user.branchId,
+      student.branchId,
     );
   } catch (error) {
     console.error(

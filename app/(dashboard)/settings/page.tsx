@@ -64,6 +64,7 @@ export default async function SettingsPage() {
 
       <SettingsTabs
         organization={{
+          logo: settings.organization.logo ?? null,
           name: settings.organization.name,
           email:
             settings.organization.email ?? "",

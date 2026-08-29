@@ -80,6 +80,35 @@ export class SettingsRepository {
     });
   }
 
+  static async updateOrganizationLogo(
+    organizationId: string,
+    logo: string,
+  ) {
+    return db.organization.updateMany({
+      where: {
+        id: organizationId,
+        deletedAt: null,
+      },
+      data: {
+        logo,
+      },
+    });
+  }
+
+  static async removeOrganizationLogo(
+    organizationId: string,
+  ) {
+    return db.organization.updateMany({
+      where: {
+        id: organizationId,
+        deletedAt: null,
+      },
+      data: {
+        logo: null,
+      },
+    });
+  }
+
   static async updateOrganizationSettings(
     organizationId: string,
     data: {

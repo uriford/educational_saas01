@@ -88,8 +88,10 @@ export default async function StudentCoursePage({
 
   const { courseId } = await params;
 
-  const student = await StudentService.getByUserIdOnly(
+  const student = await StudentService.getByUserId(
     session.user.id,
+    session.user.organizationId,
+    session.user.branchId ?? undefined,
   );
 
   if (!student) {
@@ -113,15 +115,11 @@ export default async function StudentCoursePage({
     );
   }
 
-  if (!student.branchId) {
-    redirect("/login");
-  }
-
   const enrollments =
     await EnrollmentService.getStudentEnrollments(
       student.id,
       student.organizationId,
-      student.branchId,
+      student.branchId ?? undefined,
     );
 
   const enrollment = enrollments.find(
@@ -144,18 +142,18 @@ export default async function StudentCoursePage({
     ClassSessionService.getCourseSessions(
       course.id,
       student.organizationId,
-      student.branchId,
+      student.branchId ?? undefined,
     ),
     AssessmentRepository.findByCourse(
       course.id,
       student.organizationId,
-      student.branchId,
+      student.branchId ?? undefined,
     ),
     LessonProgressService.getCourseLessons(
       student.id,
       course.id,
       student.organizationId,
-      student.branchId,
+      student.branchId ?? undefined,
     ),
     getAIPersonalizationAction(course.id),
     getMyPaymentHistoryAction(),
@@ -198,11 +196,50 @@ export default async function StudentCoursePage({
 
   const now = new Date();
 
+  /*
+   * Schedule presentation:
+   * - Upcoming: class has not started yet.
+   * - In progress: class has started but has not ended.
+   * - Recent: class has already ended.
+   *
+   * We intentionally use the scheduled times for the UI transition
+   * so a class does not remain under "Upcoming" after it has finished
+   * simply because an admin has not manually changed its status.
+   */
   const upcomingSessions = sessions
     .filter(
       (item) =>
-        item.startTime >= now &&
+        item.startTime > now &&
         item.status !== "CANCELLED",
+    )
+    .sort(
+      (a, b) =>
+        a.startTime.getTime() - b.startTime.getTime(),
+    )
+    .slice(0, 5);
+
+  const inProgressSessions = sessions
+    .filter(
+      (item) =>
+        item.startTime <= now &&
+        item.endTime >= now &&
+        item.status !== "CANCELLED",
+    )
+    .sort(
+      (a, b) =>
+        a.startTime.getTime() - b.startTime.getTime(),
+    )
+    .slice(0, 5);
+
+  const recentSessions = sessions
+    .filter(
+      (item) =>
+        item.endTime < now &&
+        item.status !== "CANCELLED",
+    )
+    .sort(
+      (a, b) =>
+        b.startTime.getTime() - a.startTime.getTime(),
     )
     .slice(0, 5);
 
@@ -345,109 +382,305 @@ export default async function StudentCoursePage({
 
       {/* Main content */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Upcoming classes */}
+        {/* Class schedule */}
         <section className="rounded-2xl border bg-card shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between border-b p-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <CalendarDays className="size-5 text-primary" />
+          {/* Upcoming classes */}
+          <div>
+            <div className="flex items-center justify-between border-b p-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="size-5 text-primary" />
 
-                <h2 className="text-lg font-semibold">
-                  Upcoming Classes
-                </h2>
-              </div>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your next scheduled classes for this course.
-              </p>
-            </div>
-
-            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
-              {upcomingSessions.length}
-            </span>
-          </div>
-
-          {upcomingSessions.length === 0 ? (
-            <div className="flex min-h-52 items-center justify-center p-8">
-              <div className="text-center">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-muted">
-                  <CalendarDays className="size-6 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold">
+                    Upcoming Classes
+                  </h2>
                 </div>
 
-                <h3 className="mt-4 font-semibold">
-                  No upcoming classes
-                </h3>
-
                 <p className="mt-1 text-sm text-muted-foreground">
-                  There are no upcoming classes scheduled
-                  right now.
+                  Your next scheduled classes for this course.
                 </p>
               </div>
+
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                {upcomingSessions.length}
+              </span>
             </div>
-          ) : (
-            <div className="divide-y">
-              {upcomingSessions.map((classSession) => (
-                <div
-                  key={classSession.id}
-                  className="p-6 transition hover:bg-muted/30"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold">
-                        {classSession.title}
-                      </h3>
 
-                      {classSession.description && (
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                          {classSession.description}
-                        </p>
-                      )}
+            {upcomingSessions.length === 0 ? (
+              <div className="flex min-h-44 items-center justify-center p-8">
+                <div className="text-center">
+                  <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-muted">
+                    <CalendarDays className="size-6 text-muted-foreground" />
+                  </div>
 
-                      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center gap-2">
-                          <CalendarDays className="size-4" />
-                          {formatDateTime(
-                            classSession.startTime,
-                          )}
-                        </span>
+                  <h3 className="mt-4 font-semibold">
+                    No upcoming classes
+                  </h3>
 
-                        <span className="inline-flex items-center gap-2">
-                          <Clock3 className="size-4" />
-                          {formatTime(
-                            classSession.startTime,
-                          )}{" "}
-                          –{" "}
-                          {formatTime(classSession.endTime)}
-                        </span>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    There are no upcoming classes scheduled right now.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {upcomingSessions.map((classSession) => (
+                  <div
+                    key={classSession.id}
+                    className="p-6 transition hover:bg-muted/30"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold">
+                            {classSession.title}
+                          </h3>
 
-                        {classSession.room && (
-                          <span className="inline-flex items-center gap-2">
-                            <MapPin className="size-4" />
-                            {classSession.room}
+                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                            Upcoming
                           </span>
+                        </div>
+
+                        {classSession.description && (
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                            {classSession.description}
+                          </p>
                         )}
+
+                        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="size-4" />
+                            {formatDateTime(classSession.startTime)}
+                          </span>
+
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="size-4" />
+                            {formatTime(classSession.startTime)}{" "}
+                            –{" "}
+                            {formatTime(classSession.endTime)}
+                          </span>
+
+                          {classSession.room && (
+                            <span className="inline-flex items-center gap-2">
+                              <MapPin className="size-4" />
+                              {classSession.room}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex shrink-0 items-center gap-2 rounded-xl bg-muted/60 px-3 py-2">
-                      <UserRound className="size-4 text-muted-foreground" />
+                      <div className="flex shrink-0 items-center gap-2 rounded-xl bg-muted/60 px-3 py-2">
+                        <UserRound className="size-4 text-muted-foreground" />
 
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Teacher
-                        </p>
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Teacher
+                          </p>
 
-                        <p className="text-sm font-medium">
-                          {classSession.teacher.firstName}{" "}
-                          {classSession.teacher.lastName ?? ""}
-                        </p>
+                          <p className="text-sm font-medium">
+                            {classSession.teacher.firstName}{" "}
+                            {classSession.teacher.lastName ?? ""}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* In-progress classes */}
+          {inProgressSessions.length > 0 && (
+            <div className="border-t">
+              <div className="flex items-center justify-between border-b p-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Clock3 className="size-5 text-primary" />
+
+                    <h2 className="text-lg font-semibold">
+                      In Progress
+                    </h2>
+                  </div>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Classes currently in session.
+                  </p>
                 </div>
-              ))}
+
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  {inProgressSessions.length}
+                </span>
+              </div>
+
+              <div className="divide-y">
+                {inProgressSessions.map((classSession) => (
+                  <div
+                    key={classSession.id}
+                    className="p-6 transition hover:bg-muted/30"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold">
+                            {classSession.title}
+                          </h3>
+
+                          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                            Live now
+                          </span>
+                        </div>
+
+                        {classSession.description && (
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                            {classSession.description}
+                          </p>
+                        )}
+
+                        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="size-4" />
+                            {formatDateTime(classSession.startTime)}
+                          </span>
+
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="size-4" />
+                            {formatTime(classSession.startTime)}{" "}
+                            –{" "}
+                            {formatTime(classSession.endTime)}
+                          </span>
+
+                          {classSession.room && (
+                            <span className="inline-flex items-center gap-2">
+                              <MapPin className="size-4" />
+                              {classSession.room}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2 rounded-xl bg-primary/5 px-3 py-2">
+                        <UserRound className="size-4 text-muted-foreground" />
+
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Teacher
+                          </p>
+
+                          <p className="text-sm font-medium">
+                            {classSession.teacher.firstName}{" "}
+                            {classSession.teacher.lastName ?? ""}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Recent classes */}
+          <div className="border-t">
+            <div className="flex items-center justify-between border-b p-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="size-5 text-muted-foreground" />
+
+                  <h2 className="text-lg font-semibold">
+                    Recent Classes
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Recently finished classes for this course.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                {recentSessions.length}
+              </span>
+            </div>
+
+            {recentSessions.length === 0 ? (
+              <div className="flex min-h-36 items-center justify-center p-8">
+                <div className="text-center">
+                  <h3 className="font-semibold">
+                    No recent classes
+                  </h3>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Finished classes will appear here.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {recentSessions.map((classSession) => (
+                  <div
+                    key={classSession.id}
+                    className="p-6 transition hover:bg-muted/30"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold">
+                            {classSession.title}
+                          </h3>
+
+                          <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                            Completed
+                          </span>
+                        </div>
+
+                        {classSession.description && (
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                            {classSession.description}
+                          </p>
+                        )}
+
+                        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="size-4" />
+                            {formatDateTime(classSession.startTime)}
+                          </span>
+
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="size-4" />
+                            {formatTime(classSession.startTime)}{" "}
+                            –{" "}
+                            {formatTime(classSession.endTime)}
+                          </span>
+
+                          {classSession.room && (
+                            <span className="inline-flex items-center gap-2">
+                              <MapPin className="size-4" />
+                              {classSession.room}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2 rounded-xl bg-muted/40 px-3 py-2">
+                        <UserRound className="size-4 text-muted-foreground" />
+
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Teacher
+                          </p>
+
+                          <p className="text-sm font-medium">
+                            {classSession.teacher.firstName}{" "}
+                            {classSession.teacher.lastName ?? ""}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Course progress */}
