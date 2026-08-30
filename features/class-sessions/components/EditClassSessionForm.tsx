@@ -1,4 +1,5 @@
 "use client";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -47,8 +48,7 @@ type Props = {
 function formatDateTimeLocal(date: Date) {
   const value = new Date(date);
 
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   const formatter = new Intl.DateTimeFormat(
     "en-CA",
@@ -77,7 +77,11 @@ function formatDateTimeLocal(date: Date) {
 }
 
 function localDateTimeToISOString(value: string) {
-  return new Date(value).toISOString();
+  if (!value) {
+    return "";
+  }
+
+  return new Date(`${value}:00+06:00`).toISOString();
 }
 
 export default function EditClassSessionForm({

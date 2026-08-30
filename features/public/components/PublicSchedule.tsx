@@ -1,3 +1,4 @@
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 
@@ -22,8 +23,7 @@ type ClassSession = {
 };
 
 function getLocalDateParts(date: Date) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,

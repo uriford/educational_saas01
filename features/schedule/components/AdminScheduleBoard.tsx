@@ -1,4 +1,5 @@
 "use client";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -95,14 +96,30 @@ function formatDate(date: Date) {
 }
 
 function formatTime(value: string) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function getOrganizationWeekday(value: string) {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
+    weekday: "short",
+  }).format(new Date(value));
+
+  return [
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+  ].indexOf(weekday);
 }
 
 function formatWeekRange(start: Date, end: Date) {
@@ -272,7 +289,7 @@ export default function AdminScheduleBoard({
         date,
         sessions: weekSessions.filter(
           (session) =>
-            new Date(session.startTime).getDay() ===
+            getOrganizationWeekday(session.startTime) ===
             index,
         ),
       };

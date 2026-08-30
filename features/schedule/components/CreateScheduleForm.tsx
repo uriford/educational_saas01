@@ -1,4 +1,5 @@
 "use client";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,11 @@ type Teacher = {
 };
 
 function localDateTimeToISOString(value: string) {
-  return new Date(value).toISOString();
+  if (!value) {
+    return "";
+  }
+
+  return new Date(`${value}:00+06:00`).toISOString();
 }
 
 type Props = {

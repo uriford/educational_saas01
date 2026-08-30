@@ -1,4 +1,5 @@
 "use client";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 
 import { useMemo, useState } from "react";
 import {
@@ -72,8 +73,7 @@ function endOfWeek(date: Date) {
 }
 
 function formatDate(date: Date) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -83,8 +83,7 @@ function formatDate(date: Date) {
 }
 
 function formatFullDate(date: Date) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -96,8 +95,7 @@ function formatFullDate(date: Date) {
 }
 
 function formatTime(value: string) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone,

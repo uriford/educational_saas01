@@ -1,4 +1,5 @@
 "use client";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 
 import { useMemo, useState } from "react";
 import {
@@ -44,8 +45,7 @@ type Props = {
 };
 
 function formatDate(date: string) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -57,14 +57,17 @@ function formatDate(date: string) {
 }
 
 function formatTime(date: string) {
-  const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = ORGANIZATION_TIMEZONE;
 
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(date));
+}
+
+function getOrganizationNow() {
+  return new Date();
 }
 
 function statusStyles(status: StudentSession["status"]) {

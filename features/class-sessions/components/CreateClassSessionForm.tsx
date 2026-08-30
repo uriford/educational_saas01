@@ -1,4 +1,5 @@
 "use client";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -19,8 +20,12 @@ type Teacher = {
   status: string;
 };
 
-function convertToBangladeshTime(value: string) {
-  return `${value}:00+06:00`;
+function localDateTimeToISOString(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  return new Date(`${value}:00+06:00`).toISOString();
 }
 
 type Props = {
@@ -65,8 +70,8 @@ export default function CreateClassSessionForm({
         teacherId,
         title,
         description,
-        startTime: convertToBangladeshTime(startTime),
-        endTime: convertToBangladeshTime(endTime),
+        startTime: localDateTimeToISOString(startTime),
+        endTime: localDateTimeToISOString(endTime),
         room,
       });
 
