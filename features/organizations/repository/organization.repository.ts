@@ -155,8 +155,9 @@ export class OrganizationRepository {
     _deletedById: string,
   ) {
     void _deletedById;
+
     return db.$transaction(async (tx) => {
-      const organization = await tx.organization.findFirst({
+      const organization = await tx.organization.findUnique({
         where: {
           id,
         },
@@ -172,100 +173,11 @@ export class OrganizationRepository {
       }
 
       /*
-       * IMPORTANT:
-       * This is a PERMANENT deletion.
+       * Permanent deletion.
        *
-       * We intentionally do not use deletedAt here.
-       * The organization and its related records are removed
-       * from the database so the same organization name,
-       * slug, email, branch slug, admin email, etc. can be
-       * registered again later.
-       */
-
-      // Delete organization-level records that do not rely
-      // on Organization's cascade to remove them.
-      await tx.organizationSettings.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      await tx.subscription.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      await tx.branchCreationCredential.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      /*
-       * Branches have many branch-scoped relations.
-       * Most of the Prisma schema already uses Cascade,
-       * so deleting the branches allows Prisma/database
-       * cascades to remove their dependent records.
-       */
-      await tx.branch.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      /*
-       * Delete organization-level records that may remain
-       * after branch deletion.
-       *
-       * These are safe because they belong exclusively
-       * to this organization.
-       */
-
-      await tx.chatStaff.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      await tx.chatConversation.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      await tx.notification.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      await tx.announcement.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      await tx.auditLog.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      /*
-       * Delete remaining organization-level users.
-       * Branch users should already be gone through the
-       * branch cascade, but this handles users whose
-       * branchId is null.
-       */
-      await tx.user.deleteMany({
-        where: {
-          organizationId: id,
-        },
-      });
-
-      /*
-       * Finally remove the organization itself.
+       * Organization-owned relations in the production
+       * database use ON DELETE CASCADE, so PostgreSQL
+       * removes all dependent records automatically.
        */
       const deletedOrganization =
         await tx.organization.delete({
