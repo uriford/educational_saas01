@@ -1,5 +1,9 @@
 "use client";
-import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
+import {
+  ORGANIZATION_TIMEZONE,
+  getOrganizationDateKey,
+  getOrganizationToday,
+} from "@/lib/timezone";
 
 import { useMemo, useState } from "react";
 import {
@@ -60,7 +64,7 @@ const weekDays = [
 
 function startOfWeek(date: Date) {
   const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
+  result.setHours(12, 0, 0, 0);
   result.setDate(result.getDate() - result.getDay());
   return result;
 }
@@ -68,7 +72,7 @@ function startOfWeek(date: Date) {
 function endOfWeek(date: Date) {
   const result = startOfWeek(date);
   result.setDate(result.getDate() + 6);
-  result.setHours(23, 59, 59, 999);
+  result.setHours(12, 0, 0, 0);
   return result;
 }
 
@@ -105,20 +109,32 @@ function formatTime(value: string) {
 }
 
 function formatWeekRange(start: Date, end: Date) {
-  if (start.getFullYear() === end.getFullYear()) {
-    return `${formatDate(start)} – ${formatDate(end)}, ${end.getFullYear()}`;
+  const startYear = new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
+    year: "numeric",
+  }).format(start);
+
+  const endYear = new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
+    year: "numeric",
+  }).format(end);
+
+  if (startYear === endYear) {
+    return `${formatDate(start)} – ${formatDate(end)}, ${endYear}`;
   }
 
-  return `${formatDate(start)}, ${start.getFullYear()} – ${formatDate(
+  return `${formatDate(start)}, ${startYear} – ${formatDate(
     end,
-  )}, ${end.getFullYear()}`;
+  )}, ${endYear}`;
 }
 
-function sameDay(dateA: Date, dateB: Date) {
+function sameOrganizationDay(
+  dateA: Date | string,
+  dateB: Date | string,
+) {
   return (
-    dateA.getFullYear() === dateB.getFullYear() &&
-    dateA.getMonth() === dateB.getMonth() &&
-    dateA.getDate() === dateB.getDate()
+    getOrganizationDateKey(dateA) ===
+    getOrganizationDateKey(dateB)
   );
 }
 
@@ -188,11 +204,19 @@ export default function GuardianScheduleBoard({
   const weekEnd = endOfWeek(currentWeek);
 
   const weekSessions = useMemo(() => {
+    const startKey = getOrganizationDateKey(currentWeek);
+    const endKey = getOrganizationDateKey(weekEnd);
+
     return sessions
       .filter((session) => {
-        const date = new Date(session.startTime);
+        const sessionKey = getOrganizationDateKey(
+          session.startTime,
+        );
 
-        return date >= currentWeek && date <= weekEnd;
+        return (
+          sessionKey >= startKey &&
+          sessionKey <= endKey
+        );
       })
       .sort(
         (a, b) =>
@@ -211,7 +235,7 @@ export default function GuardianScheduleBoard({
         name,
         date,
         sessions: weekSessions.filter((session) =>
-          sameDay(new Date(session.startTime), date),
+          sameOrganizationDay(session.startTime, date),
         ),
       };
     });
@@ -452,7 +476,9 @@ export default function GuardianScheduleBoard({
           </div>
         ) : (
           days.map((day) => {
-            const isToday = sameDay(day.date, new Date());
+            const isToday =
+              getOrganizationDateKey(day.date) ===
+              getOrganizationDateKey(getOrganizationToday());
 
             return (
               <section

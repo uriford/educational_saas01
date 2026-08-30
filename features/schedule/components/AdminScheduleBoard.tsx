@@ -1,5 +1,9 @@
 "use client";
-import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
+import {
+  ORGANIZATION_TIMEZONE,
+  getOrganizationDateKey,
+  getOrganizationToday,
+} from "@/lib/timezone";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -64,7 +68,7 @@ const weekDays = [
 function startOfWeek(date: Date) {
   const result = new Date(date);
 
-  result.setHours(0, 0, 0, 0);
+  result.setHours(12, 0, 0, 0);
 
   const day = result.getDay();
 
@@ -84,42 +88,25 @@ function endOfWeek(date: Date) {
 
 function formatDay(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
     weekday: "short",
   }).format(date);
 }
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
     month: "short",
     day: "numeric",
   }).format(date);
 }
 
 function formatTime(value: string) {
-  const timeZone = ORGANIZATION_TIMEZONE;
-
   return new Intl.DateTimeFormat("en-US", {
-    timeZone,
+    timeZone: ORGANIZATION_TIMEZONE,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function getOrganizationWeekday(value: string) {
-  const weekday = new Intl.DateTimeFormat("en-US", {
-    timeZone: ORGANIZATION_TIMEZONE,
-    weekday: "short",
-  }).format(new Date(value));
-
-  return [
-    "Sun",
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-  ].indexOf(weekday);
 }
 
 function formatWeekRange(start: Date, end: Date) {
@@ -205,11 +192,13 @@ function statusDot(status: ScheduleSession["status"]) {
   }
 }
 
-function sameDay(dateA: Date, dateB: Date) {
+function sameOrganizationDay(
+  dateA: Date | string,
+  dateB: Date | string,
+) {
   return (
-    dateA.getFullYear() === dateB.getFullYear() &&
-    dateA.getMonth() === dateB.getMonth() &&
-    dateA.getDate() === dateB.getDate()
+    getOrganizationDateKey(dateA) ===
+    getOrganizationDateKey(dateB)
   );
 }
 
@@ -244,7 +233,7 @@ export default function AdminScheduleBoard({
   readOnly = false,
 }: Props) {
   const [currentWeek, setCurrentWeek] = useState(
-    startOfWeek(new Date()),
+    startOfWeek(getOrganizationToday()),
   );
 
   const [selectedCourse, setSelectedCourse] =
@@ -253,11 +242,19 @@ export default function AdminScheduleBoard({
   const weekEnd = endOfWeek(currentWeek);
 
   const weekSessions = useMemo(() => {
+    const startKey = getOrganizationDateKey(currentWeek);
+    const endKey = getOrganizationDateKey(weekEnd);
+
     return sessions
       .filter((session) => {
-        const date = new Date(session.startTime);
+        const sessionKey = getOrganizationDateKey(
+          session.startTime,
+        );
 
-        return date >= currentWeek && date <= weekEnd;
+        return (
+          sessionKey >= startKey &&
+          sessionKey <= endKey
+        );
       })
       .filter((session) => {
         if (selectedCourse === "ALL") {
@@ -289,8 +286,10 @@ export default function AdminScheduleBoard({
         date,
         sessions: weekSessions.filter(
           (session) =>
-            getOrganizationWeekday(session.startTime) ===
-            index,
+            sameOrganizationDay(
+              session.startTime,
+              date,
+            ),
         ),
       };
     });
@@ -535,7 +534,7 @@ export default function AdminScheduleBoard({
         <div className="hidden overflow-x-auto lg:block">
           <div className="grid min-w-[1120px] grid-cols-7 divide-x">
             {days.map((day) => {
-              const isToday = sameDay(
+              const isToday = sameOrganizationDay(
                 day.date,
                 today,
               );
@@ -603,7 +602,7 @@ export default function AdminScheduleBoard({
         {/* Mobile / tablet timetable */}
         <div className="divide-y lg:hidden">
           {days.map((day) => {
-            const isToday = sameDay(
+            const isToday = sameOrganizationDay(
               day.date,
               today,
             );

@@ -66,10 +66,6 @@ function formatTime(date: string) {
   }).format(new Date(date));
 }
 
-function getOrganizationNow() {
-  return new Date();
-}
-
 function statusStyles(status: StudentSession["status"]) {
   switch (status) {
     case "ONGOING":

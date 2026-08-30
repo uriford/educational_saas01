@@ -1,5 +1,8 @@
 "use client";
-import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
+import {
+  ORGANIZATION_TIMEZONE,
+  organizationLocalDateTimeToISOString,
+} from "@/lib/timezone";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -76,14 +79,6 @@ function formatDateTimeLocal(date: Date) {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
-function localDateTimeToISOString(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  return new Date(`${value}:00+06:00`).toISOString();
-}
-
 export default function EditClassSessionForm({
   session,
   courseId,
@@ -120,8 +115,12 @@ export default function EditClassSessionForm({
       return;
     }
 
-    const parsedStartTime = new Date(startTime);
-    const parsedEndTime = new Date(endTime);
+    const parsedStartTime = new Date(
+      organizationLocalDateTimeToISOString(startTime),
+    );
+    const parsedEndTime = new Date(
+      organizationLocalDateTimeToISOString(endTime),
+    );
 
     if (
       Number.isNaN(parsedStartTime.getTime()) ||
@@ -144,8 +143,8 @@ export default function EditClassSessionForm({
         title,
         teacherId,
         description,
-        startTime: localDateTimeToISOString(startTime),
-        endTime: localDateTimeToISOString(endTime),
+        startTime: organizationLocalDateTimeToISOString(startTime),
+        endTime: organizationLocalDateTimeToISOString(endTime),
         room,
         status,
       });

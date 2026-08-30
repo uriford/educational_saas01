@@ -1,5 +1,5 @@
 "use client";
-import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
+import { organizationLocalDateTimeToISOString } from "@/lib/timezone";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -31,18 +31,11 @@ type Teacher = {
   status: string;
 };
 
-function localDateTimeToISOString(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  return new Date(`${value}:00+06:00`).toISOString();
-}
-
 type Props = {
   courses: Course[];
   teachers: Teacher[];
 };
+
 
 export default function CreateScheduleForm({
   courses,
@@ -84,8 +77,12 @@ export default function CreateScheduleForm({
       return;
     }
 
-    const parsedStartTime = new Date(startTime);
-    const parsedEndTime = new Date(endTime);
+    const parsedStartTime = new Date(
+      organizationLocalDateTimeToISOString(startTime),
+    );
+    const parsedEndTime = new Date(
+      organizationLocalDateTimeToISOString(endTime),
+    );
 
     if (
       Number.isNaN(parsedStartTime.getTime()) ||
@@ -108,8 +105,8 @@ export default function CreateScheduleForm({
         teacherId,
         title: title.trim(),
         description: description.trim() || undefined,
-        startTime: localDateTimeToISOString(startTime),
-        endTime: localDateTimeToISOString(endTime),
+        startTime: organizationLocalDateTimeToISOString(startTime),
+        endTime: organizationLocalDateTimeToISOString(endTime),
         room: room.trim() || undefined,
       });
 
