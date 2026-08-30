@@ -321,11 +321,20 @@ export class OrganizationRepository {
         },
       });
 
-      /*
-       * IMPORTANT:
-       * No trial subscription is created here.
-       * Subscription/billing will be handled separately.
-       */
+      const startDate = new Date();
+
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 30);
+
+      await tx.subscription.create({
+        data: {
+          organizationId: organization.id,
+          planName: "TRIAL",
+          status: "TRIAL",
+          startDate,
+          endDate,
+        },
+      });
 
       let branch: {
         id: string;
