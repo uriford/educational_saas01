@@ -95,7 +95,11 @@ function formatDate(date: Date) {
 }
 
 function formatTime(value: string) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));

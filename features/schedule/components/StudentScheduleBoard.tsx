@@ -44,7 +44,11 @@ type Props = {
 };
 
 function formatDate(date: string) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
     weekday: "long",
     month: "short",
     day: "numeric",
@@ -53,7 +57,11 @@ function formatDate(date: string) {
 }
 
 function formatTime(date: string) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(date));

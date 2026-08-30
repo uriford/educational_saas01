@@ -47,10 +47,13 @@ type Props = {
 function formatDateTimeLocal(date: Date) {
   const value = new Date(date);
 
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const formatter = new Intl.DateTimeFormat(
     "en-CA",
     {
-      timeZone: "Asia/Dhaka",
+      timeZone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -73,8 +76,8 @@ function formatDateTimeLocal(date: Date) {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
-function convertToBangladeshTime(value: string) {
-  return `${value}:00+06:00`;
+function localDateTimeToISOString(value: string) {
+  return new Date(value).toISOString();
 }
 
 export default function EditClassSessionForm({
@@ -113,6 +116,22 @@ export default function EditClassSessionForm({
       return;
     }
 
+    const parsedStartTime = new Date(startTime);
+    const parsedEndTime = new Date(endTime);
+
+    if (
+      Number.isNaN(parsedStartTime.getTime()) ||
+      Number.isNaN(parsedEndTime.getTime())
+    ) {
+      toast.error("Invalid date or time.");
+      return;
+    }
+
+    if (parsedStartTime >= parsedEndTime) {
+      toast.error("End time must be after start time.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -121,8 +140,8 @@ export default function EditClassSessionForm({
         title,
         teacherId,
         description,
-        startTime: convertToBangladeshTime(startTime),
-        endTime: convertToBangladeshTime(endTime),
+        startTime: localDateTimeToISOString(startTime),
+        endTime: localDateTimeToISOString(endTime),
         room,
         status,
       });

@@ -21,6 +21,25 @@ type ClassSession = {
   };
 };
 
+function getLocalDateParts(date: Date) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "short",
+    day: "numeric",
+  }).formatToParts(date);
+
+  return parts.reduce(
+    (acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+}
+
 type Props = {
   sessions: ClassSession[];
 };
@@ -71,12 +90,10 @@ export default function PublicSchedule({
                 >
                   <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-slate-950 text-white">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      {session.startTime.toLocaleDateString("en-US", {
-                        month: "short",
-                      })}
+                      {getLocalDateParts(session.startTime).month}
                     </span>
                     <span className="text-xl font-bold">
-                      {session.startTime.getDate()}
+                      {getLocalDateParts(session.startTime).day}
                     </span>
                   </div>
 

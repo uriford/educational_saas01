@@ -30,8 +30,8 @@ type Teacher = {
   status: string;
 };
 
-function convertToBangladeshTime(value: string) {
-  return `${value}:00+06:00`;
+function localDateTimeToISOString(value: string) {
+  return new Date(value).toISOString();
 }
 
 type Props = {
@@ -79,7 +79,18 @@ export default function CreateScheduleForm({
       return;
     }
 
-    if (new Date(startTime) >= new Date(endTime)) {
+    const parsedStartTime = new Date(startTime);
+    const parsedEndTime = new Date(endTime);
+
+    if (
+      Number.isNaN(parsedStartTime.getTime()) ||
+      Number.isNaN(parsedEndTime.getTime())
+    ) {
+      toast.error("Invalid date or time.");
+      return;
+    }
+
+    if (parsedStartTime >= parsedEndTime) {
       toast.error("End time must be after start time.");
       return;
     }
@@ -92,8 +103,8 @@ export default function CreateScheduleForm({
         teacherId,
         title: title.trim(),
         description: description.trim() || undefined,
-        startTime: convertToBangladeshTime(startTime),
-        endTime: convertToBangladeshTime(endTime),
+        startTime: localDateTimeToISOString(startTime),
+        endTime: localDateTimeToISOString(endTime),
         room: room.trim() || undefined,
       });
 

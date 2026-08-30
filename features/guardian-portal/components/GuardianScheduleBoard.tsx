@@ -72,14 +72,22 @@ function endOfWeek(date: Date) {
 }
 
 function formatDate(date: Date) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
     month: "short",
     day: "numeric",
   }).format(date);
 }
 
 function formatFullDate(date: Date) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
     weekday: "long",
     month: "short",
     day: "numeric",
@@ -88,7 +96,11 @@ function formatFullDate(date: Date) {
 }
 
 function formatTime(value: string) {
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return new Intl.DateTimeFormat("en-US", {
+    timeZone,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
