@@ -24,6 +24,7 @@ import { CourseService } from "../services/course.service";
 import DeleteCourseButton from "../components/DeleteCourseButton";
 import CourseStudents from "@/features/enrollments/components/CourseStudents";
 import { ClassSessionService } from "@/features/class-sessions/services/class-session.service";
+import { ORGANIZATION_TIMEZONE } from "@/lib/timezone";
 import DeleteClassSessionButton from "@/features/class-sessions/components/DeleteClassSessionButton";
 import { AssessmentService } from "@/features/assessments/services/assessment.service";
 import CourseAssessments from "@/features/assessments/components/CourseAssessments";
@@ -707,6 +708,7 @@ function formatDate(date: string | null) {
 
 function formatDateTime(date: string) {
   return new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -715,6 +717,7 @@ function formatDateTime(date: string) {
 
 function formatTime(date: string) {
   return new Intl.DateTimeFormat("en-US", {
+    timeZone: ORGANIZATION_TIMEZONE,
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(date));
