@@ -92,6 +92,7 @@ export function isPlatformHostname(
 
   return (
     getPlatformHosts().has(normalized) ||
-    normalized.endsWith(".vercel.app")
+    (normalized.endsWith(".vercel.app") &&
+      normalized !== "educational-saas01-9e5o.vercel.app")
   );
 }
