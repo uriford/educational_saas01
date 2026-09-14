@@ -3,6 +3,7 @@ import Link from "next/link";
 import ReviewForm from "./ReviewForm";
 import AdminReviewList from "./AdminReviewList";
 import { ArrowLeft, PlayCircle, Star } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Review = {
   id: string;
@@ -17,6 +18,7 @@ type Review = {
     email: string | null;
     firstName: string | null;
     lastName: string | null;
+    avatar: string | null;
   };
 };
 
@@ -105,11 +107,30 @@ export default function PublicReviews({
                 className="rounded-2xl border border-slate-200 bg-white p-6"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-semibold text-slate-500">
-                    {review.authorType === "STUDENT"
-                      ? "Verified Student"
-                      : "Guardian Testimonial"}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-11 w-11">
+                      {review.user.avatar ? (
+                        <AvatarImage
+                          src={review.user.avatar}
+                          alt={`${review.user.firstName ?? ""} ${review.user.lastName ?? ""}`.trim()}
+                        />
+                      ) : null}
+                      <AvatarFallback>
+                        {`${review.user.firstName?.[0] ?? ""}${review.user.lastName?.[0] ?? ""}`.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div>
+                      <p className="font-semibold text-slate-950">
+                        {`${review.user.firstName ?? ""} ${review.user.lastName ?? ""}`.trim() || "Anonymous"}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-500">
+                        {review.authorType === "STUDENT"
+                          ? "Verified Student"
+                          : "Guardian Testimonial"}
+                      </p>
+                    </div>
+                  </div>
 
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }).map((_, index) => (
