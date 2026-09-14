@@ -226,7 +226,7 @@ export default function PublicHome({ data }: PublicHomeProps) {
               </Link>
 
               <Link
-                href="/admission/american-council"
+                href={`/admission/${organization.slug}`}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-xl shadow-indigo-600/20 transition hover:-translate-y-0.5 hover:bg-indigo-500"
               >
                 Apply Now
