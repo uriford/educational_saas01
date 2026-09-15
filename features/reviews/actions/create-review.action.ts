@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { ReviewRepository } from "../repository/review.repository";
 
-const REVIEW_VIDEO_BUCKET = "review-videos";
+const REVIEW_VIDEO_BUCKET = "reviews-video";
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
 const ALLOWED_VIDEO_TYPES = new Set([
