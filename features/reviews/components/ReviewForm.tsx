@@ -158,13 +158,12 @@ export default function ReviewForm({ authorType }: Props) {
             className="sr-only"
           />
 
-          <button
-            type="button"
-            onClick={() => videoInputRef.current?.click()}
-            className="mt-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+          <label
+            htmlFor="review-video"
+            className="mt-2 inline-block cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
           >
             Choose video
-          </button>
+          </label>
 
           {video ? (
             <p className="mt-2 text-sm text-slate-600">
