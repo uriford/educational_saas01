@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Star } from "lucide-react";
 
 import { createReviewAction } from "@/features/reviews/actions/create-review.action";
@@ -13,9 +13,11 @@ export default function ReviewForm({ authorType }: Props) {
   const [type, setType] = useState<"TEXT" | "VIDEO">("TEXT");
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
+  const [video, setVideo] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
@@ -28,15 +30,19 @@ export default function ReviewForm({ authorType }: Props) {
       type,
       rating,
       content,
-      videoUrl,
+      video,
     });
 
     setMessage(result.message);
 
     if (result.success) {
       setContent("");
-      setVideoUrl("");
+      setVideo(null);
       setRating(5);
+
+      if (videoInputRef.current) {
+        videoInputRef.current.value = "";
+      }
     }
 
     setSubmitting(false);
@@ -51,6 +57,7 @@ export default function ReviewForm({ authorType }: Props) {
         <p className="text-sm font-semibold text-slate-500">
           Your review will appear as
         </p>
+
         <p className="mt-1 font-bold text-slate-950">
           {authorType === "STUDENT"
             ? "Verified Student"
@@ -68,14 +75,19 @@ export default function ReviewForm({ authorType }: Props) {
             <button
               key={option}
               type="button"
-              onClick={() => setType(option)}
+              onClick={() => {
+                setType(option);
+                setMessage("");
+              }}
               className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
                 type === option
                   ? "bg-slate-950 text-white"
                   : "border border-slate-200 text-slate-600 hover:border-slate-300"
               }`}
             >
-              {option === "TEXT" ? "Text review" : "Video review"}
+              {option === "TEXT"
+                ? "Text review"
+                : "Video review"}
             </button>
           ))}
         </div>
@@ -130,26 +142,42 @@ export default function ReviewForm({ authorType }: Props) {
         </div>
       ) : (
         <div className="mt-6">
-          <label
-            htmlFor="review-video-url"
-            className="text-sm font-semibold text-slate-700"
-          >
-            Video URL
-          </label>
+          <p className="text-sm font-semibold text-slate-700">
+            Your video
+          </p>
 
           <input
-            id="review-video-url"
-            type="url"
-            value={videoUrl}
-            onChange={(event) => setVideoUrl(event.target.value)}
-            placeholder="https://..."
-            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+            ref={videoInputRef}
+            id="review-video"
+            type="file"
+            accept="video/*"
+            onChange={(event) => {
+              setVideo(event.target.files?.[0] ?? null);
+              setMessage("");
+            }}
+            className="sr-only"
           />
 
-          <p className="mt-2 text-xs text-slate-500">
-            Share a link to your video. The video itself is not stored in
-            the platform.
-          </p>
+          <button
+            type="button"
+            onClick={() => videoInputRef.current?.click()}
+            className="mt-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+          >
+            Choose video
+          </button>
+
+          {video ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Selected:{" "}
+              <span className="font-semibold">
+                {video.name}
+              </span>
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-slate-500">
+              Choose a video from your device. Maximum size: 50 MB.
+            </p>
+          )}
         </div>
       )}
 
