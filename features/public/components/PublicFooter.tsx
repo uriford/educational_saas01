@@ -44,6 +44,9 @@ export default function PublicFooter({
               <Link className="block hover:text-slate-950" href="/about">
                 About
               </Link>
+              <Link className="block hover:text-slate-950" href="/reviews">
+                Reviews
+              </Link>
             </div>
           </div>
 

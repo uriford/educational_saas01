@@ -1056,6 +1056,13 @@ export default function PublicHome({ data }: PublicHomeProps) {
                 </Link>
 
                 <Link
+                  href="/reviews"
+                  className="block transition hover:text-slate-950"
+                >
+                  Reviews
+                </Link>
+
+                <Link
                   href="/login"
                   className="block transition hover:text-slate-950"
                 >
