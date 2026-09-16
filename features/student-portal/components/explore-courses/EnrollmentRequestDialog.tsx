@@ -3,7 +3,7 @@
 import { PaymentMethod } from "@prisma/client";
 
 import { useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Tag, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 import { requestEnrollmentAction } from "../../actions/request-enrollment.action";
+import { validateEnrollmentCouponAction } from "../../actions/validate-enrollment-coupon.action";
 
 
 function formatPrice(price: unknown) {
@@ -54,6 +55,20 @@ export default function EnrollmentRequestDialog({
 }: Props) {
 
   const [loading, setLoading] = useState(false);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const [couponCode, setCouponCode] = useState("");
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponValid, setCouponValid] = useState(false);
+
+  const [pricing, setPricing] = useState<{
+    couponId: string;
+    couponCode: string;
+    couponType: PaymentMethod extends never ? never : "PERCENTAGE" | "FIXED";
+    originalAmount: number;
+    discountAmount: number;
+    finalAmount: number;
+  } | null>(null);
 
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>(PaymentMethod.MOBILE_BANKING);
@@ -85,6 +100,69 @@ export default function EnrollmentRequestDialog({
   }
 
 
+  async function validateCoupon() {
+    const code = couponCode.trim();
+
+    if (!code) {
+      setCouponMessage("Enter a coupon code.");
+      setCouponValid(false);
+      setPricing(null);
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponMessage("");
+
+    try {
+      const result =
+        await validateEnrollmentCouponAction(
+          courseId,
+          code,
+        );
+
+      if (!result.success) {
+        setCouponValid(false);
+        setPricing(null);
+        setCouponMessage(
+          result.message ?? "Invalid coupon code.",
+        );
+        return;
+      }
+
+      if (!result.pricing) {
+        setCouponValid(false);
+        setPricing(null);
+        setCouponMessage(
+          "Coupon pricing could not be calculated.",
+        );
+        return;
+      }
+
+      const appliedPricing = result.pricing;
+
+      setCouponValid(true);
+      setPricing(appliedPricing);
+      setCouponMessage("Coupon applied successfully.");
+
+      setForm((prev) => ({
+        ...prev,
+        requestedAmount: String(
+          appliedPricing.finalAmount,
+        ),
+      }));
+    } catch (error) {
+      console.error(error);
+      setCouponValid(false);
+      setPricing(null);
+      setCouponMessage(
+        "Unable to validate coupon.",
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+
   async function submit() {
 
     if (!form.requestedAmount) {
@@ -103,6 +181,9 @@ export default function EnrollmentRequestDialog({
           {
             ...form,
             paymentMethod,
+            couponCode: couponValid
+              ? couponCode
+              : "",
           },
         );
 
@@ -134,9 +215,9 @@ export default function EnrollmentRequestDialog({
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:items-center">
 
-      <div className="w-full max-w-xl rounded-xl bg-background p-6 shadow-xl space-y-5">
+      <div className="my-4 max-h-[calc(100vh-2rem)] w-full max-w-xl overflow-y-auto rounded-xl bg-background p-6 shadow-xl space-y-5 sm:my-8 sm:max-h-[calc(100vh-4rem)]">
 
         <div>
           <h2 className="text-xl font-semibold">
@@ -154,13 +235,88 @@ export default function EnrollmentRequestDialog({
             Course Fee
           </p>
 
-          <p className="mt-1 text-2xl font-bold">
-            {formatPrice(courseFee)}
-          </p>
+          {pricing ? (
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span>Original fee</span>
+                <span>{formatPrice(pricing.originalAmount)}</span>
+              </div>
+
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Discount</span>
+                <span>-{formatPrice(pricing.discountAmount)}</span>
+              </div>
+
+              <div className="flex justify-between border-t pt-2 text-lg font-bold">
+                <span>Final fee</span>
+                <span>{formatPrice(pricing.finalAmount)}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-1 text-2xl font-bold">
+              {formatPrice(courseFee)}
+            </p>
+          )}
 
           <p className="mt-1 text-xs text-muted-foreground">
-            This is the total fee for this course.
+            {pricing
+              ? `Coupon ${pricing.couponCode} applied.`
+              : "This is the total fee for this course."}
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Coupon Code</Label>
+
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter coupon code"
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value);
+                setCouponValid(false);
+                setPricing(null);
+                setCouponMessage("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void validateCoupon();
+                }
+              }}
+            />
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={couponLoading}
+              onClick={() => void validateCoupon()}
+            >
+              {couponLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Tag className="size-4" />
+              )}
+              <span className="ml-2">Apply</span>
+            </Button>
+          </div>
+
+          {couponMessage && (
+            <p
+              className={`flex items-center gap-1 text-xs ${
+                couponValid
+                  ? "text-green-600"
+                  : "text-destructive"
+              }`}
+            >
+              {couponValid ? (
+                <CheckCircle2 className="size-3.5" />
+              ) : (
+                <XCircle className="size-3.5" />
+              )}
+              {couponMessage}
+            </p>
+          )}
         </div>
 
 
