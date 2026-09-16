@@ -18,6 +18,7 @@ import {
   Users,
   Building2,
   Star,
+  PlayCircle,
 } from "lucide-react";
 
 type PublicHomeProps = {
@@ -1055,13 +1056,15 @@ export default function PublicHome({ data }: PublicHomeProps) {
                     </div>
 
                     {review.type === "VIDEO" && review.videoUrl ? (
-                      <video
-                        controls
-                        preload="metadata"
-                        className="mt-5 aspect-video w-full rounded-2xl bg-slate-950 object-cover"
+                      <a
+                        href={review.videoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-200 p-4 font-semibold text-slate-950 transition hover:border-slate-300 hover:bg-slate-50"
                       >
-                        <source src={review.videoUrl} />
-                      </video>
+                        <PlayCircle className="h-6 w-6" />
+                        Watch video review
+                      </a>
                     ) : review.content ? (
                       <p className="mt-5 text-sm leading-7 text-slate-600">
                         “{review.content}”
