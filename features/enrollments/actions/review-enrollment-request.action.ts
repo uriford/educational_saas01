@@ -587,6 +587,8 @@ export async function reviewEnrollmentRequestAction(
       {
         isolationLevel:
           Prisma.TransactionIsolationLevel.Serializable,
+        maxWait: 5000,
+        timeout: 15000,
       },
     );
 
