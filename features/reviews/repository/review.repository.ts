@@ -3,7 +3,10 @@ import "server-only";
 import { db } from "@/lib/db";
 
 export class ReviewRepository {
-  static async getApprovedReviews(organizationId: string) {
+  static async getApprovedReviews(
+    organizationId: string,
+    take?: number,
+  ) {
     return db.review.findMany({
       where: {
         organizationId,
@@ -30,6 +33,7 @@ export class ReviewRepository {
       orderBy: {
         createdAt: "desc",
       },
+      ...(take ? { take } : {}),
     });
   }
 

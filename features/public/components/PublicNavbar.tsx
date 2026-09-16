@@ -184,6 +184,13 @@ export default function PublicNavbar({
             Announcements
           </Link>
 
+          <Link
+            href="/reviews"
+            className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+          >
+            Reviews
+          </Link>
+
           {hasBranches ? (
             <a
               href="#locations"

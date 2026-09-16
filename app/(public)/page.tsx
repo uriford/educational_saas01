@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import PublicHome from "@/features/public/components/PublicHome";
 import { PublicRepository } from "@/features/public/repository/public.repository";
+import { ReviewRepository } from "@/features/reviews/repository/review.repository";
 import SaaSHome from "@/features/saas/components/SaaSHome";
 import { getCurrentTenant } from "@/lib/tenant";
 
@@ -19,6 +20,11 @@ export default async function Home() {
   if (!data) {
     notFound();
   }
+
+  const reviews = await ReviewRepository.getApprovedReviews(
+    tenant.id,
+    6,
+  );
 
   return (
     <PublicHome
@@ -47,6 +53,8 @@ export default async function Home() {
         announcements: data.announcements,
 
         upcomingClasses: data.classSessions,
+
+        reviews,
       }}
     />
   );

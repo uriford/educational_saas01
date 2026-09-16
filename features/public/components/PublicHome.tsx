@@ -90,6 +90,23 @@ type PublicHomeProps = {
         avatar: string | null;
       };
     }>;
+
+    reviews: Array<{
+      id: string;
+      authorType: "STUDENT" | "GUARDIAN";
+      type: "TEXT" | "VIDEO";
+      rating: number;
+      content: string | null;
+      videoUrl: string | null;
+      approved: boolean;
+      createdAt: Date;
+      user: {
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        avatar: string | null;
+      };
+    }>;
   };
 };
 
@@ -943,6 +960,126 @@ export default function PublicHome({ data }: PublicHomeProps) {
                   ) : null}
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ================================================================
+          REVIEWS
+      ================================================================= */}
+
+      {data.reviews.length > 0 ? (
+        <section className="px-5 py-20 sm:px-8 lg:px-10 lg:py-28">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
+                  Learner experiences
+                </p>
+
+                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+                  What our learners say
+                </h2>
+
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+                  Hear from students and guardians who have experienced
+                  learning with {organization.name}.
+                </p>
+              </div>
+
+              <Link
+                href="/reviews"
+                className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-slate-950 transition hover:text-indigo-600"
+              >
+                View more reviews
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {data.reviews.map((review) => {
+                const reviewerName =
+                  `${review.user.firstName ?? ""} ${review.user.lastName ?? ""}`.trim() ||
+                  "Anonymous";
+
+                const authorLabel =
+                  review.authorType === "STUDENT"
+                    ? "Verified Student"
+                    : "Guardian Testimonial";
+
+                return (
+                  <article
+                    key={review.id}
+                    className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        {review.user.avatar ? (
+                          <Image
+                            src={review.user.avatar}
+                            alt={reviewerName}
+                            width={42}
+                            height={42}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                            {initials(reviewerName)}
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="text-sm font-semibold text-slate-950">
+                            {reviewerName}
+                          </p>
+
+                          <p className="text-xs text-slate-400">
+                            {authorLabel}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className={`h-4 w-4 ${
+                              index < review.rating
+                                ? "fill-current text-amber-400"
+                                : "text-slate-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {review.type === "VIDEO" && review.videoUrl ? (
+                      <video
+                        controls
+                        preload="metadata"
+                        className="mt-5 aspect-video w-full rounded-2xl bg-slate-950 object-cover"
+                      >
+                        <source src={review.videoUrl} />
+                      </video>
+                    ) : review.content ? (
+                      <p className="mt-5 text-sm leading-7 text-slate-600">
+                        “{review.content}”
+                      </p>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 flex justify-center">
+              <Link
+                href="/reviews"
+                className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+              >
+                View more reviews
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
         </section>
