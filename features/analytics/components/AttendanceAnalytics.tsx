@@ -25,6 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 import type { AttendanceAnalytics as AttendanceAnalyticsType } from "../types/attendance";
 
@@ -58,6 +59,8 @@ const tooltipStyle = {
 export default function AttendanceAnalytics({
   analytics,
 }: Props) {
+  const { t } = useLanguage();
+
   if (!analytics.enabled) {
     return (
       <Card className="border-0 shadow-sm ring-1 ring-border/60">
@@ -66,7 +69,7 @@ export default function AttendanceAnalytics({
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <Activity className="h-4 w-4" />
             </span>
-            Attendance Analytics
+            {t("attendance.analyticsTitle")}
           </CardTitle>
         </CardHeader>
 
@@ -100,14 +103,14 @@ export default function AttendanceAnalytics({
 
   const cards = [
     {
-      title: "Attendance Rate",
+      title: t("attendance.attendanceRate"),
       value: `${current.attendanceRate}%`,
       change: changes.attendanceRate,
       icon: Activity,
       iconClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     },
     {
-      title: "Present",
+      title: t("attendance.present"),
       value: `${current.presentPercentage}%`,
       detail: `${current.present} records`,
       change: changes.presentPercentage,
@@ -116,7 +119,7 @@ export default function AttendanceAnalytics({
         "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     },
     {
-      title: "Absent",
+      title: t("attendance.absent"),
       value: `${current.absentPercentage}%`,
       detail: `${current.absent} records`,
       change: changes.absentPercentage,
@@ -124,7 +127,7 @@ export default function AttendanceAnalytics({
       iconClass: "bg-red-500/10 text-red-600 dark:text-red-400",
     },
     {
-      title: "Late",
+      title: t("attendance.late"),
       value: `${current.latePercentage}%`,
       detail: `${current.late} records`,
       icon: Clock3,
@@ -149,14 +152,14 @@ export default function AttendanceAnalytics({
 
           <p className="mt-2 text-sm text-muted-foreground">
             {period === "WEEK"
-              ? "This week compared with the previous week."
-              : "This month compared with the previous month."}
+              ? t("attendance.weekComparison")
+              : t("attendance.monthComparison")}
           </p>
         </div>
 
         <div className="rounded-xl border bg-background/80 px-4 py-3 shadow-sm">
           <p className="text-xs text-muted-foreground">
-            Previous period
+            {t("attendance.previousPeriod")}
           </p>
 
           <div className="mt-1 flex items-center gap-2">
@@ -296,7 +299,7 @@ export default function AttendanceAnalytics({
 
                   <Bar
                     dataKey="present"
-                    name="Present"
+                    name={t("attendance.present")}
                     fill="#10b981"
                     radius={[5, 5, 0, 0]}
                     maxBarSize={18}
@@ -304,7 +307,7 @@ export default function AttendanceAnalytics({
 
                   <Bar
                     dataKey="absent"
-                    name="Absent"
+                    name={t("attendance.absent")}
                     fill="#ef4444"
                     radius={[5, 5, 0, 0]}
                     maxBarSize={18}
@@ -312,7 +315,7 @@ export default function AttendanceAnalytics({
 
                   <Bar
                     dataKey="late"
-                    name="Late"
+                    name={t("attendance.late")}
                     fill="#f59e0b"
                     radius={[5, 5, 0, 0]}
                     maxBarSize={18}
@@ -320,7 +323,7 @@ export default function AttendanceAnalytics({
 
                   <Bar
                     dataKey="excused"
-                    name="Excused"
+                    name={t("attendance.excused")}
                     fill="#64748b"
                     radius={[5, 5, 0, 0]}
                     maxBarSize={18}
@@ -333,31 +336,31 @@ export default function AttendanceAnalytics({
 
         <Card className="border-0 shadow-sm ring-1 ring-border/60">
           <CardHeader className="border-b bg-muted/20 pb-4">
-            <CardTitle>Attendance Breakdown</CardTitle>
+            <CardTitle>{t("attendance.breakdown")}</CardTitle>
             <p className="text-xs text-muted-foreground">
-              Distribution of current attendance records.
+              {t("attendance.breakdownDescription")}
             </p>
           </CardHeader>
 
           <CardContent className="space-y-5 pt-6">
             {[
               {
-                label: "Present",
+                label: t("attendance.present"),
                 value: current.presentPercentage,
                 className: "bg-emerald-500",
               },
               {
-                label: "Absent",
+                label: t("attendance.absent"),
                 value: current.absentPercentage,
                 className: "bg-red-500",
               },
               {
-                label: "Late",
+                label: t("attendance.late"),
                 value: current.latePercentage,
                 className: "bg-amber-500",
               },
               {
-                label: "Excused",
+                label: t("attendance.excused"),
                 value: current.excusedPercentage,
                 className: "bg-slate-500",
               },
@@ -387,7 +390,7 @@ export default function AttendanceAnalytics({
             <div className="rounded-xl border bg-muted/20 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
-                  Total records
+                  {t("attendance.totalRecords")}
                 </span>
 
                 <span className="text-xl font-bold">
@@ -401,10 +404,9 @@ export default function AttendanceAnalytics({
 
       <Card className="border-0 shadow-sm ring-1 ring-border/60">
         <CardHeader className="border-b bg-muted/20 pb-4">
-          <CardTitle>Period Comparison</CardTitle>
+          <CardTitle>{t("attendance.periodComparison")}</CardTitle>
           <p className="text-xs text-muted-foreground">
-            Compare attendance performance against the previous
-            equivalent period.
+            {t("attendance.periodComparisonDescription")}
           </p>
         </CardHeader>
 
@@ -416,7 +418,9 @@ export default function AttendanceAnalytics({
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Current {period === "WEEK" ? "week" : "month"}
+                {period === "WEEK"
+                  ? t("attendance.currentWeek")
+                  : t("attendance.currentMonth")}
               </p>
 
               <p className="mt-2 text-3xl font-bold tracking-tight">
@@ -435,7 +439,9 @@ export default function AttendanceAnalytics({
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Previous {period === "WEEK" ? "week" : "month"}
+                {period === "WEEK"
+                  ? t("attendance.previousWeek")
+                  : t("attendance.previousMonth")}
               </p>
 
               <p className="mt-2 text-3xl font-bold tracking-tight">
