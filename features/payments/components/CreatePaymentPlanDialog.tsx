@@ -1,14 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import {
-  CalendarDays,
-  CircleDollarSign,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CalendarDays, CircleDollarSign, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 import { createPaymentPlanAction } from "../actions/create-payment-plan.action";
 
@@ -20,6 +16,12 @@ type Enrollment = {
     code: string;
     fee: unknown;
   };
+  admissionRequest?: {
+    originalAmount: unknown;
+    discountAmount: unknown;
+    finalAmount: unknown;
+    couponCode: string | null;
+  } | null;
 };
 
 type Installment = {
@@ -37,40 +39,43 @@ export default function CreatePaymentPlanDialog({
   enrollments,
   onClose,
 }: Props) {
+  const { t } = useLanguage();
+
   const [isPending, startTransition] = useTransition();
 
-  const [enrollmentId, setEnrollmentId] = useState(
-    enrollments[0]?.id ?? "",
-  );
+  const [enrollmentId, setEnrollmentId] = useState(enrollments[0]?.id ?? "");
 
   const selectedEnrollment = enrollments.find(
     (item) => item.id === enrollmentId,
   );
 
-  const [totalAmount, setTotalAmount] = useState(
-    selectedEnrollment?.course.fee
-      ? String(Number(selectedEnrollment.course.fee))
-      : "",
+  const selectedPricing = selectedEnrollment?.admissionRequest;
+
+  const hasCouponPricing = Boolean(
+    selectedPricing?.couponCode && selectedPricing.finalAmount != null,
   );
 
-  const [installments, setInstallments] = useState<
-    Installment[]
-  >([
+  const initialTotal = hasCouponPricing
+    ? Number(selectedPricing!.finalAmount)
+    : selectedEnrollment?.course.fee
+      ? Number(selectedEnrollment.course.fee)
+      : 0;
+
+  const [totalAmount, setTotalAmount] = useState(
+    initialTotal > 0 ? String(initialTotal) : "",
+  );
+
+  const [installments, setInstallments] = useState<Installment[]>([
     {
       amount: "",
-      dueDate: new Date()
-        .toISOString()
-        .split("T")[0],
+      dueDate: new Date().toISOString().split("T")[0],
       notes: "",
     },
   ]);
 
   const allocated = useMemo(
     () =>
-      installments.reduce(
-        (sum, item) => sum + (Number(item.amount) || 0),
-        0,
-      ),
+      installments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
     [installments],
   );
 
@@ -84,9 +89,7 @@ export default function CreatePaymentPlanDialog({
     installments.length > 0 &&
     Math.abs(remaining) < 0.01 &&
     installments.every(
-      (item) =>
-        Number(item.amount) > 0 &&
-        Boolean(item.dueDate),
+      (item) => Number(item.amount) > 0 && Boolean(item.dueDate),
     );
 
   function addInstallment() {
@@ -94,18 +97,14 @@ export default function CreatePaymentPlanDialog({
       ...current,
       {
         amount: "",
-        dueDate: new Date()
-          .toISOString()
-          .split("T")[0],
+        dueDate: new Date().toISOString().split("T")[0],
         notes: "",
       },
     ]);
   }
 
   function removeInstallment(index: number) {
-    setInstallments((current) =>
-      current.filter((_, i) => i !== index),
-    );
+    setInstallments((current) => current.filter((_, i) => i !== index));
   }
 
   function updateInstallment(
@@ -128,14 +127,15 @@ export default function CreatePaymentPlanDialog({
   function handleEnrollmentChange(value: string) {
     setEnrollmentId(value);
 
-    const enrollment = enrollments.find(
-      (item) => item.id === value,
-    );
+    const enrollment = enrollments.find((item) => item.id === value);
+    const pricing = enrollment?.admissionRequest;
 
-    if (enrollment?.course.fee) {
-      setTotalAmount(
-        String(Number(enrollment.course.fee)),
-      );
+    if (pricing?.couponCode && pricing.finalAmount != null) {
+      setTotalAmount(String(Number(pricing.finalAmount)));
+    } else if (enrollment?.course.fee) {
+      setTotalAmount(String(Number(enrollment.course.fee)));
+    } else {
+      setTotalAmount("");
     }
   }
 
@@ -143,18 +143,20 @@ export default function CreatePaymentPlanDialog({
     if (!isValid) {
       if (remaining > 0) {
         toast.error(
-          `৳${remaining.toLocaleString()} is still unallocated.`,
-        );
+        t("paymentPlan.unallocated").replace(
+          "{amount}",
+          remaining.toLocaleString(),
+        ),
+      );
       } else if (remaining < 0) {
         toast.error(
-          `Installments exceed the total by ৳${Math.abs(
-            remaining,
-          ).toLocaleString()}.`,
+          t("paymentPlan.exceedsTotal").replace(
+            "{amount}",
+            Math.abs(remaining).toLocaleString(),
+          ),
         );
       } else {
-        toast.error(
-          "Please complete all payment plan fields.",
-        );
+        toast.error(t("paymentPlan.completeFields"));
       }
 
       return;
@@ -167,16 +169,12 @@ export default function CreatePaymentPlanDialog({
           totalAmount: total,
           installments: installments.map((item) => ({
             amount: Number(item.amount),
-            dueDate: new Date(
-              `${item.dueDate}T00:00:00`,
-            ),
+            dueDate: new Date(`${item.dueDate}T00:00:00`),
             notes: item.notes || undefined,
           })),
         });
 
-        toast.success(
-          "Payment plan created successfully.",
-        );
+        toast.success(t("paymentPlan.createdSuccessfully"));
 
         onClose();
         window.location.reload();
@@ -184,7 +182,7 @@ export default function CreatePaymentPlanDialog({
         toast.error(
           error instanceof Error
             ? error.message
-            : "Unable to create payment plan.",
+            : t("paymentPlan.unableToCreate"),
         );
       }
     });
@@ -201,12 +199,10 @@ export default function CreatePaymentPlanDialog({
               </div>
 
               <div>
-                <h2 className="text-lg font-semibold">
-                  Create Payment Plan
-                </h2>
+                <h2 className="text-lg font-semibold">{t("paymentPlan.title")}</h2>
 
                 <p className="text-sm text-muted-foreground">
-                  Set up a payment schedule for this student.
+                  {t("paymentPlan.description")}
                 </p>
               </div>
             </div>
@@ -224,32 +220,23 @@ export default function CreatePaymentPlanDialog({
         <div className="space-y-6 p-6">
           {enrollments.length === 0 ? (
             <div className="rounded-xl border border-orange-200 bg-orange-50 p-5 text-sm text-orange-700">
-              This student has no active course enrollment.
-              Enroll the student in a course first.
+              {t("paymentPlan.noActiveEnrollment")}
             </div>
           ) : (
             <>
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Course Enrollment
+                  {t("paymentPlan.courseEnrollment")}
                 </label>
 
                 <select
                   value={enrollmentId}
-                  onChange={(e) =>
-                    handleEnrollmentChange(
-                      e.target.value,
-                    )
-                  }
+                  onChange={(e) => handleEnrollmentChange(e.target.value)}
                   className="w-full rounded-xl border bg-background px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                 >
                   {enrollments.map((enrollment) => (
-                    <option
-                      key={enrollment.id}
-                      value={enrollment.id}
-                    >
-                      {enrollment.course.name} (
-                      {enrollment.course.code})
+                    <option key={enrollment.id} value={enrollment.id}>
+                      {enrollment.course.name} ({enrollment.course.code})
                     </option>
                   ))}
                 </select>
@@ -257,7 +244,7 @@ export default function CreatePaymentPlanDialog({
 
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Total Course Fee
+                  {t("paymentPlan.totalCourseFee")}
                 </label>
 
                 <div className="relative">
@@ -270,34 +257,79 @@ export default function CreatePaymentPlanDialog({
                     min="0"
                     step="0.01"
                     value={totalAmount}
-                    onChange={(e) =>
-                      setTotalAmount(e.target.value)
-                    }
-                    className="w-full rounded-xl border bg-background py-3 pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    readOnly={hasCouponPricing}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    className="w-full rounded-xl border bg-background py-3 pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary read-only:cursor-not-allowed read-only:bg-muted/50"
                     placeholder="30000"
                   />
                 </div>
 
-                {selectedEnrollment?.course.fee != null && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Course fee:{" "}
-                    {`৳${Number(
-                      selectedEnrollment.course.fee,
-                    ).toLocaleString()}`}
-                  </p>
+                {hasCouponPricing ? (
+                  <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground">
+                          {t("paymentPlan.originalCourseFee")}
+                        </span>
+                        <span>
+                          ৳
+                          {Number(
+                            selectedPricing!.originalAmount,
+                          ).toLocaleString("en-BD")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground">{t("paymentPlan.coupon")}</span>
+                        <span className="font-medium">
+                          {selectedPricing!.couponCode}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground">{t("paymentPlan.discount")}</span>
+                        <span className="font-medium text-emerald-600">
+                          −৳
+                          {Number(
+                            selectedPricing!.discountAmount,
+                          ).toLocaleString("en-BD")}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4 border-t border-emerald-200 pt-2 font-semibold dark:border-emerald-900/50">
+                        <span>{t("paymentPlan.discountedCourseFee")}</span>
+                        <span>
+                          ৳
+                          {Number(selectedPricing!.finalAmount).toLocaleString(
+                            "en-BD",
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
+                      {t("paymentPlan.lockedDiscount")}
+                    </p>
+                  </div>
+                ) : (
+                  selectedEnrollment?.course.fee != null && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("paymentPlan.courseFee")}{" "}
+                      {`৳${Number(
+                        selectedEnrollment.course.fee,
+                      ).toLocaleString()}`}
+                    </p>
+                  )
                 )}
               </div>
 
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold">
-                      Installments
-                    </h3>
+                    <h3 className="text-sm font-semibold">{t("paymentPlan.installments")}</h3>
 
                     <p className="text-xs text-muted-foreground">
-                      Divide the total fee into scheduled
-                      payments.
+                      {t("paymentPlan.installmentsDescription")}
                     </p>
                   </div>
 
@@ -307,115 +339,101 @@ export default function CreatePaymentPlanDialog({
                     className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition hover:bg-muted"
                   >
                     <Plus className="size-3.5" />
-                    Add Installment
+                    {t("paymentPlan.addInstallment")}
                   </button>
                 </div>
 
                 <div className="space-y-3">
-                  {installments.map(
-                    (installment, index) => (
-                      <div
-                        key={index}
-                        className="rounded-xl border bg-muted/20 p-4"
-                      >
-                        <div className="mb-3 flex items-center justify-between">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Installment {index + 1}
-                          </span>
+                  {installments.map((installment, index) => (
+                    <div
+                      key={index}
+                      className="rounded-xl border bg-muted/20 p-4"
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {t("paymentPlan.installment").replace("{number}", String(index + 1))}
+                        </span>
 
-                          {installments.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                removeInstallment(
-                                  index,
-                                )
-                              }
-                              className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
-                          )}
-                        </div>
+                        {installments.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeInstallment(index)}
+                            className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        )}
+                      </div>
 
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium">
-                              Amount
-                            </label>
-
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                ৳
-                              </span>
-
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={
-                                  installment.amount
-                                }
-                                onChange={(e) =>
-                                  updateInstallment(
-                                    index,
-                                    "amount",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full rounded-lg border bg-background py-2.5 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                                placeholder="10000"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium">
-                              Due Date
-                            </label>
-
-                            <div className="relative">
-                              <CalendarDays className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-                              <input
-                                type="date"
-                                value={
-                                  installment.dueDate
-                                }
-                                onChange={(e) =>
-                                  updateInstallment(
-                                    index,
-                                    "dueDate",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full rounded-lg border bg-background py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
                           <label className="mb-1.5 block text-xs font-medium">
-                            Notes
+                            {t("paymentPlan.amount")}
                           </label>
 
-                          <input
-                            value={installment.notes}
-                            onChange={(e) =>
-                              updateInstallment(
-                                index,
-                                "notes",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="Optional note..."
-                            className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
-                          />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                              ৳
+                            </span>
+
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={installment.amount}
+                              onChange={(e) =>
+                                updateInstallment(
+                                  index,
+                                  "amount",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-lg border bg-background py-2.5 pl-7 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                              placeholder="10000"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="mb-1.5 block text-xs font-medium">
+                            {t("paymentPlan.dueDate")}
+                          </label>
+
+                          <div className="relative">
+                            <CalendarDays className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+                            <input
+                              type="date"
+                              value={installment.dueDate}
+                              onChange={(e) =>
+                                updateInstallment(
+                                  index,
+                                  "dueDate",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full rounded-lg border bg-background py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                            />
+                          </div>
                         </div>
                       </div>
-                    ),
-                  )}
+
+                      <div className="mt-3">
+                        <label className="mb-1.5 block text-xs font-medium">
+                          {t("paymentPlan.notes")}
+                        </label>
+
+                        <input
+                          value={installment.notes}
+                          onChange={(e) =>
+                            updateInstallment(index, "notes", e.target.value)
+                          }
+                          placeholder={t("paymentPlan.optionalNote")}
+                          className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -427,19 +445,13 @@ export default function CreatePaymentPlanDialog({
                 }`}
               >
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Total Fee
-                  </span>
+                  <span className="text-muted-foreground">{t("paymentPlan.totalFee")}</span>
 
-                  <span className="font-medium">
-                    ৳{total.toLocaleString()}
-                  </span>
+                  <span className="font-medium">৳{total.toLocaleString()}</span>
                 </div>
 
                 <div className="mt-2 flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Allocated
-                  </span>
+                  <span className="text-muted-foreground">{t("paymentPlan.allocated")}</span>
 
                   <span className="font-medium">
                     ৳{allocated.toLocaleString()}
@@ -450,23 +462,18 @@ export default function CreatePaymentPlanDialog({
                   <div className="flex justify-between">
                     <span className="font-semibold">
                       {remaining === 0
-                        ? "Fully allocated"
+                        ? t("paymentPlan.fullyAllocated")
                         : remaining > 0
-                          ? "Remaining"
-                          : "Over allocated"}
+                          ? t("paymentPlan.remaining")
+                          : t("paymentPlan.overAllocated")}
                     </span>
 
                     <span
                       className={`font-semibold ${
-                        remaining === 0
-                          ? "text-emerald-600"
-                          : "text-orange-600"
+                        remaining === 0 ? "text-emerald-600" : "text-orange-600"
                       }`}
                     >
-                      ৳
-                      {Math.abs(
-                        remaining,
-                      ).toLocaleString()}
+                      ৳{Math.abs(remaining).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -481,7 +488,7 @@ export default function CreatePaymentPlanDialog({
             onClick={onClose}
             className="flex-1 rounded-xl border bg-background px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
           >
-            Cancel
+            {t("paymentPlan.cancel")}
           </button>
 
           <button
@@ -490,9 +497,7 @@ export default function CreatePaymentPlanDialog({
             onClick={submit}
             className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isPending
-              ? "Creating..."
-              : "Create Payment Plan"}
+            {isPending ? t("paymentPlan.creating") : t("paymentPlan.create")}
           </button>
         </div>
       </div>
