@@ -104,7 +104,12 @@ export default async function TeachersPage({
       </div>
 
       {/* Table */}
-      <TeacherTable teachers={result.teachers} />
+      <TeacherTable
+        teachers={result.teachers.map((teacher) => ({
+          ...teacher,
+          salary: teacher.salary?.toString() ?? null,
+        }))}
+      />
 
       {/* Pagination */}
       <Pagination

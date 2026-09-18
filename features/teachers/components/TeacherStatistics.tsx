@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Users,
   UserCheck,
@@ -8,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 type Props = {
   total: number;
@@ -26,41 +29,43 @@ export default function TeacherStatistics({
   resigned,
   newThisMonth,
 }: Props) {
+  const { t } = useLanguage();
+
   const statistics = [
     {
-      title: "Total Teachers",
+      title: t("teacherStatistics.totalTeachers"),
       value: total,
-      description: "All active records",
+      description: t("teacherStatistics.totalDescription"),
       icon: Users,
     },
     {
-      title: "Active",
+      title: t("teacherStatistics.active"),
       value: active,
-      description: "Currently teaching",
+      description: t("teacherStatistics.activeDescription"),
       icon: UserCheck,
     },
     {
-      title: "Inactive",
+      title: t("teacherStatistics.inactive"),
       value: inactive,
-      description: "Currently inactive",
+      description: t("teacherStatistics.inactiveDescription"),
       icon: UserX,
     },
     {
-      title: "On Leave",
+      title: t("teacherStatistics.onLeave"),
       value: onLeave,
-      description: "Temporarily unavailable",
+      description: t("teacherStatistics.onLeaveDescription"),
       icon: Clock3,
     },
     {
-      title: "Resigned",
+      title: t("teacherStatistics.resigned"),
       value: resigned,
-      description: "No longer working",
+      description: t("teacherStatistics.resignedDescription"),
       icon: UserMinus,
     },
     {
-      title: "New This Month",
+      title: t("teacherStatistics.newThisMonth"),
       value: newThisMonth,
-      description: "Recently added",
+      description: t("teacherStatistics.newThisMonthDescription"),
       icon: UserPlus,
     },
   ];
